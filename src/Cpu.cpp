@@ -45,25 +45,19 @@ void Cpu::clock()
 {
 	uint8_t* opcode = &state.memory->at(state.pc);
 
+	disassemble(state.memory, state.pc);
+
+	state.pc += 1;  //for the opcode 
+
 	switch (*opcode)
 	{
 		// Only advances the program counter by 1. Performs no other operations that would have an effect.
-		// 
-		// Opcode: 0x00
-		// Number of Bytes : 1
-		// Number of Cycles : 1
-		// Flags : ----
 		case 0x00:
 			break;
 
 		// Load the 2 bytes of immediate data into register pair BC. The first byte of immediate data 
 		// is the lower byte (i.e., bits 0-7), and the second byte of immediate data is the 
 		// higher byte (i.e., bits 8-15).
-		//
-		// Opcode: 0x01
-		// Number of Bytes : 3
-		// Number of Cycles : 3
-		// Flags : ----
 		case 0x01:
 			state.c = opcode[1];
 			state.b = opcode[2];
@@ -71,25 +65,86 @@ void Cpu::clock()
 			break;
 
 		// Store the contents of register A in the memory location specified by register pair BC.
-		//
-		// Opcode: 0x02
-		// Number of Bytes : 1
-		// Number of Cycles : 2
-		// Flags : ----
 		case 0x02:
-			unimplementedInstruction(state, *opcode);
+		{
+			uint16_t offset = (state.b << 8) | state.c;
+			WriteToMemory(offset, state.a);
 			break;
+		}
+
+		// Increment the contents of register pair BC by 1.
+		case 0x03:
+		{
+			state.c = state.c + 1;
+			if (state.c == 0)
+				state.b = state.b + 1;
+			break;
+		}
+
+		// Load the contents of register A into register A.
+		case 0x7F:
+		{
+			state.a = state.a;
+			break;
+		}
+
+		case 0xC3:
+		{
+			uint8_t firstChar = opcode[state.pc + 1];
+			uint8_t secondChar = opcode[state.pc];
+			state.pc = ((uint16_t)firstChar << 8) | secondChar;
+			break;
+		}
+
+		// Push the current value of the program counter PC onto the memory stack, and load into PC 
+		// the 8th byte of page 0 memory addresses, 0x38. The next instruction is fetched from the 
+		// address specified by the new content of PC(as usual).
+
+		// With the push, the contents of the stack pointer SP are decremented by 1, and the 
+		// higher - order byte of PC is loaded in the memory address specified by the new SP 
+		// value. The value of SP is then again decremented by 1, and the lower - order byte
+		// of the PC is loaded in the memory address specified by that value of SP.
+
+		// The RST instruction can be used to jump to 1 of 8 addresses. Because all of the 
+		// addresses are held in page 0 memory, 0x00 is loaded in the higher - order byte 
+		// of the PC, and 0x38 is loaded in the lower - order byte.
+		case 0xFF:
+		{
+			uint16_t ret = state.pc + 2;
+			WriteToMemory(state.sp - 1, (ret >> 8) & 0xff);
+			WriteToMemory(state.sp - 2, (ret & 0xff));
+			state.sp = state.sp - 2;
+			state.pc = 0x38;
+			break;
+		}
 
 		default: 
 			unimplementedInstruction(state, *opcode); 
 			break;
 	}
-	state.pc += 1;  //for the opcode 
+	//state.pc += 1;  //for the opcode 
+}
+
+void WriteToMemory(uint16_t address, uint8_t value)
+{
+	if (address < 0x2000)
+	{
+		//        printf("Writing ROM not allowed %x\n", address);
+		return;
+	}
+	if (address >= 0x4000)
+	{
+		//       printf("Writing out of Space Invaders RAM not allowed %x\n", address);
+		return;
+	}
+
+	state.memory->at(address) = value;
 }
 
 void unimplementedInstruction(Cpu::cpuState &state, uint8_t opcode)
 {
-	//pc will have advanced one, so undo that    
+	//pc will have advanced one, so undo that 
+	printf("\n");
 	printf("Error: Unimplemented instruction\n");
 	printf("PC: %04x \n", state.pc);
 	printf("OPCODE: %02x \n", opcode);

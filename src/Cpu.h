@@ -20,7 +20,7 @@ public:
 };
 
 
-
+void WriteToMemory(uint16_t address, uint8_t value);
 void disasseble16bit(std::vector<uint8_t>* rom, uint16_t opcode, int pc);
 void outputDisassembledInstruction(const char* instructionName, int pc, std::vector<uint8_t>* rom, int totalOpBytes);
 
