@@ -29,6 +29,8 @@ struct Cpu::cpuState
 
 	std::vector<uint8_t>* memory;
 	struct cpuFlags flags;
+
+	uint8_t	int_enable;
 };
 
 Cpu::cpuState state;
@@ -59,10 +61,12 @@ void Cpu::clock()
 		// is the lower byte (i.e., bits 0-7), and the second byte of immediate data is the 
 		// higher byte (i.e., bits 8-15).
 		case 0x01:
+		{
 			state.c = opcode[1];
 			state.b = opcode[2];
-			state.pc += 2;  
+			state.pc += 2;
 			break;
+		}
 
 		// Store the contents of register A in the memory location specified by register pair BC.
 		case 0x02:
@@ -81,10 +85,86 @@ void Cpu::clock()
 			break;
 		}
 
+		// Load the 8 - bit immediate operand d8 into register B.
+		case 0x06:
+		{
+			state.b = opcode[1];
+			state.pc++;
+			break;
+		}
+
+		// Load the 8-bit immediate operand d8 into register C.
+		case 0x0E:
+		{
+			state.c = opcode[1];
+			state.pc++;
+			break;
+		}
+
+
+		// If the Z flag is 0, jump s8 steps from the current address stored in the 
+		// program counter (PC). If not, the instruction following the current 
+		// JP instruction is executed (as usual).
+		case 0x20:
+		{
+			if (state.flags.z == 0)
+			{
+				// TODO: this could be wrong
+				state.pc = (int8_t)state.pc;
+			}
+			else
+			{
+				state.pc++;
+			}
+		}
+
+		// Load the 2 bytes of immediate data into register pair HL.
+
+		// The first byte of immediate data is the lower byte (i.e., bits 0 - 7), 
+		// and the second byte of immediate data is the higher byte(i.e., bits 8 - 15).
+		case 0x21:
+		{
+			state.h = opcode[1];
+			state.l = opcode[2];
+			state.pc += 2;
+			break;
+		}
+
 		// Load the contents of register A into register A.
 		case 0x7F:
 		{
 			state.a = state.a;
+			break;
+		}
+
+		// Take the logical exclusive-OR for each bit of the contents of register A and 
+		// the contents of register A, and store the results in register A.
+		case 0xAF:
+		{
+			state.a = state.a ^ state.a;
+			state.flags.z = 1;
+			state.flags.c = 0;
+			state.flags.h = 0;
+			state.flags.n = 0;
+			break;
+		}
+
+
+		// Store the contents of register A into the memory location specified by
+		//  register pair HL, and simultaneously decrement the contents of HL.
+		case 0x32:
+		{
+			uint16_t offset = (opcode[2] << 8) | (opcode[1]);
+			WriteToMemory(offset, state.a);
+			state.pc++;
+			break;
+		}
+
+		// Load the 8-bit immediate operand d8 into register A.
+		case 0x3E:
+		{
+			state.a = opcode[1];
+			state.pc++;
 			break;
 		}
 
@@ -96,9 +176,25 @@ void Cpu::clock()
 		// code corresponds to the higher - order byte(bits 8 - 15).
 		case 0xC3:
 		{
-			uint8_t firstChar = opcode[2];
-			uint8_t secondChar = opcode[1];
-			state.pc = ((uint16_t)firstChar << 8) | secondChar;
+			uint16_t offset = (opcode[2] << 8) | (opcode[1]);
+			state.pc = offset;
+			break;
+		}
+
+		// Reset the interrupt master enable (IME) flag and prohibit maskable interrupts.
+
+		// Even if a DI instruction is executed in an interrupt routine, the IME 
+		// flag is set if a return is performed with a RETI instruction.
+		case 0xF3:
+		{
+			state.int_enable = 0;
+			break;
+		}
+
+		// Load the contents of register pair HL into the stack pointer SP.
+		case 0xF9:
+		{
+			state.sp = (state.l << 8) | (state.h);
 			break;
 		}
 
@@ -128,19 +224,16 @@ void Cpu::clock()
 			unimplementedInstruction(state, *opcode); 
 			break;
 	}
-	//state.pc += 1;  //for the opcode 
 }
 
 void WriteToMemory(uint16_t address, uint8_t value)
 {
 	if (address < 0x2000)
 	{
-		//        printf("Writing ROM not allowed %x\n", address);
 		return;
 	}
 	if (address >= 0x4000)
 	{
-		//       printf("Writing out of Space Invaders RAM not allowed %x\n", address);
 		return;
 	}
 
