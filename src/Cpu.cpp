@@ -244,9 +244,25 @@ void unimplementedInstruction(Cpu::cpuState &state, uint8_t opcode)
 {
 	//pc will have advanced one, so undo that 
 	printf("\n");
-	printf("Error: Unimplemented instruction\n");
-	printf("PC: %04x \n", state.pc);
-	printf("OPCODE: %02x \n", opcode);
+	printf("Error: Unimplemented instruction: %02x \n", opcode);
+	printf("######################################################\n");
+	printf("# CPU Details:\n");
+	printf("# Program Counter: %04x \n", state.pc);
+	printf("# Registers: \n");
+	printf("#    A: %02x \n", state.a);
+	printf("#    B: %02x \n", state.b);
+	printf("#    C: %02x \n", state.c);
+	printf("#    D: %02x \n", state.d);
+	printf("#    E: %02x \n", state.e);
+	printf("#    F: %02x \n", state.f);
+	printf("#    H: %02x \n", state.h);
+	printf("#    L: %02x \n", state.l);
+	printf("# Flags:\n");
+	printf("#    Zero flag (Z): %02x \n", state.flags.z );
+	printf("#    Subtract flag (N): %02x \n", state.flags.z);
+	printf("#    Half Carry Flag (H): %02x \n", state.flags.z);
+	printf("#    Carry flag (C): %02x \n", state.flags.z);
+	printf("######################################################\n");
 	exit(1);
 }
 
