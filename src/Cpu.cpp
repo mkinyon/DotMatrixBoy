@@ -88,10 +88,16 @@ void Cpu::clock()
 			break;
 		}
 
+		// Load the 16-bit immediate operand a16 into the program counter (PC). a16 specifies 
+		// the address of the subsequently executed instruction.
+
+		// The second byte of the object code(immediately following the opcode) corresponds 
+		// to the lower - order byte of a16(bits 0 - 7), and the third byte of the object 
+		// code corresponds to the higher - order byte(bits 8 - 15).
 		case 0xC3:
 		{
-			uint8_t firstChar = opcode[state.pc + 1];
-			uint8_t secondChar = opcode[state.pc];
+			uint8_t firstChar = opcode[2];
+			uint8_t secondChar = opcode[1];
 			state.pc = ((uint16_t)firstChar << 8) | secondChar;
 			break;
 		}
