@@ -1,38 +1,51 @@
 #include "Cpu.h"
 
+struct Cpu::cpuFlags
+{
+	// Flag register
+	uint8_t z : 1; // 7th bit: Zero flag (Z)
+	uint8_t n : 1; // 6th bit: Subtract flag (N)
+	uint8_t h : 1; // 5th bit: Half Carry Flag (H)
+	uint8_t c : 1; // 4th bit: Carry flag (C)
+	uint8_t pad : 4; // 3rd to 0 bit: not used
+};
+
+struct Cpu::cpuState
+{
+	// 8 bit registers
+	// Note: Some instructions can pair two registers as 16 bit registers.
+	//  The pairings are AF, BC, DE, & HL.
+	uint8_t a = 0x00;
+	uint8_t b = 0x00;
+	uint8_t c = 0x00;
+	uint8_t d = 0x00;
+	uint8_t e = 0x00;
+	uint8_t f = 0x00;
+	uint8_t h = 0x00;
+	uint8_t l = 0x00;
+
+	uint16_t sp = 0x00; // stack pointer
+	uint16_t pc = 0x100; // the gameboy program counter starts at $100
+
+	std::vector<uint8_t>* memory;
+	struct cpuFlags flags;
+};
+
+Cpu::cpuState state;
+
 Cpu::Cpu() {}
 Cpu::~Cpu() {}
 
-void Cpu::clock( uint8_t opcode )
+void Cpu::loadCartData(std::vector<uint8_t>* rom)
 {
-	//opcode = read(pc);
-
-	switch (opcode)
-	{
-		case 0x00: // NOP
-			break;
-		case 0x01: // LD BC,d16
-			break;
-		default:
-			// handle unknown opcode
-			break;
-	}
-
-	return;
+	state.memory = rom;
 }
 
-uint8_t Cpu::read(uint8_t address)
+void Cpu::clock()
 {
-	return 0;//cart.read(address);
-}
+	uint8_t* opcode = &state.memory->at(state.pc);
 
-
-int Cpu::disassemble(std::vector<uint8_t> *rom, int pc)
-{
-	uint8_t opcode = rom->at(pc);
-	int opBytes = 1;
-
-	switch (opcode)
+	switch (*opcode)
 	{
 		// Only advances the program counter by 1. Performs no other operations that would have an effect.
 		// 
@@ -40,7 +53,8 @@ int Cpu::disassemble(std::vector<uint8_t> *rom, int pc)
 		// Number of Bytes : 1
 		// Number of Cycles : 1
 		// Flags : ----
-		case 0x00: outputDisassembledInstruction("NOP", pc, rom, 1); break;
+		case 0x00:
+			break;
 
 		// Load the 2 bytes of immediate data into register pair BC. The first byte of immediate data 
 		// is the lower byte (i.e., bits 0-7), and the second byte of immediate data is the 
@@ -50,7 +64,11 @@ int Cpu::disassemble(std::vector<uint8_t> *rom, int pc)
 		// Number of Bytes : 3
 		// Number of Cycles : 3
 		// Flags : ----
-		case 0x01: outputDisassembledInstruction("LD BC, d16", pc, rom, 3); opBytes = 3; break;
+		case 0x01:
+			state.c = opcode[1];
+			state.b = opcode[2];
+			state.pc += 2;  
+			break;
 
 		// Store the contents of register A in the memory location specified by register pair BC.
 		//
@@ -58,6 +76,35 @@ int Cpu::disassemble(std::vector<uint8_t> *rom, int pc)
 		// Number of Bytes : 1
 		// Number of Cycles : 2
 		// Flags : ----
+		case 0x02:
+			unimplementedInstruction(state, *opcode);
+			break;
+
+		default: 
+			unimplementedInstruction(state, *opcode); 
+			break;
+	}
+	state.pc += 1;  //for the opcode 
+}
+
+void unimplementedInstruction(Cpu::cpuState &state, uint8_t opcode)
+{
+	//pc will have advanced one, so undo that    
+	printf("Error: Unimplemented instruction\n");
+	printf("PC: %04x \n", state.pc);
+	printf("OPCODE: %02x \n", opcode);
+	exit(1);
+}
+
+int Cpu::disassemble(std::vector<uint8_t> *rom, int pc)
+{
+	uint8_t opcode = rom->at(pc);
+	int opBytes = 1;
+
+	switch (opcode)
+	{
+		case 0x00: outputDisassembledInstruction("NOP", pc, rom, 1); break;
+		case 0x01: outputDisassembledInstruction("LD BC, d16", pc, rom, 3); opBytes = 3; break;
 		case 0x02: outputDisassembledInstruction("LD (BC)", pc, rom, 1); break;
 
 		// Increment the contents of register pair BC by 1.
