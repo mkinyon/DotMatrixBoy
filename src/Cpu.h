@@ -43,13 +43,11 @@ private:
 	uint8_t opcode = 0x00;
 
 public:
-	// Memory map
-	uint8_t ram[2048];
-
 	void clock( uint8_t opcode );
 	uint8_t read(uint8_t address);
 	int disassemble(std::vector<uint8_t> *rom, int pc);
 };
 
+void disasseble16bit(std::vector<uint8_t>* rom, uint16_t opcode, int pc);
 void outputDisassembledInstruction(const char* instructionName, int pc, std::vector<uint8_t>* rom, int totalOpBytes);
 
