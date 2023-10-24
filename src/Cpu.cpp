@@ -107,10 +107,11 @@ void Cpu::clock()
 		// JP instruction is executed (as usual).
 		case 0x20:
 		{
+			// note: "s8" in the description refers to a signed char
+			int8_t offset = opcode[1];
 			if (state.flags.z == 0)
 			{
-				// TODO: this could be wrong
-				state.pc = (int8_t)state.pc;
+				state.pc += offset;
 			}
 			else
 			{
@@ -178,6 +179,21 @@ void Cpu::clock()
 		{
 			uint16_t offset = (opcode[2] << 8) | (opcode[1]);
 			state.pc = offset;
+			break;
+		}
+
+		// Store the contents of register A in the internal RAM, port register, or mode register 
+		// at the address in the range 0xFF00-0xFFFF specified by the 8-bit immediate operand a8.
+
+		// Note: Should specify a 16 - bit address in the mnemonic portion for a8, although 
+		// the immediate operand only has the lower - order 8 bits.
+
+		// 0xFF00 - 0xFF7F : Port / Mode registers, control register, sound register
+		// 0xFF80 - 0xFFFE : Working & Stack RAM(127 bytes)
+		// 0xFFFF : Interrupt Enable Register
+		case 0xE0:
+		{
+			unimplementedInstruction(state, *opcode);
 			break;
 		}
 
