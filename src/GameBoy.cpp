@@ -1,10 +1,7 @@
 #include "GameBoy.h"
 
 
-GameBoy::GameBoy()
-{
-	memoryMap[65535];
-}
+GameBoy::GameBoy() {}
 
 GameBoy::~GameBoy() {}
 
@@ -39,20 +36,24 @@ uint8_t& GameBoy::ReadFromMemoryMap(uint16_t address)
 	// internal ram bank 0
 	else if (address >= 0xC000 && address <= 0xCFFF)
 	{
-		//return (uint8_t)0; // todo
+		// offset the address so it maps correctly to the ram
+		uint8_t offset = address - 49152;
+		return ram[offset];
+	}
+	else
+	{
+		// todo: temp
+		return cart.Read(0);
 	}
 }
 
 void GameBoy::WriteToMemoryMap(uint16_t address, uint8_t value)
 {
-	if (address < 0x2000)
+	// internal ram
+	if (address >= 0xC000 && address <= 0xCFFF)
 	{
-		return;
+		// offset the address so it maps correctly to the ram
+		uint8_t offset = address - 49152;
+		ram[offset] = value;
 	}
-	if (address >= 0x4000)
-	{
-		return;
-	}
-
-	// TODO state.memory->at(address) = value;
 }

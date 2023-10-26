@@ -65,7 +65,7 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x02:
 		{
 			uint16_t offset = (state.b << 8) | state.c;
-			// TODO: WriteToMemory(offset, state.a);
+			gb.WriteToMemoryMap(offset, state.a);
 			break;
 		}
 
@@ -94,6 +94,12 @@ void Cpu::Clock(GameBoy& gb)
 			break;
 		}
 
+		case 0x0F:
+		{
+			unimplementedInstruction(state, *opcode);
+			break;
+		}
+
 
 		// If the Z flag is 0, jump s8 steps from the current address stored in the 
 		// program counter (PC). If not, the instruction following the current 
@@ -110,6 +116,7 @@ void Cpu::Clock(GameBoy& gb)
 			{
 				state.pc++;
 			}
+			break;
 		}
 
 		// Load the 2 bytes of immediate data into register pair HL.
@@ -149,8 +156,26 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x32:
 		{
 			uint16_t offset = (opcode[2] << 8) | (opcode[1]);
-			// TODO WriteToMemory(offset, state.a);
+			gb.WriteToMemoryMap(offset, state.a);
 			state.pc++;
+			break;
+		}
+
+		// If the CY flag is 1, jump s8 steps from the current address stored in the 
+		// program counter (PC). If not, the instruction following the current 
+		// JP instruction is executed (as usual).
+		case 0x38:
+		{
+			// note: "s8" in the description refers to a signed char
+			int8_t offset = opcode[1];
+			if (state.flags.c == 1)
+			{
+				state.pc += offset;
+			}
+			else
+			{
+				state.pc++;
+			}
 			break;
 		}
 
@@ -186,7 +211,9 @@ void Cpu::Clock(GameBoy& gb)
 		// 0xFFFF : Interrupt Enable Register
 		case 0xE0:
 		{
-			unimplementedInstruction(state, *opcode);
+			uint8_t offset = opcode[1];
+			gb.WriteToMemoryMap(0xFF00 + offset, state.a);
+			state.pc++;
 			break;
 		}
 
@@ -201,7 +228,8 @@ void Cpu::Clock(GameBoy& gb)
 		// 0xFFFF : Interrupt Enable Register
 		case 0xF0:
 		{
-			unimplementedInstruction(state, *opcode);
+			state.a = gb.ReadFromMemoryMap(0xFF00 + opcode[1]);
+			state.pc++;
 			break;
 		}
 
@@ -222,6 +250,20 @@ void Cpu::Clock(GameBoy& gb)
 			break;
 		}
 
+		// Compare the contents of register A and the contents of the 8-bit immediate 
+		// operand d8 by calculating A - d8, and set the Z flag if they are equal.
+
+		// The execution of this instruction does not affect the contents of register A.
+		case 0xFE:
+		{
+			if (state.a == opcode[1])
+			{
+				state.flags.z = 1;
+			}
+			state.pc++;
+			break;
+		}
+
 		// Push the current value of the program counter PC onto the memory stack, and load into PC 
 		// the 8th byte of page 0 memory addresses, 0x38. The next instruction is fetched from the 
 		// address specified by the new content of PC(as usual).
@@ -236,11 +278,9 @@ void Cpu::Clock(GameBoy& gb)
 		// of the PC, and 0x38 is loaded in the lower - order byte.
 		case 0xFF:
 		{
-			uint16_t ret = state.pc + 2;
-			// TODO WriteToMemory(state.sp - 1, (ret >> 8) & 0xff);
-			// TODO WriteToMemory(state.sp - 2, (ret & 0xff));
-			state.sp = state.sp - 2;
-			state.pc = 0x38;
+			gb.WriteToMemoryMap(state.sp, (state.pc) >> 8);
+			gb.WriteToMemoryMap(state.sp, (state.pc) & 0xff);
+			state.pc = opcode[0] ^ 0xC7;
 			break;
 		}
 

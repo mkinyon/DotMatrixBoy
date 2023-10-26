@@ -20,7 +20,8 @@ public:
 	void WriteToMemoryMap(uint16_t address, uint8_t value);
 
 private:
-	std::vector<uint8_t> *memoryMap;
+	//devices
 	Cartridge cart;
+	uint8_t ram[4095];
 };
 
