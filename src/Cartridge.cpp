@@ -35,15 +35,15 @@ Cartridge::Cartridge(const std::string& fileName)
 		if (header.cartridgeType == 0x00)
 		{
 			file.seekg(0); // reset to beginning
-			romData.resize(32767);
-			file.read((char*)romData.data(), romData.size());
+			romData = new std::vector<uint8_t>(32767);
+			file.read((char*)romData->data(), romData->size());
 		}
 	}
 }
 
 Cartridge::~Cartridge() {}
 
-uint8_t Cartridge::read(uint8_t address)
+uint8_t& Cartridge::read(uint16_t address)
 {
-	return romData[address];
+	return romData->at(address);
 }

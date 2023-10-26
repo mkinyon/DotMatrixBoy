@@ -129,9 +129,11 @@
   <ItemGroup>
     <ClInclude Include="Cartridge.h" />
     <ClInclude Include="Cpu.h" />
+    <ClInclude Include="GameBoy.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Cartridge.cpp" />
+    <ClCompile Include="GameBoy.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Cpu.cpp" />
   </ItemGroup>
