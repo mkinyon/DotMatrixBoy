@@ -43,7 +43,7 @@ Cartridge::Cartridge(const std::string& fileName)
 
 Cartridge::~Cartridge() {}
 
-uint8_t& Cartridge::read(uint16_t address)
+uint8_t& Cartridge::Read(uint16_t address)
 {
 	return romData->at(address);
 }

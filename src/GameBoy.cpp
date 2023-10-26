@@ -14,13 +14,13 @@ void GameBoy::Run()
 
 	while (true)
 	{
-		cpu.clock(*this);
+		cpu.Clock(*this);
 	}
 
 	// disassemble all instructions (for testing)
 	while (pc < cart.romData->size())
 	{
-		pc += cpu.disassemble(&ReadFromMemoryMap(pc), pc);
+		pc += cpu.Disassemble(&ReadFromMemoryMap(pc), pc);
 	}
 }
 
@@ -34,7 +34,7 @@ uint8_t& GameBoy::ReadFromMemoryMap(uint16_t address)
 	// cartridge rom
 	if (address >= 0x0000 && address <= 0x7FFF)
 	{
-		return cart.read(address);
+		return cart.Read(address);
 	}
 	// internal ram bank 0
 	else if (address >= 0xC000 && address <= 0xCFFF)

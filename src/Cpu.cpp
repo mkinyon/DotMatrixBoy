@@ -36,11 +36,11 @@ Cpu::cpuState state;
 Cpu::Cpu() {}
 Cpu::~Cpu() {}
 
-void Cpu::clock(GameBoy& gb)
+void Cpu::Clock(GameBoy& gb)
 {
 	uint8_t* opcode = &gb.ReadFromMemoryMap(state.pc);
 
-	disassemble(opcode, state.pc);
+	Disassemble(opcode, state.pc);
 
 	state.pc += 1;  //for the opcode 
 
@@ -276,7 +276,7 @@ void unimplementedInstruction(Cpu::cpuState &state, uint8_t opcode)
 	exit(1);
 }
 
-int Cpu::disassemble(uint8_t *opcode, int pc)
+int Cpu::Disassemble(uint8_t *opcode, int pc)
 {
 	int opBytes = 1;
 

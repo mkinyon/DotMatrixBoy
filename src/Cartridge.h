@@ -11,7 +11,7 @@ public:
 	Cartridge(const std::string& fileName);
 	~Cartridge();
 
-	uint8_t& read(uint16_t address );
+	uint8_t& Read(uint16_t address );
 
 	std::vector<uint8_t> *romData;
 };

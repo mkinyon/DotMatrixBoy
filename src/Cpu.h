@@ -16,8 +16,8 @@ public:
 	struct cpuState;
 
 public:
-	void clock(GameBoy& gb);
-	int disassemble(uint8_t *opcode, int pc);
+	void Clock(GameBoy& gb);
+	int Disassemble(uint8_t *opcode, int pc);
 };
 
 
