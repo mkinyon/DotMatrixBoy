@@ -3,14 +3,12 @@
 
 int totalCycles = 0;
 
-struct Cpu::cpuFlags
+enum Flags
 {
-	// Flag register
-	uint8_t z : 1; // 7th bit: Zero flag (Z)
-	uint8_t n : 1; // 6th bit: Subtract flag (N)
-	uint8_t h : 1; // 5th bit: Half Carry Flag (H)
-	uint8_t c : 1; // 4th bit: Carry flag (C)
-	uint8_t pad : 4; // 3rd to 0 bit: not used
+	FLAG_CARRY = 0x10, // C 0001
+	FLAG_HALF_CARRY = 0x20, // H 0010
+	FLAG_SUBTRACT = 0x40, // N 0100
+	FLAG_ZERO = 0x80 // Z 1000
 };
 
 struct Cpu::cpuState
@@ -19,17 +17,20 @@ struct Cpu::cpuState
 	// Note: Some instructions can pair two registers as 16 bit registers.
 	//  The pairings are AF, BC, DE, & HL.
 	uint8_t a = 0x00;
+	uint8_t f = 0x00; // this register is used for flags
+
 	uint8_t b = 0x00;
 	uint8_t c = 0x00;
+
 	uint8_t d = 0x00;
 	uint8_t e = 0x00;
-	uint8_t f = 0x00;
+	
 	uint8_t h = 0x00;
 	uint8_t l = 0x00;
 
 	uint16_t sp = 0x00; // stack pointer
 	uint16_t pc = 0x100; // the gameboy program counter starts at $100
-	struct cpuFlags flags;
+
 	uint8_t	int_enable;
 };
 
@@ -90,7 +91,7 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			// note: "s8" in the description refers to a signed char
 			int8_t offset = opcode[1];
-			if (state.flags.z == 0)
+			if (!getFlag(FLAG_ZERO))
 			{
 				state.pc += offset;
 			}
@@ -112,7 +113,7 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			// note: "s8" in the description refers to a signed char
 			int8_t offset = opcode[1];
-			if (state.flags.c == 1)
+			if (getFlag(FLAG_ZERO))
 			{
 				state.pc += offset;
 			}
@@ -625,9 +626,9 @@ void Cpu::Clock(GameBoy& gb)
 			state.b--;
 
 			if (state.b == 0)
-				state.flags.z = 1;
+				setFlag(FLAG_ZERO);
 
-			state.flags.n = 1;
+			setFlag(FLAG_SUBTRACT);
 			break;
 		}
 
@@ -640,9 +641,9 @@ void Cpu::Clock(GameBoy& gb)
 			state.c--;
 
 			if (state.c == 0)
-				state.flags.z = 1;
+				setFlag(FLAG_ZERO);
 
-			state.flags.n = 1;
+			setFlag(FLAG_SUBTRACT);
 			break;
 		}
 
@@ -839,10 +840,10 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xAF:
 		{
 			state.a = state.a ^ state.a;
-			state.flags.z = 1;
-			state.flags.c = 0;
-			state.flags.h = 0;
-			state.flags.n = 0;
+			setFlag(FLAG_ZERO);
+			clearFlag(FLAG_SUBTRACT);
+			clearFlag(FLAG_HALF_CARRY);
+			clearFlag(FLAG_CARRY);
 			break;
 		}
 
@@ -924,7 +925,7 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			if (state.a == opcode[1])
 			{
-				state.flags.z = 1;
+				setFlag(FLAG_ZERO);
 			}
 			state.pc++;
 			break;
@@ -1031,10 +1032,10 @@ void unimplementedInstruction(Cpu::cpuState& state, uint8_t opcode)
 	printf("#    L: %02x \n", state.l);
 	printf("#\n");
 	printf("# Flags:\n");
-	printf("#    Zero flag (Z): %02x \n", state.flags.z);
-	printf("#    Subtract flag (N): %02x \n", state.flags.z);
-	printf("#    Half Carry Flag (H): %02x \n", state.flags.z);
-	printf("#    Carry flag (C): %02x \n", state.flags.z);
+	printf("#    Zero flag (Z): %02x \n", getFlag(FLAG_ZERO));
+	printf("#    Subtract flag (N): %02x \n", getFlag(FLAG_SUBTRACT));
+	printf("#    Half Carry Flag (H): %02x \n", getFlag(FLAG_HALF_CARRY));
+	printf("#    Carry flag (C): %02x \n", getFlag(FLAG_CARRY));
 	printf("######################################################\n");
 	exit(1);
 }
@@ -1669,10 +1670,10 @@ void Cpu::Reset(GameBoy& gb)
 	state.sp = 0xFFFE;
 
 	// flags
-	state.flags.c = 0;
-	state.flags.h = 0; // todo: h and c are determined by the checksum header
-	state.flags.n = 0; // but we are going to set them to zero for now
-	state.flags.z = 1;
+	clearFlag(FLAG_CARRY);
+	clearFlag(FLAG_HALF_CARRY); // todo: h and c are determined by the checksum header
+	clearFlag(FLAG_SUBTRACT);   // but we are going to set them to zero for now
+	setFlag(FLAG_ZERO);
 
 	// hardware registers
 	gb.WriteToMemoryMap(0xFF00, 0xCF);
@@ -1730,4 +1731,18 @@ void Cpu::Reset(GameBoy& gb)
 	gb.WriteToMemoryMap(0xFF6B, 0xFF);
 	gb.WriteToMemoryMap(0xFF70, 0xFF);
 	gb.WriteToMemoryMap(0xFFFF, 0x00);
+}
+
+bool getFlag(Flags flag)
+{
+	return (state.f & flag) != 0;
+}
+void setFlag(Flags flag)
+{
+	state.f |= flag;
+}
+
+void clearFlag(Flags flag)
+{
+	state.f &= ~flag;
 }

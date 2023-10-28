@@ -12,7 +12,6 @@ public:
 	~Cpu();
 
 public:
-	struct cpuFlags;
 	struct cpuState;
 
 public:
@@ -22,7 +21,11 @@ public:
 };
 
 void disasseble16bit(uint8_t *opcode, int pc);
-
 void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t *opcode, int totalOpBytes);
-
 void unimplementedInstruction(Cpu::cpuState &state, uint8_t opcode);
+
+enum Flags;
+
+bool getFlag(Flags flag);
+void setFlag(Flags flag);
+void clearFlag(Flags flag);
