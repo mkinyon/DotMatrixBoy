@@ -200,8 +200,11 @@ void Cpu::Clock(GameBoy& gb)
 		// "RST $38" B:1 C:16 FLAGS: - - - -
 		case 0xFF:
 		{
-			gb.WriteToMemoryMap(state.sp, (state.pc) >> 8);
-			gb.WriteToMemoryMap(state.sp, (state.pc) & 0xff);
+			state.sp = state.pc;
+			state.pc = 0x00 + 0x38;
+
+			//gb.WriteToMemoryMap(state.sp, (state.pc) >> 8);
+			//gb.WriteToMemoryMap(state.sp, (state.pc) & 0xff);
 			state.pc = opcode[0] ^ 0xC7;
 			break;
 		}
@@ -239,43 +242,47 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "LD [DE] A" B:1 C:8 FLAGS: - - - -
-		case 0x12: { unimplementedInstruction(state, *opcode); }
+		case 0x12: { unimplementedInstruction(state, *opcode); break; }
 
 		// "LD D n8" B:2 C:8 FLAGS: - - - -
-		case 0x16: { unimplementedInstruction(state, *opcode); }
+		case 0x16: { unimplementedInstruction(state, *opcode); break; }
 		
 		// "LD A [DE]" B:1 C:8 FLAGS: - - - -
-		case 0x1A: { unimplementedInstruction(state, *opcode); }
+		case 0x1A: { unimplementedInstruction(state, *opcode); break; }
 		
 		// "LD E n8" B:2 C:8 FLAGS: - - - -
-		case 0x1E: { unimplementedInstruction(state, *opcode); }
+		case 0x1E: { unimplementedInstruction(state, *opcode); break; }
 
 		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
-		case 0x22: { unimplementedInstruction(state, *opcode); }
+		case 0x22: { unimplementedInstruction(state, *opcode); break; }
 		
 		// "LD H n8" B:2 C:8 FLAGS: - - - -
-		case 0x26: { unimplementedInstruction(state, *opcode); }
+		case 0x26: { unimplementedInstruction(state, *opcode); break; }
 		
 		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x2A: { unimplementedInstruction(state, *opcode); }
+		case 0x2A: { unimplementedInstruction(state, *opcode); break; }
 		
 		// "LD L n8" B:2 C:8 FLAGS: - - - -
-		case 0x2E: { unimplementedInstruction(state, *opcode); }
+		case 0x2E: { unimplementedInstruction(state, *opcode); break; }
 
 		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
 		case 0x32:
 		{
 			uint16_t offset = (opcode[2] << 8) | (opcode[1]);
 			gb.WriteToMemoryMap(offset, state.a);
-			state.pc++;
 			break;
 		}
 
 		// "LD [HL] n8" B:2 C:12 FLAGS: - - - -
-		case 0x36: { unimplementedInstruction(state, *opcode); }
+		case 0x36:
+		{
+			state.h = opcode[1];
+			state.pc++;
+			break;
+		}
 
 		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x3A: { unimplementedInstruction(state, *opcode); }
+		case 0x3A: { unimplementedInstruction(state, *opcode); break; }
 
 		// "LD A n8" B:2 C:8 FLAGS: - - - -
 		case 0x3E:
@@ -491,7 +498,12 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xE2: { unimplementedInstruction(state, *opcode); break; }
 
 		// "LD [a16] A" B:3 C:16 FLAGS: - - - -
-		case 0xEA: { unimplementedInstruction(state, *opcode); break; }
+		case 0xEA:
+		{
+			gb.WriteToMemoryMap((opcode[2] << 8) | (opcode[1]), state.a);
+			state.pc = state.pc + 2;
+			break;
+		}
 		
 		// "LDH A [a8]" B:2 C:12 FLAGS: - - - -
 		case 0xF0:
@@ -522,10 +534,10 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "LD [a16] SP" B:3 C:20 FLAGS: - - - -
-		case 0x08: { unimplementedInstruction(state, *opcode); }
+		case 0x08: { unimplementedInstruction(state, *opcode); break; }
 
 		// "LD DE n16" B:3 C:12 FLAGS: - - - -
-		case 0x11: { unimplementedInstruction(state, *opcode); }
+		case 0x11: { unimplementedInstruction(state, *opcode); break; }
 		
 		// "LD HL n16" B:3 C:12 FLAGS: - - - -
 		case 0x21:
@@ -582,13 +594,31 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x04: { unimplementedInstruction(state, *opcode); break; }
 
 		// "DEC B" B:1 C:4 FLAGS: Z 1 H -
-		case 0x05: { unimplementedInstruction(state, *opcode); break; }
+		case 0x05:
+		{
+			state.b--;
+
+			if (state.b == 0)
+				state.flags.z = 1;
+
+			state.flags.n = 1;
+			break;
+		}
 
 		// "INC C" B:1 C:4 FLAGS: Z 0 H -
 		case 0x0C: { unimplementedInstruction(state, *opcode); break; }
 
 		// "DEC C" B:1 C:4 FLAGS: Z 1 H -
-		case 0x0D: { unimplementedInstruction(state, *opcode); break; }
+		case 0x0D: 
+		{ 
+			state.c--;
+
+			if (state.c == 0) 
+				state.flags.z = 1;
+
+			state.flags.n = 1;
+			break; 
+		}
 
 		// "INC D" B:1 C:4 FLAGS: Z 0 H -
 		case 0x14: { unimplementedInstruction(state, *opcode); break; }
