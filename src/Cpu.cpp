@@ -1,6 +1,8 @@
 #include "Cpu.h"
 #include "GameBoy.h"
 
+int totalCycles = 0;
+
 struct Cpu::cpuFlags
 {
 	// Flag register
@@ -42,7 +44,8 @@ void Cpu::Clock(GameBoy& gb)
 
 	Disassemble(opcode, state.pc);
 
-	state.pc += 1;
+	totalCycles++;
+	state.pc++;
 
 	switch (*opcode)
 	{
@@ -1014,7 +1017,9 @@ void unimplementedInstruction(Cpu::cpuState& state, uint8_t opcode)
 	printf("Error: Unimplemented instruction: %02x \n", opcode);
 	printf("######################################################\n");
 	printf("# CPU Details:\n");
+	printf("# Total Cycles: %d \n", totalCycles);
 	printf("# Program Counter: %04x \n", state.pc);
+	printf("#\n");
 	printf("# Registers: \n");
 	printf("#    A: %02x \n", state.a);
 	printf("#    B: %02x \n", state.b);
@@ -1024,6 +1029,7 @@ void unimplementedInstruction(Cpu::cpuState& state, uint8_t opcode)
 	printf("#    F: %02x \n", state.f);
 	printf("#    H: %02x \n", state.h);
 	printf("#    L: %02x \n", state.l);
+	printf("#\n");
 	printf("# Flags:\n");
 	printf("#    Zero flag (Z): %02x \n", state.flags.z);
 	printf("#    Subtract flag (N): %02x \n", state.flags.z);
@@ -1649,6 +1655,8 @@ void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t*
 
 void Cpu::Reset(GameBoy& gb)
 {
+	totalCycles = 0;
+
 	// registers
 	state.a = 0x01;
 	state.b = 0x00;
