@@ -29,3 +29,6 @@ enum Flags;
 bool getFlag(Flags flag);
 void setFlag(Flags flag);
 void clearFlag(Flags flag);
+
+void pushSP(GameBoy& gb, uint16_t value);
+uint16_t popSP(GameBoy& gb);

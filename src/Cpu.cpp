@@ -156,10 +156,10 @@ void Cpu::Clock(GameBoy& gb)
 		// "CALL Z a16" B:3 C:2412 FLAGS: - - - -
 		case 0xCC: { unimplementedInstruction(state, *opcode); break; }
 
-				 // "CALL a16" B:3 C:24 FLAGS: - - - -
+		// "CALL a16" B:3 C:24 FLAGS: - - - -
 		case 0xCD:
 		{
-			state.sp = (opcode[2] << 8) | (opcode[1]);
+			pushSP(gb, (opcode[2] << 8) | (opcode[1]));
 			state.pc = (opcode[2] << 8) | (opcode[1]);
 			break;
 		}
@@ -209,7 +209,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "RST $38" B:1 C:16 FLAGS: - - - -
 		case 0xFF:
 		{
-			state.sp = state.pc;
+			pushSP(gb, state.pc);
 			state.pc = 0x00 + 0x38;
 
 			//gb.WriteToMemoryMap(state.sp, (state.pc) >> 8);
@@ -573,7 +573,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD SP n16" B:3 C:12 FLAGS: - - - -
 		case 0x31:
 		{
-			state.sp = (opcode[2] << 8) | (opcode[1]);
+			pushSP(gb, (opcode[2] << 8) | (opcode[1]));
 			state.pc += 2;
 			break;
 		}
@@ -608,7 +608,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD SP HL" B:1 C:8 FLAGS: - - - -
 		case 0xF9:
 		{
-			state.sp = (state.l << 8) | (state.h);
+			pushSP(gb, (state.l << 8) | (state.h));
 			break;
 		}
 
@@ -1745,4 +1745,14 @@ void setFlag(Flags flag)
 void clearFlag(Flags flag)
 {
 	state.f &= ~flag;
+}
+
+void pushSP(GameBoy& gb, uint16_t value)
+{
+	gb.WriteToMemoryMap(--state.sp, value);
+}
+
+uint16_t popSP(GameBoy& gb)
+{
+	return gb.ReadFromMemoryMap(state.sp++);
 }

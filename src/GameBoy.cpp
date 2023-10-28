@@ -37,9 +37,14 @@ uint8_t& GameBoy::ReadFromMemoryMap(uint16_t address)
 	// internal ram bank 0
 	else if (address >= 0xC000 && address <= 0xCFFF)
 	{
-		// offset the address so it maps correctly to the ram
-		uint8_t offset = address - 49152;
+		uint8_t offset = address - 0xC000;
 		return ram[offset];
+	}
+	// zero page
+	else if (address >= 0xFF80 && address <= 0xFFFE)
+	{
+		uint8_t offset = address - 0xFF80;
+		return zeroPage[offset];
 	}
 	else
 	{
@@ -53,8 +58,13 @@ void GameBoy::WriteToMemoryMap(uint16_t address, uint8_t value)
 	// internal ram
 	if (address >= 0xC000 && address <= 0xCFFF)
 	{
-		// offset the address so it maps correctly to the ram
-		uint8_t offset = address - 49152;
+		uint8_t offset = address - 0xC000;
 		ram[offset] = value;
+	}
+	// zero page
+	else if (address >= 0xFF80 && address <= 0xFFFE)
+	{
+		uint8_t offset = address - 0xFF80;
+		zeroPage[offset] = value;
 	}
 }
