@@ -42,7 +42,7 @@ void Cpu::Clock(GameBoy& gb)
 
 	Disassemble(opcode, state.pc);
 
-	state.pc += 1;  //for the opcode 
+	state.pc += 1;
 
 	switch (*opcode)
 	{
@@ -51,7 +51,7 @@ void Cpu::Clock(GameBoy& gb)
 		/********************************************************************************************
 			Misc / Control Instructions
 		*********************************************************************************************/
-		
+
 		// "NOP" B:1 C:4 FLAGS: - - - -
 		case 0x00: break;
 
@@ -100,7 +100,7 @@ void Cpu::Clock(GameBoy& gb)
 
 		// "JR Z e8" B:2 C:128 FLAGS: - - - -
 		case 0x28: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "JR NC e8" B:2 C:128 FLAGS: - - - -
 		case 0x30: { unimplementedInstruction(state, *opcode); break; }
 
@@ -136,64 +136,69 @@ void Cpu::Clock(GameBoy& gb)
 
 		// "CALL NZ a16" B:3 C:2412 FLAGS: - - - -
 		case 0xC4: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "RST $00" B:1 C:16 FLAGS: - - - -
 		case 0xC7: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "RET Z" B:1 C:208 FLAGS: - - - -
 		case 0xC8: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "RET" B:1 C:16 FLAGS: - - - -
 		case 0xC9: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "JP Z a16" B:3 C:1612 FLAGS: - - - -
 		case 0xCA: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "CALL Z a16" B:3 C:2412 FLAGS: - - - -
 		case 0xCC: { unimplementedInstruction(state, *opcode); break; }
-		
-		// "CALL a16" B:3 C:24 FLAGS: - - - -
-		case 0xCD: { unimplementedInstruction(state, *opcode); break; }
-		
+
+				 // "CALL a16" B:3 C:24 FLAGS: - - - -
+		case 0xCD:
+		{
+			state.sp = (opcode[2] << 8) | (opcode[1]);
+			state.pc = (opcode[2] << 8) | (opcode[1]);
+			break;
+		}
+
 		// "RST $08" B:1 C:16 FLAGS: - - - -
 		case 0xCF: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "RET NC" B:1 C:208 FLAGS: - - - -
 		case 0xD0: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "JP NC a16" B:3 C:1612 FLAGS: - - - -
 		case 0xD2: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "CALL NC a16" B:3 C:2412 FLAGS: - - - -
 		case 0xD4: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "RST $10" B:1 C:16 FLAGS: - - - -
 		case 0xD7: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "RET C" B:1 C:208 FLAGS: - - - -
 		case 0xD8: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "RETI" B:1 C:16 FLAGS: - - - -
 		case 0xD9: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "JP C a16" B:3 C:1612 FLAGS: - - - -
 		case 0xDA: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "CALL C a16" B:3 C:2412 FLAGS: - - - -
 		case 0xDC: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "RST $18" B:1 C:16 FLAGS: - - - -
 		case 0xDF: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "RST $20" B:1 C:16 FLAGS: - - - -
 		case 0xE7: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "JP HL" B:1 C:4 FLAGS: - - - -
 		case 0xE9: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "RST $28" B:1 C:16 FLAGS: - - - -
 		case 0xEF: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "RST $30" B:1 C:16 FLAGS: - - - -
 		case 0xF7: { unimplementedInstruction(state, *opcode); break; }
 
@@ -211,9 +216,9 @@ void Cpu::Clock(GameBoy& gb)
 
 
 		/********************************************************************************************
-			8-bit Load Instructions 
+			8-bit Load Instructions
 		*********************************************************************************************/
-		
+
 		// "LD [BC] A" B:1 C:8 FLAGS: - - - -
 		case 0x02:
 		{
@@ -232,8 +237,8 @@ void Cpu::Clock(GameBoy& gb)
 
 		// "LD A [BC]" B:1 C:8 FLAGS: - - - -
 		case 0x0A: { unimplementedInstruction(state, *opcode); break; }
-		
-		// "LD C n8" B:2 C:8 FLAGS: - - - -
+
+				 // "LD C n8" B:2 C:8 FLAGS: - - - -
 		case 0x0E:
 		{
 			state.c = opcode[1];
@@ -246,22 +251,28 @@ void Cpu::Clock(GameBoy& gb)
 
 		// "LD D n8" B:2 C:8 FLAGS: - - - -
 		case 0x16: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "LD A [DE]" B:1 C:8 FLAGS: - - - -
 		case 0x1A: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "LD E n8" B:2 C:8 FLAGS: - - - -
 		case 0x1E: { unimplementedInstruction(state, *opcode); break; }
 
 		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
 		case 0x22: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "LD H n8" B:2 C:8 FLAGS: - - - -
 		case 0x26: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x2A: { unimplementedInstruction(state, *opcode); break; }
-		
+		case 0x2A:
+		{
+			state.a = state.h;
+			state.f = state.l;
+			state.l++;
+			break;
+		}
+
 		// "LD L n8" B:2 C:8 FLAGS: - - - -
 		case 0x2E: { unimplementedInstruction(state, *opcode); break; }
 
@@ -284,7 +295,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x3A: { unimplementedInstruction(state, *opcode); break; }
 
-		// "LD A n8" B:2 C:8 FLAGS: - - - -
+				 // "LD A n8" B:2 C:8 FLAGS: - - - -
 		case 0x3E:
 		{
 			state.a = opcode[1];
@@ -458,7 +469,11 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x77: { unimplementedInstruction(state, *opcode); break; }
 
 		// "LD A B" B:1 C:4 FLAGS: - - - -
-		case 0x78: { unimplementedInstruction(state, *opcode); break; }
+		case 0x78:
+		{
+			state.a = state.b;
+			break;
+		}
 
 		// "LD A C" B:1 C:4 FLAGS: - - - -
 		case 0x79: { unimplementedInstruction(state, *opcode); break; }
@@ -495,7 +510,10 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "LD [C] A" B:1 C:8 FLAGS: - - - -
-		case 0xE2: { unimplementedInstruction(state, *opcode); break; }
+		case 0xE2:
+		{
+			gb.WriteToMemoryMap(0xFF00 + state.c, state.a);
+		}
 
 		// "LD [a16] A" B:3 C:16 FLAGS: - - - -
 		case 0xEA:
@@ -504,7 +522,7 @@ void Cpu::Clock(GameBoy& gb)
 			state.pc = state.pc + 2;
 			break;
 		}
-		
+
 		// "LDH A [a8]" B:2 C:12 FLAGS: - - - -
 		case 0xF0:
 		{
@@ -538,7 +556,7 @@ void Cpu::Clock(GameBoy& gb)
 
 		// "LD DE n16" B:3 C:12 FLAGS: - - - -
 		case 0x11: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "LD HL n16" B:3 C:12 FLAGS: - - - -
 		case 0x21:
 		{
@@ -549,32 +567,37 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "LD SP n16" B:3 C:12 FLAGS: - - - -
-		case 0x31: { unimplementedInstruction(state, *opcode); break; }
-				 
+		case 0x31:
+		{
+			state.sp = (opcode[2] << 8) | (opcode[1]);
+			state.pc += 2;
+			break;
+		}
+
 		// "POP BC" B:1 C:12 FLAGS: - - - -
 		case 0xC1: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "PUSH BC" B:1 C:16 FLAGS: - - - -
 		case 0xC5: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "POP DE" B:1 C:12 FLAGS: - - - -
 		case 0xD1: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "PUSH DE" B:1 C:16 FLAGS: - - - -
 		case 0xD5: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "POP HL" B:1 C:12 FLAGS: - - - -
 		case 0xE1: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "PUSH HL" B:1 C:16 FLAGS: - - - -
 		case 0xE5: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "POP AF" B:1 C:12 FLAGS: Z N H C
 		case 0xF1: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "PUSH AF" B:1 C:16 FLAGS: - - - -
 		case 0xF5: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "LD HL SP e8" B:2 C:12 FLAGS: 0 0 H C
 		case 0xF8: { unimplementedInstruction(state, *opcode); break; }
 
@@ -609,15 +632,15 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x0C: { unimplementedInstruction(state, *opcode); break; }
 
 		// "DEC C" B:1 C:4 FLAGS: Z 1 H -
-		case 0x0D: 
-		{ 
+		case 0x0D:
+		{
 			state.c--;
 
-			if (state.c == 0) 
+			if (state.c == 0)
 				state.flags.z = 1;
 
 			state.flags.n = 1;
-			break; 
+			break;
 		}
 
 		// "INC D" B:1 C:4 FLAGS: Z 0 H -
@@ -637,7 +660,7 @@ void Cpu::Clock(GameBoy& gb)
 
 		// "DEC H" B:1 C:4 FLAGS: Z 1 H -
 		case 0x25: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "DAA" B:1 C:4 FLAGS: Z - 0 C
 		case 0x27: { unimplementedInstruction(state, *opcode); break; }
 
@@ -655,7 +678,7 @@ void Cpu::Clock(GameBoy& gb)
 
 		// "DEC [HL]" B:1 C:12 FLAGS: Z 1 H -
 		case 0x35: { unimplementedInstruction(state, *opcode); break; }
-		
+
 		// "SCF" B:1 C:4 FLAGS: - 0 0 1
 		case 0x37: { unimplementedInstruction(state, *opcode); break; }
 
@@ -824,7 +847,11 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xB0: { unimplementedInstruction(state, *opcode); break; }
 
 		// "OR A C" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB1: { unimplementedInstruction(state, *opcode); break; }
+		case 0xB1:
+		{
+			state.a = state.a | state.c;
+			break;
+		}
 
 		// "OR A D" B:1 C:4 FLAGS: Z 0 0 0
 		case 0xB2: { unimplementedInstruction(state, *opcode); break; }
@@ -917,7 +944,11 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x09: { unimplementedInstruction(state, *opcode); break; }
 
 		// "DEC BC" B:1 C:8 FLAGS: - - - -
-		case 0x0B: { unimplementedInstruction(state, *opcode); break; }
+		case 0x0B:
+		{
+			state.c--;
+			break;
+		}
 
 		// "INC DE" B:1 C:8 FLAGS: - - - -
 		case 0x13: { unimplementedInstruction(state, *opcode); break; }
@@ -962,21 +993,21 @@ void Cpu::Clock(GameBoy& gb)
 			unimplementedInstruction(state, *opcode);
 			break;
 		}
-		
+
 		// "RLA" B:1 C:4 FLAGS: 0 0 0 C
 		case 0x17: { unimplementedInstruction(state, *opcode); break; }
 
 		// "RRA" B:1 C:4 FLAGS: 0 0 0 C
 		case 0x1F: { unimplementedInstruction(state, *opcode); break; }
 
-		
-		default: 
-			unimplementedInstruction(state, *opcode); 
+
+		default:
+			unimplementedInstruction(state, *opcode);
 			break;
 	}
 }
 
-void unimplementedInstruction(Cpu::cpuState &state, uint8_t opcode)
+void unimplementedInstruction(Cpu::cpuState& state, uint8_t opcode)
 {
 	//pc will have advanced one, so undo that 
 	printf("\n");
@@ -994,7 +1025,7 @@ void unimplementedInstruction(Cpu::cpuState &state, uint8_t opcode)
 	printf("#    H: %02x \n", state.h);
 	printf("#    L: %02x \n", state.l);
 	printf("# Flags:\n");
-	printf("#    Zero flag (Z): %02x \n", state.flags.z );
+	printf("#    Zero flag (Z): %02x \n", state.flags.z);
 	printf("#    Subtract flag (N): %02x \n", state.flags.z);
 	printf("#    Half Carry Flag (H): %02x \n", state.flags.z);
 	printf("#    Carry flag (C): %02x \n", state.flags.z);
@@ -1002,7 +1033,7 @@ void unimplementedInstruction(Cpu::cpuState &state, uint8_t opcode)
 	exit(1);
 }
 
-int Cpu::Disassemble(uint8_t *opcode, int pc)
+int Cpu::Disassemble(uint8_t* opcode, int pc)
 {
 	int opBytes = 1;
 
@@ -1024,7 +1055,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0x0D: outputDisassembledInstruction("DEC C", pc, opcode, 1); break; // "DEC C" B:1 C:4 FLAGS: Z 1 H -
 		case 0x0E: outputDisassembledInstruction("LD C n8", pc, opcode, 2); opBytes = 2; break; // "LD C n8" B:2 C:8 FLAGS: - - - -
 		case 0x0F: outputDisassembledInstruction("RRCA", pc, opcode, 1); break; // "RRCA" B:1 C:4 FLAGS: 0 0 0 C
-		
+
 		case 0x10: outputDisassembledInstruction("STOP n8", pc, opcode, 2); opBytes = 2; break; // "STOP n8" B:2 C:4 FLAGS: - - - -
 		case 0x11: outputDisassembledInstruction("LD DE n16", pc, opcode, 3); opBytes = 3; break; // "LD DE n16" B:3 C:12 FLAGS: - - - -
 		case 0x12: outputDisassembledInstruction("LD [DE] A", pc, opcode, 1); break; // "LD [DE] A" B:1 C:8 FLAGS: - - - -
@@ -1041,7 +1072,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0x1D: outputDisassembledInstruction("DEC E", pc, opcode, 1); break; // "DEC E" B:1 C:4 FLAGS: Z 1 H -
 		case 0x1E: outputDisassembledInstruction("LD E n8", pc, opcode, 2); opBytes = 2; break; // "LD E n8" B:2 C:8 FLAGS: - - - -
 		case 0x1F: outputDisassembledInstruction("RRA", pc, opcode, 1); break; // "RRA" B:1 C:4 FLAGS: 0 0 0 C
-		
+
 		case 0x20: outputDisassembledInstruction("JR NZ e8", pc, opcode, 2); opBytes = 2; break; // "JR NZ e8" B:2 C:128 FLAGS: - - - -
 		case 0x21: outputDisassembledInstruction("LD HL n16", pc, opcode, 3); opBytes = 3; break; // "LD HL n16" B:3 C:12 FLAGS: - - - -
 		case 0x22: outputDisassembledInstruction("LD [HL] A", pc, opcode, 1); break; // "LD [HL] A" B:1 C:8 FLAGS: - - - -
@@ -1058,7 +1089,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0x2D: outputDisassembledInstruction("DEC L", pc, opcode, 1); break; // "DEC L" B:1 C:4 FLAGS: Z 1 H -
 		case 0x2E: outputDisassembledInstruction("LD L n8", pc, opcode, 2); opBytes = 2; break; // "LD L n8" B:2 C:8 FLAGS: - - - -
 		case 0x2F: outputDisassembledInstruction("CPL", pc, opcode, 1); break; // "CPL" B:1 C:4 FLAGS: - 1 1 -
-		
+
 		case 0x30: outputDisassembledInstruction("JR NC e8", pc, opcode, 2); opBytes = 2; break; // "JR NC e8" B:2 C:128 FLAGS: - - - -
 		case 0x31: outputDisassembledInstruction("LD SP n16", pc, opcode, 3); opBytes = 3; break; // "LD SP n16" B:3 C:12 FLAGS: - - - -
 		case 0x32: outputDisassembledInstruction("LD [HL] A", pc, opcode, 1); break; // "LD [HL] A" B:1 C:8 FLAGS: - - - -
@@ -1075,7 +1106,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0x3D: outputDisassembledInstruction("DEC A", pc, opcode, 1); break; // "DEC A" B:1 C:4 FLAGS: Z 1 H -
 		case 0x3E: outputDisassembledInstruction("LD A n8", pc, opcode, 2); opBytes = 2; break; // "LD A n8" B:2 C:8 FLAGS: - - - -
 		case 0x3F: outputDisassembledInstruction("CCF", pc, opcode, 1); break; // "CCF" B:1 C:4 FLAGS: - 0 0 C
-		
+
 		case 0x40: outputDisassembledInstruction("LD B B", pc, opcode, 1); break; // "LD B B" B:1 C:4 FLAGS: - - - -
 		case 0x41: outputDisassembledInstruction("LD B C", pc, opcode, 1); break; // "LD B C" B:1 C:4 FLAGS: - - - -
 		case 0x42: outputDisassembledInstruction("LD B D", pc, opcode, 1); break; // "LD B D" B:1 C:4 FLAGS: - - - -
@@ -1092,7 +1123,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0x4D: outputDisassembledInstruction("LD C L", pc, opcode, 1); break; // "LD C L" B:1 C:4 FLAGS: - - - -
 		case 0x4E: outputDisassembledInstruction("LD C [HL]", pc, opcode, 1); break; // "LD C [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x4F: outputDisassembledInstruction("LD C A", pc, opcode, 1); break; // "LD C A" B:1 C:4 FLAGS: - - - -
-		
+
 		case 0x50: outputDisassembledInstruction("LD D B", pc, opcode, 1); break; // "LD D B" B:1 C:4 FLAGS: - - - -
 		case 0x51: outputDisassembledInstruction("LD D C", pc, opcode, 1); break; // "LD D C" B:1 C:4 FLAGS: - - - -
 		case 0x52: outputDisassembledInstruction("LD D D", pc, opcode, 1); break; // "LD D D" B:1 C:4 FLAGS: - - - -
@@ -1109,7 +1140,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0x5D: outputDisassembledInstruction("LD E L", pc, opcode, 1); break; // "LD E L" B:1 C:4 FLAGS: - - - -
 		case 0x5E: outputDisassembledInstruction("LD E [HL]", pc, opcode, 1); break; // "LD E [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x5F: outputDisassembledInstruction("LD E A", pc, opcode, 1); break; // "LD E A" B:1 C:4 FLAGS: - - - -
-		
+
 		case 0x60: outputDisassembledInstruction("LD H B", pc, opcode, 1); break; // "LD H B" B:1 C:4 FLAGS: - - - -
 		case 0x61: outputDisassembledInstruction("LD H C", pc, opcode, 1); break; // "LD H C" B:1 C:4 FLAGS: - - - -
 		case 0x62: outputDisassembledInstruction("LD H D", pc, opcode, 1); break; // "LD H D" B:1 C:4 FLAGS: - - - -
@@ -1126,7 +1157,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0x6D: outputDisassembledInstruction("LD L L", pc, opcode, 1); break; // "LD L L" B:1 C:4 FLAGS: - - - -
 		case 0x6E: outputDisassembledInstruction("LD L [HL]", pc, opcode, 1); break; // "LD L [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x6F: outputDisassembledInstruction("LD L A", pc, opcode, 1); break; // "LD L A" B:1 C:4 FLAGS: - - - -
-		
+
 		case 0x70: outputDisassembledInstruction("LD [HL] B", pc, opcode, 1); break; // "LD [HL] B" B:1 C:8 FLAGS: - - - -
 		case 0x71: outputDisassembledInstruction("LD [HL] C", pc, opcode, 1); break; // "LD [HL] C" B:1 C:8 FLAGS: - - - -
 		case 0x72: outputDisassembledInstruction("LD [HL] D", pc, opcode, 1); break; // "LD [HL] D" B:1 C:8 FLAGS: - - - -
@@ -1143,7 +1174,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0x7D: outputDisassembledInstruction("LD A L", pc, opcode, 1); break; // "LD A L" B:1 C:4 FLAGS: - - - -
 		case 0x7E: outputDisassembledInstruction("LD A [HL]", pc, opcode, 1); break; // "LD A [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x7F: outputDisassembledInstruction("LD A A", pc, opcode, 1); break; // "LD A A" B:1 C:4 FLAGS: - - - -
-		
+
 		case 0x80: outputDisassembledInstruction("ADD A B", pc, opcode, 1); break; // "ADD A B" B:1 C:4 FLAGS: Z 0 H C
 		case 0x81: outputDisassembledInstruction("ADD A C", pc, opcode, 1); break; // "ADD A C" B:1 C:4 FLAGS: Z 0 H C
 		case 0x82: outputDisassembledInstruction("ADD A D", pc, opcode, 1); break; // "ADD A D" B:1 C:4 FLAGS: Z 0 H C
@@ -1160,7 +1191,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0x8D: outputDisassembledInstruction("ADC A L", pc, opcode, 1); break; // "ADC A L" B:1 C:4 FLAGS: Z 0 H C
 		case 0x8E: outputDisassembledInstruction("ADC A [HL]", pc, opcode, 1); break; // "ADC A [HL]" B:1 C:8 FLAGS: Z 0 H C
 		case 0x8F: outputDisassembledInstruction("ADC A A", pc, opcode, 1); break; // "ADC A A" B:1 C:4 FLAGS: Z 0 H C
-		
+
 		case 0x90: outputDisassembledInstruction("SUB A B", pc, opcode, 1); break; // "SUB A B" B:1 C:4 FLAGS: Z 1 H C
 		case 0x91: outputDisassembledInstruction("SUB A C", pc, opcode, 1); break; // "SUB A C" B:1 C:4 FLAGS: Z 1 H C
 		case 0x92: outputDisassembledInstruction("SUB A D", pc, opcode, 1); break; // "SUB A D" B:1 C:4 FLAGS: Z 1 H C
@@ -1177,7 +1208,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0x9D: outputDisassembledInstruction("SBC A L", pc, opcode, 1); break; // "SBC A L" B:1 C:4 FLAGS: Z 1 H C
 		case 0x9E: outputDisassembledInstruction("SBC A [HL]", pc, opcode, 1); break; // "SBC A [HL]" B:1 C:8 FLAGS: Z 1 H C
 		case 0x9F: outputDisassembledInstruction("SBC A A", pc, opcode, 1); break; // "SBC A A" B:1 C:4 FLAGS: Z 1 H -
-		
+
 		case 0xA0: outputDisassembledInstruction("AND A B", pc, opcode, 1); break; // "AND A B" B:1 C:4 FLAGS: Z 0 1 0
 		case 0xA1: outputDisassembledInstruction("AND A C", pc, opcode, 1); break; // "AND A C" B:1 C:4 FLAGS: Z 0 1 0
 		case 0xA2: outputDisassembledInstruction("AND A D", pc, opcode, 1); break; // "AND A D" B:1 C:4 FLAGS: Z 0 1 0
@@ -1194,7 +1225,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0xAD: outputDisassembledInstruction("XOR A L", pc, opcode, 1); break; // "XOR A L" B:1 C:4 FLAGS: Z 0 0 0
 		case 0xAE: outputDisassembledInstruction("XOR A [HL]", pc, opcode, 1); break; // "XOR A [HL]" B:1 C:8 FLAGS: Z 0 0 0
 		case 0xAF: outputDisassembledInstruction("XOR A A", pc, opcode, 1); break; // "XOR A A" B:1 C:4 FLAGS: 1 0 0 0
-		
+
 		case 0xB0: outputDisassembledInstruction("OR A B", pc, opcode, 1); break; // "OR A B" B:1 C:4 FLAGS: Z 0 0 0
 		case 0xB1: outputDisassembledInstruction("OR A C", pc, opcode, 1); break; // "OR A C" B:1 C:4 FLAGS: Z 0 0 0
 		case 0xB2: outputDisassembledInstruction("OR A D", pc, opcode, 1); break; // "OR A D" B:1 C:4 FLAGS: Z 0 0 0
@@ -1211,7 +1242,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0xBD: outputDisassembledInstruction("CP A L", pc, opcode, 1); break; // "CP A L" B:1 C:4 FLAGS: Z 1 H C
 		case 0xBE: outputDisassembledInstruction("CP A [HL]", pc, opcode, 1); break; // "CP A [HL]" B:1 C:8 FLAGS: Z 1 H C
 		case 0xBF: outputDisassembledInstruction("CP A A", pc, opcode, 1); break; // "CP A A" B:1 C:4 FLAGS: 1 1 0 0
-		
+
 		case 0xC0: outputDisassembledInstruction("RET NZ", pc, opcode, 1); break; // "RET NZ" B:1 C:208 FLAGS: - - - -
 		case 0xC1: outputDisassembledInstruction("POP BC", pc, opcode, 1); break; // "POP BC" B:1 C:12 FLAGS: - - - -
 		case 0xC2: outputDisassembledInstruction("JP NZ a16", pc, opcode, 3); opBytes = 3; break; // "JP NZ a16" B:3 C:1612 FLAGS: - - - -
@@ -1223,7 +1254,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0xC8: outputDisassembledInstruction("RET Z", pc, opcode, 1); break; // "RET Z" B:1 C:208 FLAGS: - - - -
 		case 0xC9: outputDisassembledInstruction("RET", pc, opcode, 1); break; // "RET" B:1 C:16 FLAGS: - - - -
 		case 0xCA: outputDisassembledInstruction("JP Z a16", pc, opcode, 3); opBytes = 3; break; // "JP Z a16" B:3 C:1612 FLAGS: - - - -
-		
+
 		// "PREFIX" B:1 C:4 FLAGS: - - - -
 		// Address CB triggers a 16 bit opcode 
 		case 0xCB:
@@ -1240,7 +1271,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0xCD: outputDisassembledInstruction("CALL a16", pc, opcode, 3); opBytes = 3; break; // "CALL a16" B:3 C:24 FLAGS: - - - -
 		case 0xCE: outputDisassembledInstruction("ADC A n8", pc, opcode, 2); opBytes = 2; break; // "ADC A n8" B:2 C:8 FLAGS: Z 0 H C
 		case 0xCF: outputDisassembledInstruction("RST $08", pc, opcode, 1); break; // "RST $08" B:1 C:16 FLAGS: - - - -
-		
+
 		case 0xD0: outputDisassembledInstruction("RET NC", pc, opcode, 1); break; // "RET NC" B:1 C:208 FLAGS: - - - -
 		case 0xD1: outputDisassembledInstruction("POP DE", pc, opcode, 1); break; // "POP DE" B:1 C:12 FLAGS: - - - -
 		case 0xD2: outputDisassembledInstruction("JP NC a16", pc, opcode, 3); opBytes = 3; break; // "JP NC a16" B:3 C:1612 FLAGS: - - - -
@@ -1257,7 +1288,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0xDD: outputDisassembledInstruction("ILLEGAL_DD", pc, opcode, 1); break; // "ILLEGAL_DD" B:1 C:4 FLAGS: - - - -
 		case 0xDE: outputDisassembledInstruction("SBC A n8", pc, opcode, 2); opBytes = 2; break; // "SBC A n8" B:2 C:8 FLAGS: Z 1 H C
 		case 0xDF: outputDisassembledInstruction("RST $18", pc, opcode, 1); break; // "RST $18" B:1 C:16 FLAGS: - - - -
-		
+
 		case 0xE0: outputDisassembledInstruction("LDH [a8] A", pc, opcode, 2); opBytes = 2; break; // "LDH [a8] A" B:2 C:12 FLAGS: - - - -
 		case 0xE1: outputDisassembledInstruction("POP HL", pc, opcode, 1); break; // "POP HL" B:1 C:12 FLAGS: - - - -
 		case 0xE2: outputDisassembledInstruction("LD [C] A", pc, opcode, 1); break; // "LD [C] A" B:1 C:8 FLAGS: - - - -
@@ -1274,7 +1305,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 		case 0xED: outputDisassembledInstruction("ILLEGAL_ED", pc, opcode, 1); break; // "ILLEGAL_ED" B:1 C:4 FLAGS: - - - -
 		case 0xEE: outputDisassembledInstruction("XOR A n8", pc, opcode, 2); opBytes = 2; break; // "XOR A n8" B:2 C:8 FLAGS: Z 0 0 0
 		case 0xEF: outputDisassembledInstruction("RST $28", pc, opcode, 1); break; // "RST $28" B:1 C:16 FLAGS: - - - -
-		
+
 		case 0xF0: outputDisassembledInstruction("LDH A [a8]", pc, opcode, 2); opBytes = 2; break; // "LDH A [a8]" B:2 C:12 FLAGS: - - - -
 		case 0xF1: outputDisassembledInstruction("POP AF", pc, opcode, 1); break; // "POP AF" B:1 C:12 FLAGS: Z N H C
 		case 0xF2: outputDisassembledInstruction("LD A [C]", pc, opcode, 1); break; // "LD A [C]" B:1 C:8 FLAGS: - - - -
@@ -1298,7 +1329,7 @@ int Cpu::Disassemble(uint8_t *opcode, int pc)
 	return opBytes;
 }
 
-void disasseble16bit(uint8_t *opcode, int pc)
+void disasseble16bit(uint8_t* opcode, int pc)
 {
 	// Note: All 16 bit opcodes appear to be 2 bytes.
 
@@ -1563,7 +1594,7 @@ void disasseble16bit(uint8_t *opcode, int pc)
 	}
 }
 
-void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t *opcode, int totalOpBytes)
+void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t* opcode, int totalOpBytes)
 {
 	/* Ideal format
 		0000 00       NOP
@@ -1614,4 +1645,81 @@ void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t 
 
 	// new line
 	std::cout << "\n";
+}
+
+void Cpu::Reset(GameBoy& gb)
+{
+	// registers
+	state.a = 0x01;
+	state.b = 0x00;
+	state.c = 0x13;
+	state.d = 0x00;
+	state.e = 0xD8;
+	state.h = 0x01;
+	state.l = 0x4D;
+	state.pc = 0x100; // game boy execution start point
+	state.sp = 0xFFFE;
+
+	// flags
+	state.flags.c = 0;
+	state.flags.h = 0; // todo: h and c are determined by the checksum header
+	state.flags.n = 0; // but we are going to set them to zero for now
+	state.flags.z = 1;
+
+	// hardware registers
+	gb.WriteToMemoryMap(0xFF00, 0xCF);
+	gb.WriteToMemoryMap(0xFF01, 0x00);
+	gb.WriteToMemoryMap(0xFF02, 0x7E);
+	gb.WriteToMemoryMap(0xFF04, 0xAB);
+	gb.WriteToMemoryMap(0xFF05, 0x00);
+	gb.WriteToMemoryMap(0xFF06, 0x00);
+	gb.WriteToMemoryMap(0xFF07, 0xF8);
+	gb.WriteToMemoryMap(0xFF0F, 0xE1);
+	gb.WriteToMemoryMap(0xFF10, 0x80);
+	gb.WriteToMemoryMap(0xFF11, 0xBF);
+	gb.WriteToMemoryMap(0xFF12, 0xF3);
+	gb.WriteToMemoryMap(0xFF13, 0xFF);
+	gb.WriteToMemoryMap(0xFF14, 0xBF);
+	gb.WriteToMemoryMap(0xFF16, 0x3F);
+	gb.WriteToMemoryMap(0xFF17, 0x00);
+	gb.WriteToMemoryMap(0xFF18, 0xFF);
+	gb.WriteToMemoryMap(0xFF19, 0xBF);
+	gb.WriteToMemoryMap(0xFF1A, 0x7F);
+	gb.WriteToMemoryMap(0xFF1B, 0xFF);
+	gb.WriteToMemoryMap(0xFF1C, 0x9F);
+	gb.WriteToMemoryMap(0xFF1D, 0xFF);
+	gb.WriteToMemoryMap(0xFF1E, 0xBF);
+	gb.WriteToMemoryMap(0xFF20, 0xFF);
+	gb.WriteToMemoryMap(0xFF21, 0x00);
+	gb.WriteToMemoryMap(0xFF22, 0x00);
+	gb.WriteToMemoryMap(0xFF23, 0xBF);
+	gb.WriteToMemoryMap(0xFF24, 0x77);
+	gb.WriteToMemoryMap(0xFF25, 0xF3);
+	gb.WriteToMemoryMap(0xFF26, 0xF1);
+	gb.WriteToMemoryMap(0xFF40, 0x91);
+	gb.WriteToMemoryMap(0xFF41, 0x85);
+	gb.WriteToMemoryMap(0xFF42, 0x00);
+	gb.WriteToMemoryMap(0xFF43, 0x00);
+	gb.WriteToMemoryMap(0xFF44, 0x00);
+	gb.WriteToMemoryMap(0xFF45, 0x00);
+	gb.WriteToMemoryMap(0xFF46, 0xFF);
+	gb.WriteToMemoryMap(0xFF47, 0xFC);
+	gb.WriteToMemoryMap(0xFF48, 0x00);
+	gb.WriteToMemoryMap(0xFF49, 0x00);
+	gb.WriteToMemoryMap(0xFF4A, 0x00);
+	gb.WriteToMemoryMap(0xFF4B, 0x00);
+	gb.WriteToMemoryMap(0xFF4D, 0xFF);
+	gb.WriteToMemoryMap(0xFF4F, 0xFF);
+	gb.WriteToMemoryMap(0xFF51, 0xFF);
+	gb.WriteToMemoryMap(0xFF52, 0xFF);
+	gb.WriteToMemoryMap(0xFF53, 0xFF);
+	gb.WriteToMemoryMap(0xFF54, 0xFF);
+	gb.WriteToMemoryMap(0xFF55, 0xFF);
+	gb.WriteToMemoryMap(0xFF56, 0xFF);
+	gb.WriteToMemoryMap(0xFF68, 0xFF);
+	gb.WriteToMemoryMap(0xFF69, 0xFF);
+	gb.WriteToMemoryMap(0xFF6A, 0xFF);
+	gb.WriteToMemoryMap(0xFF6B, 0xFF);
+	gb.WriteToMemoryMap(0xFF70, 0xFF);
+	gb.WriteToMemoryMap(0xFFFF, 0x00);
 }

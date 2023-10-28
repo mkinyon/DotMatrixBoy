@@ -16,10 +16,10 @@ public:
 	struct cpuState;
 
 public:
+	void Reset(GameBoy& gb);
 	void Clock(GameBoy& gb);
 	int Disassemble(uint8_t *opcode, int pc);
 };
-
 
 void disasseble16bit(uint8_t *opcode, int pc);
 

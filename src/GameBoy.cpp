@@ -7,6 +7,7 @@ GameBoy::~GameBoy() {}
 
 void GameBoy::Run()
 {
+	cpu.Reset(*this);
 	int pc = 0x100; // game boy execution start point
 
 	while (true)
