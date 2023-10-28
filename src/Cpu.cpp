@@ -125,7 +125,13 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "RET NZ" B:1 C:208 FLAGS: - - - -
-		case 0xC0: { unimplementedInstruction(state, *opcode); break; }
+		case 0xC0:
+		{
+			if (!getFlag(FLAG_ZERO))
+				state.pc = popSP(gb);
+
+			break;
+		}
 
 		// "JP NZ a16" B:3 C:1612 FLAGS: - - - -
 		case 0xC2: { unimplementedInstruction(state, *opcode); break; }
@@ -148,7 +154,11 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xC8: { unimplementedInstruction(state, *opcode); break; }
 
 		// "RET" B:1 C:16 FLAGS: - - - -
-		case 0xC9: { unimplementedInstruction(state, *opcode); break; }
+		case 0xC9:
+		{
+			state.pc = popSP(gb);
+			break;
+		}
 
 		// "JP Z a16" B:3 C:1612 FLAGS: - - - -
 		case 0xCA: { unimplementedInstruction(state, *opcode); break; }
@@ -211,10 +221,6 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			pushSP(gb, state.pc);
 			state.pc = 0x00 + 0x38;
-
-			//gb.WriteToMemoryMap(state.sp, (state.pc) >> 8);
-			//gb.WriteToMemoryMap(state.sp, (state.pc) & 0xff);
-			state.pc = opcode[0] ^ 0xC7;
 			break;
 		}
 
@@ -271,8 +277,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x2A:
 		{
-			state.a = state.h;
-			state.f = state.l;
+			state.a = gb.ReadFromMemoryMap((state.l << 8) | (state.h));
 			state.l++;
 			break;
 		}
@@ -967,7 +972,14 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x23: { unimplementedInstruction(state, *opcode); break; }
 
 		// "ADD HL HL" B:1 C:8 FLAGS: - 0 H C
-		case 0x29: { unimplementedInstruction(state, *opcode); break; }
+		case 0x29:
+		{
+			uint16_t hl = (state.l << 8) | state.h;
+			hl = hl + hl;
+			state.h = (state.h >> 8) & 0xFF;
+			state.l = state.l & 0xFF;
+			break;
+		}
 
 		// "DEC HL" B:1 C:8 FLAGS: - - - -
 		case 0x2B: { unimplementedInstruction(state, *opcode); break; }
