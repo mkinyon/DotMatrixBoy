@@ -48,7 +48,7 @@ public:
 	void DrawCharacterRam(int x, int y, uint16_t nAddr, int nRows, int nColumns)
 	{
 		DrawString(x, y, "CHARACTER RAM:", olc::WHITE);
-		int nRamX = x, nRamY = y + 10;
+		/*int nRamX = x, nRamY = y + 10;
 		for (int row = 0; row < nRows; row++)
 		{
 			std::string sOffset = "$" + FormatHex(nAddr, 4) + ":";
@@ -59,12 +59,53 @@ public:
 			}
 			DrawString(nRamX, nRamY, sOffset);
 			nRamY += 10;
+		}*/
+
+		y += 10;
+
+		int count = 0;
+		for (uint16_t byte = 0x8000; byte <= 0x97FF; byte += 2 )
+		{
+			uint8_t firstByte = gb.ReadFromMemoryMap(byte);
+			uint8_t secondByte = gb.ReadFromMemoryMap(byte + 1);
+			for (int iBit = 0; iBit < 8; iBit++)
+			{
+				uint8_t firstBit = (firstByte >> iBit) & 0x01;
+				uint8_t secondBit = (firstByte >> iBit) & 0x01;
+				int color = (secondBit << 1) | firstBit;
+
+				int draw_x = x + iBit; // Adjusted x coordinate for drawing
+				int draw_y = y + count; // Adjusted y coordinate for drawing
+
+				if (color == 0)
+					Draw(draw_x, draw_y, olc::WHITE);
+
+				if (color == 1)
+					Draw(draw_x, draw_y, olc::GREY);
+
+				if (color == 2)
+					Draw(draw_x, draw_y, olc::DARK_GREY);
+
+				if (color == 3)
+					Draw(draw_x, draw_y, olc::BLACK);
+			}
+			count++;
+
+			if ((count % 128) == 0)
+			{
+				x -= 120;
+			}
+			else if ((count % 8) == 0)
+			{
+				x += 8; // Move x coordinate right by 8
+				y -= 8;
+			}
 		}
 	}
 
 	bool OnUserCreate()
 	{
-		cart = std::make_shared<Cartridge>("../hello-world.gb");
+		cart = std::make_shared<Cartridge>("../tetris.gb");
 
 		gb.InsertCartridge(*cart);
 		gb.Run();
@@ -92,7 +133,7 @@ public:
 		}
 
 		DrawCpu(10, 10);
-		DrawCharacterRam(120, 10, 0x8000, 32, 16);
+		DrawCharacterRam(10, 100, 0x8000, 16, 16);
 		return true;
 	}
 };

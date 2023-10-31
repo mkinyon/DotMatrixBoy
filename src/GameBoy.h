@@ -22,7 +22,7 @@ public:
 private:
 	//devices
 	Cartridge cart;
-	uint8_t ram[4095];           // $C000-$CFFF   Internal RAM - Bank 0
+	uint8_t ram[8191];           // $C000-$CFFF   Internal RAM - Bank 0
 	uint8_t bgMapData2[1023];    // $9C00-$9FFF   BG Map Data 2
 	uint8_t bgMapData1[1023];    // $9800-$9BFF   BG Map Data 1
 	uint8_t characterRam[6143];  // $8000-$97FF   Character RAM

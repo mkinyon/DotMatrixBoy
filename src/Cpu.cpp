@@ -1,7 +1,7 @@
 #include "Cpu.h"
 #include "GameBoy.h"
 
-enum Flags
+enum Cpu::Flags
 {
 	FLAG_CARRY = 0x10, // C 0001
 	FLAG_HALF_CARRY = 0x20, // H 0010
@@ -10,7 +10,6 @@ enum Flags
 };
 
 int TotalCycles;
-Cpu::m_CpuState State;
 
 Cpu::Cpu() {}
 Cpu::~Cpu() {}
@@ -305,8 +304,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
 		case 0x32:
 		{
-			uint16_t offset = (opcode[2] << 8) | (opcode[1]);
-			gb.WriteToMemoryMap(offset, State.A);
+			gb.WriteToMemoryMap(State.HL, State.A);
 			break;
 		}
 
@@ -793,7 +791,7 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xEA:
 		{
 			gb.WriteToMemoryMap((opcode[2] << 8) | (opcode[1]), State.A);
-			State.PC = State.PC + 2;
+			State.PC += 2;
 			break;
 		}
 
@@ -957,7 +955,13 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x2D: { unimplementedInstruction(State, *opcode); break; }
 
 		// "CPL" B:1 C:4 FLAGS: - 1 1 -
-		case 0x2F: { unimplementedInstruction(State, *opcode); break; }
+		case 0x2F:
+		{
+			State.A = ~State.A;
+			setFlag(FLAG_SUBTRACT);
+			setFlag(FLAG_HALF_CARRY);
+			break;
+		}
 
 		// "INC [HL]" B:1 C:12 FLAGS: Z 0 H -
 		case 0x34: { unimplementedInstruction(State, *opcode); break; }
@@ -1333,7 +1337,7 @@ void Cpu::Clock(GameBoy& gb)
 	}
 }
 
-void unimplementedInstruction(Cpu::m_CpuState& State, uint8_t opcode)
+void Cpu::unimplementedInstruction(Cpu::m_CpuState& State, uint8_t opcode)
 {
 	//pc will have advanced one, so undo that 
 	printf("\n");
@@ -1654,7 +1658,7 @@ int Cpu::Disassemble(uint8_t* opcode, int pc)
 	return opBytes;
 }
 
-void disasseble16bit(uint8_t* opcode, int pc)
+void Cpu::disasseble16bit(uint8_t* opcode, int pc)
 {
 	// Note: All 16 bit opcodes appear to be 2 bytes.
 
@@ -1919,7 +1923,7 @@ void disasseble16bit(uint8_t* opcode, int pc)
 	}
 }
 
-void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t* opcode, int totalOpBytes)
+void Cpu::outputDisassembledInstruction(const char* instructionName, int pc, uint8_t* opcode, int totalOpBytes)
 {
 	/* Ideal format
 		0000 00       NOP
@@ -2056,28 +2060,28 @@ void Cpu::Reset(GameBoy& gb)
 	gb.WriteToMemoryMap(0xFFFF, 0x00);
 }
 
-bool getFlag(Flags flag)
+bool Cpu::getFlag(Flags flag)
 {
 	return (State.F & flag) != 0;
 }
 
-void setFlag(Flags flag)
+void Cpu::setFlag(Flags flag)
 {
 	State.F |= flag;
 }
 
-void clearFlag(Flags flag)
+void Cpu::clearFlag(Flags flag)
 {
 	State.F &= ~flag;
 }
 
-void pushSP(GameBoy& gb, uint16_t value)
+void Cpu::pushSP(GameBoy& gb, uint16_t value)
 {
 	gb.WriteToMemoryMap(--State.SP, (value >> 8) & 0xFF);
 	gb.WriteToMemoryMap(--State.SP, value & 0xFF);
 }
 
-uint16_t popSP(GameBoy& gb)
+uint16_t Cpu::popSP(GameBoy& gb)
 {
 	uint8_t firstByte = gb.ReadFromMemoryMap(State.SP++);
 	uint8_t secondByte = gb.ReadFromMemoryMap(State.SP++);
