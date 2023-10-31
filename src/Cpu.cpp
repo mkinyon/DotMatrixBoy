@@ -73,7 +73,7 @@ Cpu::~Cpu() {}
 void Cpu::Clock(GameBoy& gb)
 {
 	// this is just temporary to make it easier to visualize the console output
-	std::this_thread::sleep_for(std::chrono::nanoseconds(20000));
+	//std::this_thread::sleep_for(std::chrono::nanoseconds(20000));
 	uint8_t* opcode = &gb.ReadFromMemoryMap(state.PC);
 
 	Disassemble(opcode, state.PC);
@@ -83,8 +83,6 @@ void Cpu::Clock(GameBoy& gb)
 
 	switch (*opcode)
 	{
-
-
 		/********************************************************************************************
 			Misc / Control Instructions
 		*********************************************************************************************/
@@ -119,7 +117,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "JR e8" B:2 C:12 FLAGS: - - - -
 		case 0x18:
 		{
-			state.PC += (int8_t)opcode[1];
+			state.PC += (int8_t)opcode[1] + 1;
 			break;
 		}
 
@@ -1375,11 +1373,7 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x07: { unimplementedInstruction(state, *opcode); break; }
 
 		// "RRCA" B:1 C:4 FLAGS: 0 0 0 C
-		case 0x0F:
-		{
-			unimplementedInstruction(state, *opcode);
-			break;
-		}
+		case 0x0F: { unimplementedInstruction(state, *opcode); break; }
 
 		// "RLA" B:1 C:4 FLAGS: 0 0 0 C
 		case 0x17: { unimplementedInstruction(state, *opcode); break; }
@@ -2121,6 +2115,7 @@ bool getFlag(Flags flag)
 {
 	return (state.F & flag) != 0;
 }
+
 void setFlag(Flags flag)
 {
 	state.F |= flag;
