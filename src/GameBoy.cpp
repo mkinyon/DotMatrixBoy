@@ -1,7 +1,7 @@
 #include "GameBoy.h"
 
 
-GameBoy::GameBoy() {}
+GameBoy::GameBoy() : cpu() {}
 
 GameBoy::~GameBoy() {}
 
@@ -10,16 +10,16 @@ void GameBoy::Run()
 	cpu.Reset(*this);
 	int pc = 0x100; // game boy execution start point
 
-	while (true)
-	{
-		cpu.Clock(*this);
-	}
+	//while (true)
+	//{
+	//	cpu.Clock(*this);
+	//}
 
-	// disassemble all instructions (for testing)
-	while (pc < cart.romData->size())
-	{
-		pc += cpu.Disassemble(&ReadFromMemoryMap(pc), pc);
-	}
+	//// disassemble all instructions (for testing)
+	//while (pc < cart.romData->size())
+	//{
+	//	pc += cpu.Disassemble(&ReadFromMemoryMap(pc), pc);
+	//}
 }
 
 void GameBoy::InsertCartridge(Cartridge &cartridge)

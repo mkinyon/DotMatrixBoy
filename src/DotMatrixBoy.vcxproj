@@ -146,6 +146,7 @@
     <ClInclude Include="Cartridge.h" />
     <ClInclude Include="Cpu.h" />
     <ClInclude Include="GameBoy.h" />
+    <ClInclude Include="olcPixelGameEngine.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Cartridge.cpp" />

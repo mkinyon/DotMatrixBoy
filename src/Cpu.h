@@ -14,7 +14,60 @@ public:
 	~Cpu();
 
 public:
-	struct m_CpuState;
+	struct m_CpuState
+	{
+		// 8 bit registers that are grouped into 16 bit pairs
+		// The pairings are AF, BC, DE, & HL.
+		union
+		{
+			struct
+			{
+				uint8_t F;
+				uint8_t A; // this register is used for flags
+			};
+
+			uint16_t AF;
+		};
+
+		union
+		{
+			struct
+			{
+				uint8_t C;
+				uint8_t B;
+			};
+
+			uint16_t BC;
+		};
+
+		union
+		{
+			struct
+			{
+				uint8_t E;
+				uint8_t D;
+			};
+
+			uint16_t DE;
+		};
+
+		union
+		{
+			struct
+			{
+				uint8_t L;
+				uint8_t H;
+			};
+
+			uint16_t HL;
+		};
+
+		uint16_t SP = 0x00; // stack pointer
+		uint16_t PC = 0x100; // the gameboy program counter starts at $100
+
+		uint8_t	int_enable;
+	} State;
+	int TotalCycles = 0;
 
 public:
 	void Reset(GameBoy& gb);

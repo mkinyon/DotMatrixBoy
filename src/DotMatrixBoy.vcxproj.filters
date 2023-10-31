@@ -24,6 +24,9 @@
     <ClInclude Include="GameBoy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="olcPixelGameEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
