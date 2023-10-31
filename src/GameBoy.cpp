@@ -49,7 +49,7 @@ uint8_t& GameBoy::ReadFromMemoryMap(uint16_t address)
 	else
 	{
 		// todo: temp
-		return cart.Read(0);
+		return cart.Read(0x0000);
 	}
 }
 
