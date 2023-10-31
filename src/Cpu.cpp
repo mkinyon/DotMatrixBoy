@@ -41,6 +41,8 @@ Cpu::~Cpu() {}
 
 void Cpu::Clock(GameBoy& gb)
 {
+	// this is just temporary to make it easier to visualize the console output
+	std::this_thread::sleep_for(std::chrono::nanoseconds(20000));
 	uint8_t* opcode = &gb.ReadFromMemoryMap(state.pc);
 
 	Disassemble(opcode, state.pc);
@@ -89,9 +91,9 @@ void Cpu::Clock(GameBoy& gb)
 		// "JR NZ e8" B:2 C:128 FLAGS: - - - -
 		case 0x20:
 		{
-			// note: "s8" in the description refers to a signed char
+			// note: "e8" in the description refers to a signed char
 			int8_t offset = opcode[1];
-			if (!getFlag(FLAG_ZERO))
+			if (getFlag(FLAG_ZERO) == 0)
 			{
 				state.pc += offset;
 			}
@@ -113,7 +115,7 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			// note: "s8" in the description refers to a signed char
 			int8_t offset = opcode[1];
-			if (getFlag(FLAG_ZERO))
+			if (getFlag(FLAG_CARRY))
 			{
 				state.pc += offset;
 			}
@@ -263,13 +265,22 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x16: { unimplementedInstruction(state, *opcode); break; }
 
 		// "LD A [DE]" B:1 C:8 FLAGS: - - - -
-		case 0x1A: { unimplementedInstruction(state, *opcode); break; }
+		case 0x1A:
+		{
+			state.a = gb.ReadFromMemoryMap((state.e << 8) | (state.e));
+			break;
+		}
 
 		// "LD E n8" B:2 C:8 FLAGS: - - - -
 		case 0x1E: { unimplementedInstruction(state, *opcode); break; }
 
 		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
-		case 0x22: { unimplementedInstruction(state, *opcode); break; }
+		case 0x22:
+		{
+			gb.WriteToMemoryMap((state.l << 8) | (state.h), state.a);
+			state.l++;
+			break;
+		}
 
 		// "LD H n8" B:2 C:8 FLAGS: - - - -
 		case 0x26: { unimplementedInstruction(state, *opcode); break; }
@@ -564,7 +575,13 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x08: { unimplementedInstruction(state, *opcode); break; }
 
 		// "LD DE n16" B:3 C:12 FLAGS: - - - -
-		case 0x11: { unimplementedInstruction(state, *opcode); break; }
+		case 0x11:
+		{
+			state.d = opcode[1];
+			state.e = opcode[2];
+			state.pc += 2;
+			break;
+		}
 
 		// "LD HL n16" B:3 C:12 FLAGS: - - - -
 		case 0x21:
@@ -859,6 +876,10 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xB1:
 		{
 			state.a = state.a | state.c;
+			clearFlag(FLAG_ZERO);
+			clearFlag(FLAG_SUBTRACT);
+			clearFlag(FLAG_HALF_CARRY);
+			clearFlag(FLAG_CARRY);
 			break;
 		}
 
@@ -932,6 +953,10 @@ void Cpu::Clock(GameBoy& gb)
 			{
 				setFlag(FLAG_ZERO);
 			}
+			else
+			{
+				clearFlag(FLAG_ZERO);
+			}
 			state.pc++;
 			break;
 		}
@@ -960,7 +985,11 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "INC DE" B:1 C:8 FLAGS: - - - -
-		case 0x13: { unimplementedInstruction(state, *opcode); break; }
+		case 0x13:
+		{
+			state.e++;
+			break;
+		}
 
 		// "ADD HL DE" B:1 C:8 FLAGS: - 0 H C
 		case 0x19: { unimplementedInstruction(state, *opcode); break; }
@@ -1681,10 +1710,10 @@ void Cpu::Reset(GameBoy& gb)
 	state.pc = 0x100; // game boy execution start point
 	state.sp = 0xFFFE;
 
-	// flags
-	clearFlag(FLAG_CARRY);
-	clearFlag(FLAG_HALF_CARRY); // todo: h and c are determined by the checksum header
-	clearFlag(FLAG_SUBTRACT);   // but we are going to set them to zero for now
+	// flags - should be reset to $B0
+	setFlag(FLAG_CARRY);
+	setFlag(FLAG_HALF_CARRY); 
+	clearFlag(FLAG_SUBTRACT);   
 	setFlag(FLAG_ZERO);
 
 	// hardware registers
@@ -1761,10 +1790,13 @@ void clearFlag(Flags flag)
 
 void pushSP(GameBoy& gb, uint16_t value)
 {
-	gb.WriteToMemoryMap(--state.sp, value);
+	gb.WriteToMemoryMap(--state.sp, (value >> 8) & 0xFF);
+	gb.WriteToMemoryMap(--state.sp, value & 0xFF);
 }
 
 uint16_t popSP(GameBoy& gb)
 {
-	return gb.ReadFromMemoryMap(state.sp++);
+	uint8_t firstByte = gb.ReadFromMemoryMap(state.sp++);
+	uint8_t secondByte = gb.ReadFromMemoryMap(state.sp++);
+	return (secondByte << 8) | (firstByte);
 }
