@@ -43,12 +43,13 @@ public:
 		DrawString(x, y + 50, "BC: $" + FormatHex(gb.cpu.State.BC, 4));
 		DrawString(x, y + 60, "DE: $" + FormatHex(gb.cpu.State.DE, 4));
 		DrawString(x, y + 70, "HL: $" + FormatHex(gb.cpu.State.HL, 4));
+		DrawString(x, y + 80, "IE: " + FormatInt(gb.ReadFromMemoryMap(0xFFFF), 1));
 	}
 
-	void DrawCharacterRam(int x, int y, uint16_t nAddr, int nRows, int nColumns)
+	void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns)
 	{
-		DrawString(x, y, "CHARACTER RAM:", olc::WHITE);
-		/*int nRamX = x, nRamY = y + 10;
+		DrawString(x, y, "RAM:", olc::WHITE);
+		int nRamX = x, nRamY = y + 10;
 		for (int row = 0; row < nRows; row++)
 		{
 			std::string sOffset = "$" + FormatHex(nAddr, 4) + ":";
@@ -59,7 +60,12 @@ public:
 			}
 			DrawString(nRamX, nRamY, sOffset);
 			nRamY += 10;
-		}*/
+		}
+	}
+
+	void DrawCharacterRam(int x, int y)
+	{
+		DrawString(x, y, "CHARACTER RAM:", olc::WHITE);
 
 		y += 10;
 
@@ -78,16 +84,16 @@ public:
 				int draw_y = y + count; // Adjusted y coordinate for drawing
 
 				if (color == 0)
-					Draw(draw_x, draw_y, olc::WHITE);
+					Draw(draw_x, draw_y, olc::Pixel(155,188,15));
 
 				if (color == 1)
-					Draw(draw_x, draw_y, olc::GREY);
+					Draw(draw_x, draw_y, olc::Pixel(139, 172, 15));
 
 				if (color == 2)
-					Draw(draw_x, draw_y, olc::DARK_GREY);
+					Draw(draw_x, draw_y, olc::Pixel(48, 98, 48));
 
 				if (color == 3)
-					Draw(draw_x, draw_y, olc::BLACK);
+					Draw(draw_x, draw_y, olc::Pixel(15, 56, 15));
 			}
 			count++;
 
@@ -105,7 +111,7 @@ public:
 
 	bool OnUserCreate()
 	{
-		cart = std::make_shared<Cartridge>("../tetris.gb");
+		cart = std::make_shared<Cartridge>("../hello-world.gb");
 
 		gb.InsertCartridge(*cart);
 		gb.Run();
@@ -133,7 +139,8 @@ public:
 		}
 
 		DrawCpu(10, 10);
-		DrawCharacterRam(10, 100, 0x8000, 16, 16);
+		DrawRam(160, 10, 0xC000, 48, 16);
+		DrawCharacterRam(10, 110);
 		return true;
 	}
 };
