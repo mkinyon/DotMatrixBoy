@@ -11,30 +11,61 @@ enum Flags
 	FLAG_ZERO = 0x80 // Z 1000
 };
 
-struct Cpu::cpuState
+struct Cpu::m_CpuState
 {
-	// 8 bit registers
-	// Note: Some instructions can pair two registers as 16 bit registers.
-	//  The pairings are AF, BC, DE, & HL.
-	uint8_t a = 0x00;
-	uint8_t f = 0x00; // this register is used for flags
+	// 8 bit registers that are grouped into 16 bit pairs
+	// The pairings are AF, BC, DE, & HL.
+	union
+	{
+		struct
+		{
+			uint8_t F;
+			uint8_t A; // this register is used for flags
+		};
 
-	uint8_t b = 0x00;
-	uint8_t c = 0x00;
+		uint16_t AF;
+	};
 
-	uint8_t d = 0x00;
-	uint8_t e = 0x00;
-	
-	uint8_t h = 0x00;
-	uint8_t l = 0x00;
+	union
+	{
+		struct
+		{
+			uint8_t C;
+			uint8_t B;
+		};
 
-	uint16_t sp = 0x00; // stack pointer
-	uint16_t pc = 0x100; // the gameboy program counter starts at $100
+		uint16_t BC;
+	};
+
+	union
+	{
+		struct
+		{
+			uint8_t E;
+			uint8_t D;
+		};
+
+		uint16_t DE;
+	};
+
+	union
+	{
+		struct
+		{
+			uint8_t L;
+			uint8_t H;
+		};
+
+		uint16_t HL;
+	};
+
+	uint16_t SP = 0x00; // stack pointer
+	uint16_t PC = 0x100; // the gameboy program counter starts at $100
 
 	uint8_t	int_enable;
 };
 
-Cpu::cpuState state;
+Cpu::m_CpuState state;
 
 Cpu::Cpu() {}
 Cpu::~Cpu() {}
@@ -43,12 +74,12 @@ void Cpu::Clock(GameBoy& gb)
 {
 	// this is just temporary to make it easier to visualize the console output
 	std::this_thread::sleep_for(std::chrono::nanoseconds(20000));
-	uint8_t* opcode = &gb.ReadFromMemoryMap(state.pc);
+	uint8_t* opcode = &gb.ReadFromMemoryMap(state.PC);
 
-	Disassemble(opcode, state.pc);
+	Disassemble(opcode, state.PC);
 
 	totalCycles++;
-	state.pc++;
+	state.PC++;
 
 	switch (*opcode)
 	{
@@ -86,7 +117,11 @@ void Cpu::Clock(GameBoy& gb)
 		*********************************************************************************************/
 
 		// "JR e8" B:2 C:12 FLAGS: - - - -
-		case 0x18: { unimplementedInstruction(state, *opcode); break; }
+		case 0x18:
+		{
+			state.PC += (int8_t)opcode[1];
+			break;
+		}
 
 		// "JR NZ e8" B:2 C:128 FLAGS: - - - -
 		case 0x20:
@@ -95,11 +130,11 @@ void Cpu::Clock(GameBoy& gb)
 			int8_t offset = opcode[1];
 			if (getFlag(FLAG_ZERO) == 0)
 			{
-				state.pc += offset;
+				state.PC += offset + 1;
 			}
 			else
 			{
-				state.pc++;
+				state.PC++;
 			}
 			break;
 		}
@@ -117,11 +152,11 @@ void Cpu::Clock(GameBoy& gb)
 			int8_t offset = opcode[1];
 			if (getFlag(FLAG_CARRY))
 			{
-				state.pc += offset;
+				state.PC += offset;
 			}
 			else
 			{
-				state.pc++;
+				state.PC++;
 			}
 			break;
 		}
@@ -130,7 +165,7 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xC0:
 		{
 			if (!getFlag(FLAG_ZERO))
-				state.pc = popSP(gb);
+				state.PC = popSP(gb);
 
 			break;
 		}
@@ -142,7 +177,7 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xC3:
 		{
 			uint16_t offset = (opcode[2] << 8) | (opcode[1]);
-			state.pc = offset;
+			state.PC = offset;
 			break;
 		}
 
@@ -158,7 +193,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "RET" B:1 C:16 FLAGS: - - - -
 		case 0xC9:
 		{
-			state.pc = popSP(gb);
+			state.PC = popSP(gb);
 			break;
 		}
 
@@ -172,7 +207,7 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xCD:
 		{
 			pushSP(gb, (opcode[2] << 8) | (opcode[1]));
-			state.pc = (opcode[2] << 8) | (opcode[1]);
+			state.PC = (opcode[2] << 8) | (opcode[1]);
 			break;
 		}
 
@@ -221,8 +256,8 @@ void Cpu::Clock(GameBoy& gb)
 		// "RST $38" B:1 C:16 FLAGS: - - - -
 		case 0xFF:
 		{
-			pushSP(gb, state.pc);
-			state.pc = 0x00 + 0x38;
+			pushSP(gb, state.PC);
+			state.PC = 0x00 + 0x38;
 			break;
 		}
 
@@ -234,289 +269,565 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD [BC] A" B:1 C:8 FLAGS: - - - -
 		case 0x02:
 		{
-			uint16_t offset = (state.b << 8) | state.c;
-			gb.WriteToMemoryMap(offset, state.a);
+			uint16_t offset = state.BC;
+			gb.WriteToMemoryMap(offset, state.A);
 			break;
 		}
 
 		// "LD B n8" B:2 C:8 FLAGS: - - - -
 		case 0x06:
 		{
-			state.b = opcode[1];
-			state.pc++;
+			state.B = opcode[1];
+			state.PC++;
 			break;
 		}
 
 		// "LD A [BC]" B:1 C:8 FLAGS: - - - -
-		case 0x0A: { unimplementedInstruction(state, *opcode); break; }
+		case 0x0A:
+		{
+			state.A = gb.ReadFromMemoryMap(state.BC);
+			break;
+		}
 
-				 // "LD C n8" B:2 C:8 FLAGS: - - - -
+		// "LD C n8" B:2 C:8 FLAGS: - - - -
 		case 0x0E:
 		{
-			state.c = opcode[1];
-			state.pc++;
+			state.C = opcode[1];
+			state.PC++;
 			break;
 		}
 
 		// "LD [DE] A" B:1 C:8 FLAGS: - - - -
-		case 0x12: { unimplementedInstruction(state, *opcode); break; }
+		case 0x12:
+		{
+			gb.WriteToMemoryMap(state.DE, state.A);
+			break;
+		}
 
 		// "LD D n8" B:2 C:8 FLAGS: - - - -
-		case 0x16: { unimplementedInstruction(state, *opcode); break; }
+		case 0x16:
+		{
+			state.D = opcode[1];
+			state.PC++;
+			break;
+		}
 
 		// "LD A [DE]" B:1 C:8 FLAGS: - - - -
 		case 0x1A:
 		{
-			state.a = gb.ReadFromMemoryMap((state.e << 8) | (state.e));
+			state.A = gb.ReadFromMemoryMap(state.DE);
 			break;
 		}
 
 		// "LD E n8" B:2 C:8 FLAGS: - - - -
-		case 0x1E: { unimplementedInstruction(state, *opcode); break; }
+		case 0x1E:
+		{
+			state.E = opcode[1];
+			state.PC++;
+			break;
+		}
 
 		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
 		case 0x22:
 		{
-			gb.WriteToMemoryMap((state.l << 8) | (state.h), state.a);
-			state.l++;
+			gb.WriteToMemoryMap(state.HL, state.A);
+			state.HL++;
 			break;
 		}
 
 		// "LD H n8" B:2 C:8 FLAGS: - - - -
-		case 0x26: { unimplementedInstruction(state, *opcode); break; }
+		case 0x26:
+		{
+			state.H = opcode[1];
+			state.PC++;
+			break;
+		}
 
 		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x2A:
 		{
-			state.a = gb.ReadFromMemoryMap((state.l << 8) | (state.h));
-			state.l++;
+			state.A = gb.ReadFromMemoryMap(state.HL);
+			state.HL++;
 			break;
 		}
 
 		// "LD L n8" B:2 C:8 FLAGS: - - - -
-		case 0x2E: { unimplementedInstruction(state, *opcode); break; }
+		case 0x2E:
+		{
+			state.L = opcode[1];
+			state.PC++;
+			break;
+		}
 
 		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
 		case 0x32:
 		{
 			uint16_t offset = (opcode[2] << 8) | (opcode[1]);
-			gb.WriteToMemoryMap(offset, state.a);
+			gb.WriteToMemoryMap(offset, state.A);
 			break;
 		}
 
 		// "LD [HL] n8" B:2 C:12 FLAGS: - - - -
 		case 0x36:
 		{
-			state.h = opcode[1];
-			state.pc++;
+			state.HL = opcode[1];
+			state.PC++;
 			break;
 		}
 
 		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x3A: { unimplementedInstruction(state, *opcode); break; }
+		case 0x3A:
+		{
+			state.A = gb.ReadFromMemoryMap(state.HL);
+			state.HL--;
+			break;
+		}
 
-				 // "LD A n8" B:2 C:8 FLAGS: - - - -
+		// "LD A n8" B:2 C:8 FLAGS: - - - -
 		case 0x3E:
 		{
-			state.a = opcode[1];
-			state.pc++;
+			state.A = opcode[1];
+			state.PC++;
 			break;
 		}
 
 		// "LD B B" B:1 C:4 FLAGS: - - - -
-		case 0x40: { unimplementedInstruction(state, *opcode); break; }
+		case 0x40:
+		{
+			state.B = state.B;
+			break;
+		}
 
 		// "LD B C" B:1 C:4 FLAGS: - - - -
-		case 0x41: { unimplementedInstruction(state, *opcode); break; }
+		case 0x41:
+		{
+			state.B = state.C;
+			break;
+		}
 
 		// "LD B D" B:1 C:4 FLAGS: - - - -
-		case 0x42: { unimplementedInstruction(state, *opcode); break; }
+		case 0x42:
+		{
+			state.B = state.D;
+			break;
+		}
 
 		// "LD B E" B:1 C:4 FLAGS: - - - -
-		case 0x43: { unimplementedInstruction(state, *opcode); break; }
+		case 0x43: {
+			state.B = state.E;
+			break;
+		}
 
 		// "LD B H" B:1 C:4 FLAGS: - - - -
-		case 0x44: { unimplementedInstruction(state, *opcode); break; }
+		case 0x44: {
+			state.B = state.H;
+			break;
+		}
 
 		// "LD B L" B:1 C:4 FLAGS: - - - -
-		case 0x45: { unimplementedInstruction(state, *opcode); break; }
+		case 0x45:
+		{
+			state.B = state.L;
+			break;
+		}
 
 		// "LD B [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x46: { unimplementedInstruction(state, *opcode); break; }
+		case 0x46:
+		{
+			state.B = state.HL;
+			break;
+		}
 
 		// "LD B A" B:1 C:4 FLAGS: - - - -
-		case 0x47: { unimplementedInstruction(state, *opcode); break; }
+		case 0x47:
+		{
+			state.B = state.A;
+			break;
+		}
 
 		// "LD C B" B:1 C:4 FLAGS: - - - -
-		case 0x48: { unimplementedInstruction(state, *opcode); break; }
+		case 0x48:
+		{
+			state.C = state.B;
+			break;
+		}
 
 		// "LD C C" B:1 C:4 FLAGS: - - - -
-		case 0x49: { unimplementedInstruction(state, *opcode); break; }
+		case 0x49:
+		{
+			state.C = state.C;
+			break;
+		}
 
 		// "LD C D" B:1 C:4 FLAGS: - - - -
-		case 0x4A: { unimplementedInstruction(state, *opcode); break; }
+		case 0x4A:
+		{
+			state.C = state.D;
+			break;
+		}
 
 		// "LD C E" B:1 C:4 FLAGS: - - - -
-		case 0x4B: { unimplementedInstruction(state, *opcode); break; }
+		case 0x4B:
+		{
+			state.C = state.E;
+			break;
+		}
 
 		// "LD C H" B:1 C:4 FLAGS: - - - -
-		case 0x4C: { unimplementedInstruction(state, *opcode); break; }
+		case 0x4C:
+		{
+			state.C = state.H;
+			break;
+		}
 
 		// "LD C L" B:1 C:4 FLAGS: - - - -
-		case 0x4D: { unimplementedInstruction(state, *opcode); break; }
+		case 0x4D:
+		{
+			state.C = state.L;
+			break;
+		}
 
 		// "LD C [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x4E: { unimplementedInstruction(state, *opcode); break; }
+		case 0x4E:
+		{
+			state.C = state.HL;
+			break;
+		}
 
 		// "LD C A" B:1 C:4 FLAGS: - - - -
-		case 0x4F: { unimplementedInstruction(state, *opcode); break; }
+		case 0x4F:
+		{
+			state.C = state.A;
+			break;
+		}
 
 		// "LD D B" B:1 C:4 FLAGS: - - - -
-		case 0x50: { unimplementedInstruction(state, *opcode); break; }
+		case 0x50:
+		{
+			state.D = state.B;
+			break;
+		}
 
 		// "LD D C" B:1 C:4 FLAGS: - - - -
-		case 0x51: { unimplementedInstruction(state, *opcode); break; }
+		case 0x51:
+		{
+			state.D = state.C;
+			break;
+		}
 
 		// "LD D D" B:1 C:4 FLAGS: - - - -
-		case 0x52: { unimplementedInstruction(state, *opcode); break; }
+		case 0x52:
+		{
+			state.D = state.D;
+			break;
+		}
 
 		// "LD D E" B:1 C:4 FLAGS: - - - -
-		case 0x53: { unimplementedInstruction(state, *opcode); break; }
+		case 0x53:
+		{
+			state.D = state.E;
+			break;
+		}
 
 		// "LD D H" B:1 C:4 FLAGS: - - - -
-		case 0x54: { unimplementedInstruction(state, *opcode); break; }
+		case 0x54:
+		{
+			state.D = state.H;
+			break;
+		}
 
 		// "LD D L" B:1 C:4 FLAGS: - - - -
-		case 0x55: { unimplementedInstruction(state, *opcode); break; }
+		case 0x55:
+		{
+			state.D = state.L;
+			break;
+		}
 
 		// "LD D [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x56: { unimplementedInstruction(state, *opcode); break; }
+		case 0x56:
+		{
+			state.D = state.HL;
+			break;
+		}
 
 		// "LD D A" B:1 C:4 FLAGS: - - - -
-		case 0x57: { unimplementedInstruction(state, *opcode); break; }
+		case 0x57:
+		{
+			state.D = state.A;
+			break;
+		}
 
 		// "LD E B" B:1 C:4 FLAGS: - - - -
-		case 0x58: { unimplementedInstruction(state, *opcode); break; }
+		case 0x58:
+		{
+			state.E = state.B;
+			break;
+		}
 
 		// "LD E C" B:1 C:4 FLAGS: - - - -
-		case 0x59: { unimplementedInstruction(state, *opcode); break; }
+		case 0x59:
+		{
+			state.E = state.C;
+			break;
+		}
 
 		// "LD E D" B:1 C:4 FLAGS: - - - -
-		case 0x5A: { unimplementedInstruction(state, *opcode); break; }
+		case 0x5A:
+		{
+			state.E = state.D;
+			break;
+		}
 
 		// "LD E E" B:1 C:4 FLAGS: - - - -
-		case 0x5B: { unimplementedInstruction(state, *opcode); break; }
+		case 0x5B:
+		{
+			state.E = state.E;
+			break;
+		}
 
 		// "LD E H" B:1 C:4 FLAGS: - - - -
-		case 0x5C: { unimplementedInstruction(state, *opcode); break; }
+		case 0x5C:
+		{
+			state.E = state.H;
+			break;
+		}
 
 		// "LD E L" B:1 C:4 FLAGS: - - - -
-		case 0x5D: { unimplementedInstruction(state, *opcode); break; }
+		case 0x5D:
+		{
+			state.E = state.L;
+			break;
+		}
 
 		// "LD E [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x5E: { unimplementedInstruction(state, *opcode); break; }
+		case 0x5E:
+		{
+			state.E = state.HL;
+			break;
+		}
 
 		// "LD E A" B:1 C:4 FLAGS: - - - -
-		case 0x5F: { unimplementedInstruction(state, *opcode); break; }
+		case 0x5F:
+		{
+			state.E = state.A;
+			break;
+		}
 
 		// "LD H B" B:1 C:4 FLAGS: - - - -
-		case 0x60: { unimplementedInstruction(state, *opcode); break; }
+		case 0x60:
+		{
+			state.H = state.B;
+			break;
+		}
 
 		// "LD H C" B:1 C:4 FLAGS: - - - -
-		case 0x61: { unimplementedInstruction(state, *opcode); break; }
+		case 0x61:
+		{
+			state.H = state.C;
+			break;
+		}
 
 		// "LD H D" B:1 C:4 FLAGS: - - - -
-		case 0x62: { unimplementedInstruction(state, *opcode); break; }
+		case 0x62:
+		{
+			state.H = state.D;
+			break;
+		}
 
 		// "LD H E" B:1 C:4 FLAGS: - - - -
-		case 0x63: { unimplementedInstruction(state, *opcode); break; }
+		case 0x63:
+		{
+			state.H = state.E;
+			break;
+		}
 
 		// "LD H H" B:1 C:4 FLAGS: - - - -
-		case 0x64: { unimplementedInstruction(state, *opcode); break; }
+		case 0x64:
+		{
+			state.H = state.H;
+			break;
+		}
 
 		// "LD H L" B:1 C:4 FLAGS: - - - -
-		case 0x65: { unimplementedInstruction(state, *opcode); break; }
+		case 0x65:
+		{
+			state.H = state.L;
+			break;
+		}
 
 		// "LD H [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x66: { unimplementedInstruction(state, *opcode); break; }
+		case 0x66: 
+		{
+			state.H = state.HL;
+			break;
+		}
 
 		// "LD H A" B:1 C:4 FLAGS: - - - -
-		case 0x67: { unimplementedInstruction(state, *opcode); break; }
+		case 0x67:
+		{
+			state.H = state.A;
+			break;
+		}
 
 		// "LD L B" B:1 C:4 FLAGS: - - - -
-		case 0x68: { unimplementedInstruction(state, *opcode); break; }
+		case 0x68:
+		{
+			state.L = state.B;
+			break;
+		}
 
 		// "LD L C" B:1 C:4 FLAGS: - - - -
-		case 0x69: { unimplementedInstruction(state, *opcode); break; }
+		case 0x69:
+		{
+			state.L = state.C;
+			break;
+		}
 
 		// "LD L D" B:1 C:4 FLAGS: - - - -
-		case 0x6A: { unimplementedInstruction(state, *opcode); break; }
+		case 0x6A:
+		{
+			state.L = state.D;
+			break;
+		}
 
 		// "LD L E" B:1 C:4 FLAGS: - - - -
-		case 0x6B: { unimplementedInstruction(state, *opcode); break; }
+		case 0x6B:
+		{
+			state.L = state.E;
+			break;
+		}
 
 		// "LD L H" B:1 C:4 FLAGS: - - - -
-		case 0x6C: { unimplementedInstruction(state, *opcode); break; }
+		case 0x6C:
+		{
+			state.L = state.H;
+			break;
+		}
 
 		// "LD L L" B:1 C:4 FLAGS: - - - -
-		case 0x6D: { unimplementedInstruction(state, *opcode); break; }
+		case 0x6D:
+		{
+			state.L = state.L;
+			break;
+		}
 
 		// "LD L [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x6E: { unimplementedInstruction(state, *opcode); break; }
+		case 0x6E:
+		{
+			state.L = state.HL;
+			break;
+		}
+
 
 		// "LD L A" B:1 C:4 FLAGS: - - - -
-		case 0x6F: { unimplementedInstruction(state, *opcode); break; }
+		case 0x6F:
+		{
+			state.L = state.A;
+			break;
+		}
 
 		// "LD [HL] B" B:1 C:8 FLAGS: - - - -
-		case 0x70: { unimplementedInstruction(state, *opcode); break; }
+		case 0x70:
+		{
+			state.HL = state.L;
+			break;
+		}
 
 		// "LD [HL] C" B:1 C:8 FLAGS: - - - -
-		case 0x71: { unimplementedInstruction(state, *opcode); break; }
+		case 0x71:
+		{
+			state.HL = state.C;
+			break;
+		}
 
 		// "LD [HL] D" B:1 C:8 FLAGS: - - - -
-		case 0x72: { unimplementedInstruction(state, *opcode); break; }
+		case 0x72:
+		{
+			state.HL = state.D;
+			break;
+		}
 
 		// "LD [HL] E" B:1 C:8 FLAGS: - - - -
-		case 0x73: { unimplementedInstruction(state, *opcode); break; }
+		case 0x73:
+		{
+			state.HL = state.E;
+			break;
+		}
 
 		// "LD [HL] H" B:1 C:8 FLAGS: - - - -
-		case 0x74: { unimplementedInstruction(state, *opcode); break; }
+		case 0x74:
+		{
+			state.HL = state.H;
+			break;
+		}
 
 		// "LD [HL] L" B:1 C:8 FLAGS: - - - -
-		case 0x75: { unimplementedInstruction(state, *opcode); break; }
+		case 0x75:
+		{
+			state.HL = state.L;
+			break;
+		}
 
 		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
-		case 0x77: { unimplementedInstruction(state, *opcode); break; }
+		case 0x77:
+		{
+			state.HL = state.A;
+			break;
+		}
 
 		// "LD A B" B:1 C:4 FLAGS: - - - -
 		case 0x78:
 		{
-			state.a = state.b;
+			state.A = state.B;
 			break;
 		}
 
 		// "LD A C" B:1 C:4 FLAGS: - - - -
-		case 0x79: { unimplementedInstruction(state, *opcode); break; }
+		case 0x79:
+		{
+			state.A = state.C;
+			break;
+		}
 
 		// "LD A D" B:1 C:4 FLAGS: - - - -
-		case 0x7A: { unimplementedInstruction(state, *opcode); break; }
+		case 0x7A:
+		{
+			state.A = state.D;
+			break;
+		}
 
 		// "LD A E" B:1 C:4 FLAGS: - - - -
-		case 0x7B: { unimplementedInstruction(state, *opcode); break; }
+		case 0x7B:
+		{
+			state.A = state.E;
+			break;
+		}
 
 		// "LD A H" B:1 C:4 FLAGS: - - - -
-		case 0x7C: { unimplementedInstruction(state, *opcode); break; }
+		case 0x7C:
+		{
+			state.A = state.H;
+			break;
+		}
 
 		// "LD A L" B:1 C:4 FLAGS: - - - -
-		case 0x7D: { unimplementedInstruction(state, *opcode); break; }
+		case 0x7D:
+		{
+			state.A = state.L;
+			break;
+		}
 
 		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x7E: { unimplementedInstruction(state, *opcode); break; }
+		case 0x7E:
+		{
+			state.A = state.HL;
+			break;
+		}
 
 		// "LD A A" B:1 C:4 FLAGS: - - - -
 		case 0x7F:
 		{
-			state.a = state.a;
+			state.A = state.A;
 			break;
 		}
 
@@ -524,38 +835,47 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xE0:
 		{
 			uint8_t offset = opcode[1];
-			gb.WriteToMemoryMap(0xFF00 + offset, state.a);
-			state.pc++;
+			gb.WriteToMemoryMap(0xFF00 + offset, state.A);
+			state.PC++;
 			break;
 		}
 
 		// "LD [C] A" B:1 C:8 FLAGS: - - - -
 		case 0xE2:
 		{
-			gb.WriteToMemoryMap(0xFF00 + state.c, state.a);
+			gb.WriteToMemoryMap(0xFF00 + state.C, state.A);
 		}
 
 		// "LD [a16] A" B:3 C:16 FLAGS: - - - -
 		case 0xEA:
 		{
-			gb.WriteToMemoryMap((opcode[2] << 8) | (opcode[1]), state.a);
-			state.pc = state.pc + 2;
+			gb.WriteToMemoryMap((opcode[2] << 8) | (opcode[1]), state.A);
+			state.PC = state.PC + 2;
 			break;
 		}
 
 		// "LDH A [a8]" B:2 C:12 FLAGS: - - - -
 		case 0xF0:
 		{
-			state.a = gb.ReadFromMemoryMap(0xFF00 + opcode[1]);
-			state.pc++;
+			state.A = gb.ReadFromMemoryMap(0xFF00 + opcode[1]);
+			state.PC++;
 			break;
 		}
 
 		// "LD A [C]" B:1 C:8 FLAGS: - - - -
-		case 0xF2: { unimplementedInstruction(state, *opcode); break; }
+		case 0xF2:
+		{
+			state.A = gb.ReadFromMemoryMap(0xFF00 + state.C);
+			break;
+		}
 
 		// "LD A [a16]" B:3 C:16 FLAGS: - - - -
-		case 0xFA: { unimplementedInstruction(state, *opcode); break; }
+		case 0xFA:
+		{
+			state.A = gb.ReadFromMemoryMap(0xFF00 + (opcode[2] << 8) | (opcode[1]));
+			state.PC += 2;
+			break;
+		}
 
 
 		/********************************************************************************************
@@ -565,9 +885,8 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD BC n16" B:3 C:12 FLAGS: - - - -
 		case 0x01:
 		{
-			state.c = opcode[1];
-			state.b = opcode[2];
-			state.pc += 2;
+			state.BC = (opcode[2] << 8) | (opcode[1]);
+			state.PC += 2;
 			break;
 		}
 
@@ -577,18 +896,16 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD DE n16" B:3 C:12 FLAGS: - - - -
 		case 0x11:
 		{
-			state.d = opcode[1];
-			state.e = opcode[2];
-			state.pc += 2;
+			state.DE = (opcode[2] << 8) | (opcode[1]);
+			state.PC += 2;
 			break;
 		}
 
 		// "LD HL n16" B:3 C:12 FLAGS: - - - -
 		case 0x21:
 		{
-			state.h = opcode[1];
-			state.l = opcode[2];
-			state.pc += 2;
+			state.HL = (opcode[2] << 8) | (opcode[1]);
+			state.PC += 2;
 			break;
 		}
 
@@ -596,7 +913,7 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x31:
 		{
 			pushSP(gb, (opcode[2] << 8) | (opcode[1]));
-			state.pc += 2;
+			state.PC += 2;
 			break;
 		}
 
@@ -630,7 +947,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD SP HL" B:1 C:8 FLAGS: - - - -
 		case 0xF9:
 		{
-			pushSP(gb, (state.l << 8) | (state.h));
+			pushSP(gb, state.HL);
 			break;
 		}
 
@@ -645,9 +962,9 @@ void Cpu::Clock(GameBoy& gb)
 		// "DEC B" B:1 C:4 FLAGS: Z 1 H -
 		case 0x05:
 		{
-			state.b--;
+			state.B--;
 
-			if (state.b == 0)
+			if (state.B == 0)
 				setFlag(FLAG_ZERO);
 
 			setFlag(FLAG_SUBTRACT);
@@ -660,9 +977,9 @@ void Cpu::Clock(GameBoy& gb)
 		// "DEC C" B:1 C:4 FLAGS: Z 1 H -
 		case 0x0D:
 		{
-			state.c--;
+			state.C--;
 
-			if (state.c == 0)
+			if (state.C == 0)
 				setFlag(FLAG_ZERO);
 
 			setFlag(FLAG_SUBTRACT);
@@ -835,7 +1152,20 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xA6: { unimplementedInstruction(state, *opcode); break; }
 
 		// "AND A A" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA7: { unimplementedInstruction(state, *opcode); break; }
+		case 0xA7:
+		{
+			state.A = state.A & state.A;
+
+			if (state.A == 0)
+				setFlag(FLAG_ZERO);
+			else
+				clearFlag(FLAG_ZERO);
+
+			clearFlag(FLAG_SUBTRACT);
+			setFlag(FLAG_HALF_CARRY);
+			clearFlag(FLAG_CARRY);
+			break;
+		}
 
 		// "XOR A B" B:1 C:4 FLAGS: Z 0 0 0
 		case 0xA8: { unimplementedInstruction(state, *opcode); break; }
@@ -861,8 +1191,13 @@ void Cpu::Clock(GameBoy& gb)
 		// "XOR A A" B:1 C:4 FLAGS: 1 0 0 0
 		case 0xAF:
 		{
-			state.a = state.a ^ state.a;
-			setFlag(FLAG_ZERO);
+			state.A = state.A ^ state.A;
+			
+			if (state.A == 0)
+				setFlag(FLAG_ZERO);
+			else
+				clearFlag(FLAG_ZERO);
+
 			clearFlag(FLAG_SUBTRACT);
 			clearFlag(FLAG_HALF_CARRY);
 			clearFlag(FLAG_CARRY);
@@ -875,8 +1210,13 @@ void Cpu::Clock(GameBoy& gb)
 		// "OR A C" B:1 C:4 FLAGS: Z 0 0 0
 		case 0xB1:
 		{
-			state.a = state.a | state.c;
-			clearFlag(FLAG_ZERO);
+			state.A = state.A | state.C;
+			
+			if (state.A == 0)
+				setFlag(FLAG_ZERO);
+			else
+				clearFlag(FLAG_ZERO);
+			
 			clearFlag(FLAG_SUBTRACT);
 			clearFlag(FLAG_HALF_CARRY);
 			clearFlag(FLAG_CARRY);
@@ -949,15 +1289,22 @@ void Cpu::Clock(GameBoy& gb)
 		// "CP A n8" B:2 C:8 FLAGS: Z 1 H C
 		case 0xFE:
 		{
-			if (state.a == opcode[1])
+			if (state.A == opcode[1])
 			{
 				setFlag(FLAG_ZERO);
 			}
-			else
+
+			if ((state.A & 0xF) < (opcode[1] & 0xF))
 			{
-				clearFlag(FLAG_ZERO);
+				clearFlag(FLAG_HALF_CARRY);
 			}
-			state.pc++;
+
+			if (state.A < opcode[1])
+			{
+				clearFlag(FLAG_CARRY);
+			}
+
+			state.PC++;
 			break;
 		}
 
@@ -968,9 +1315,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "INC BC" B:1 C:8 FLAGS: - - - -
 		case 0x03:
 		{
-			state.c = state.c + 1;
-			if (state.c == 0)
-				state.b = state.b + 1;
+			state.BC++;
 			break;
 		}
 
@@ -980,14 +1325,14 @@ void Cpu::Clock(GameBoy& gb)
 		// "DEC BC" B:1 C:8 FLAGS: - - - -
 		case 0x0B:
 		{
-			state.c--;
+			state.BC--;
 			break;
 		}
 
 		// "INC DE" B:1 C:8 FLAGS: - - - -
 		case 0x13:
 		{
-			state.e++;
+			state.DE++;
 			break;
 		}
 
@@ -1003,10 +1348,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "ADD HL HL" B:1 C:8 FLAGS: - 0 H C
 		case 0x29:
 		{
-			uint16_t hl = (state.l << 8) | state.h;
-			hl = hl + hl;
-			state.h = (state.h >> 8) & 0xFF;
-			state.l = state.l & 0xFF;
+			state.HL += state.HL;
 			break;
 		}
 
@@ -1052,7 +1394,7 @@ void Cpu::Clock(GameBoy& gb)
 	}
 }
 
-void unimplementedInstruction(Cpu::cpuState& state, uint8_t opcode)
+void unimplementedInstruction(Cpu::m_CpuState& state, uint8_t opcode)
 {
 	//pc will have advanced one, so undo that 
 	printf("\n");
@@ -1060,17 +1402,13 @@ void unimplementedInstruction(Cpu::cpuState& state, uint8_t opcode)
 	printf("######################################################\n");
 	printf("# CPU Details:\n");
 	printf("# Total Cycles: %d \n", totalCycles);
-	printf("# Program Counter: %04x \n", state.pc);
+	printf("# Program Counter: %04x \n", state.PC);
 	printf("#\n");
 	printf("# Registers: \n");
-	printf("#    A: %02x \n", state.a);
-	printf("#    B: %02x \n", state.b);
-	printf("#    C: %02x \n", state.c);
-	printf("#    D: %02x \n", state.d);
-	printf("#    E: %02x \n", state.e);
-	printf("#    F: %02x \n", state.f);
-	printf("#    H: %02x \n", state.h);
-	printf("#    L: %02x \n", state.l);
+	printf("#    AF: %04x \n", state.AF);
+	printf("#    BC: %04x \n", state.BC);
+	printf("#    DE: %04x \n", state.DE);
+	printf("#    HL: %04x \n", state.HL);
 	printf("#\n");
 	printf("# Flags:\n");
 	printf("#    Zero flag (Z): %02x \n", getFlag(FLAG_ZERO));
@@ -1692,7 +2030,15 @@ void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t*
 	}
 
 	// new line
-	std::cout << "\n";
+	printf("\n");
+
+	//printf("C%02x ", getFlag(FLAG_CARRY));
+	//printf("H%02x ", getFlag(FLAG_HALF_CARRY));
+	//printf("N%02x ", getFlag(FLAG_SUBTRACT));
+	//printf("Z%02x ", getFlag(FLAG_ZERO));
+
+	//printf("\n");
+	//printf("\n");
 }
 
 void Cpu::Reset(GameBoy& gb)
@@ -1700,15 +2046,12 @@ void Cpu::Reset(GameBoy& gb)
 	totalCycles = 0;
 
 	// registers
-	state.a = 0x01;
-	state.b = 0x00;
-	state.c = 0x13;
-	state.d = 0x00;
-	state.e = 0xD8;
-	state.h = 0x01;
-	state.l = 0x4D;
-	state.pc = 0x100; // game boy execution start point
-	state.sp = 0xFFFE;
+	state.AF = 0x01B0;
+	state.BC = 0x0013;
+	state.DE = 0x00D8;
+	state.HL = 0x014D;
+	state.PC = 0x100; // game boy execution start point
+	state.SP = 0xFFFE;
 
 	// flags - should be reset to $B0
 	setFlag(FLAG_CARRY);
@@ -1776,27 +2119,27 @@ void Cpu::Reset(GameBoy& gb)
 
 bool getFlag(Flags flag)
 {
-	return (state.f & flag) != 0;
+	return (state.F & flag) != 0;
 }
 void setFlag(Flags flag)
 {
-	state.f |= flag;
+	state.F |= flag;
 }
 
 void clearFlag(Flags flag)
 {
-	state.f &= ~flag;
+	state.F &= ~flag;
 }
 
 void pushSP(GameBoy& gb, uint16_t value)
 {
-	gb.WriteToMemoryMap(--state.sp, (value >> 8) & 0xFF);
-	gb.WriteToMemoryMap(--state.sp, value & 0xFF);
+	gb.WriteToMemoryMap(--state.SP, (value >> 8) & 0xFF);
+	gb.WriteToMemoryMap(--state.SP, value & 0xFF);
 }
 
 uint16_t popSP(GameBoy& gb)
 {
-	uint8_t firstByte = gb.ReadFromMemoryMap(state.sp++);
-	uint8_t secondByte = gb.ReadFromMemoryMap(state.sp++);
+	uint8_t firstByte = gb.ReadFromMemoryMap(state.SP++);
+	uint8_t secondByte = gb.ReadFromMemoryMap(state.SP++);
 	return (secondByte << 8) | (firstByte);
 }

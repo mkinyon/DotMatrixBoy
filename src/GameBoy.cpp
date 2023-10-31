@@ -40,16 +40,17 @@ uint8_t& GameBoy::ReadFromMemoryMap(uint16_t address)
 		uint8_t offset = address - 0xC000;
 		return ram[offset];
 	}
+	// hardware IO
+	else if (address >= 0xFF00 && address <= 0xFF7F)
+	{
+		uint8_t offset = address - 0xFF00;
+		return hardwareIO[offset];
+	}
 	// zero page
 	else if (address >= 0xFF80 && address <= 0xFFFE)
 	{
 		uint8_t offset = address - 0xFF80;
 		return zeroPage[offset];
-	}
-	else
-	{
-		// todo: temp
-		return cart.Read(0x0000);
 	}
 }
 
@@ -60,6 +61,12 @@ void GameBoy::WriteToMemoryMap(uint16_t address, uint8_t value)
 	{
 		uint8_t offset = address - 0xC000;
 		ram[offset] = value;
+	}
+	// hardware IO
+	else if (address >= 0xFF00 && address <= 0xFF7F)
+	{
+		uint8_t offset = address - 0xFF00;
+		hardwareIO[offset] = value;
 	}
 	// zero page
 	else if (address >= 0xFF80 && address <= 0xFFFE)

@@ -14,7 +14,7 @@ public:
 	~Cpu();
 
 public:
-	struct cpuState;
+	struct m_CpuState;
 
 public:
 	void Reset(GameBoy& gb);
@@ -24,7 +24,7 @@ public:
 
 void disasseble16bit(uint8_t *opcode, int pc);
 void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t *opcode, int totalOpBytes);
-void unimplementedInstruction(Cpu::cpuState &state, uint8_t opcode);
+void unimplementedInstruction(Cpu::m_CpuState &state, uint8_t opcode);
 
 enum Flags;
 

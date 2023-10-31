@@ -35,7 +35,7 @@ Cartridge::Cartridge(const std::string& fileName)
 		if (header.cartridgeType == 0x00)
 		{
 			file.seekg(0); // reset to beginning
-			romData = new std::vector<uint8_t>(32767);
+			romData = new std::vector<uint8_t>(32768);
 			file.read((char*)romData->data(), romData->size());
 		}
 	}

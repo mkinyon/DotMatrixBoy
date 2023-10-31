@@ -23,6 +23,7 @@ private:
 	//devices
 	Cartridge cart;
 	uint8_t ram[4095];
+	uint8_t hardwareIO[127]; // $FF00-$FF7F Hardware IO - 127 bytes
 	uint8_t zeroPage[127]; // $FF80-$FFFE  Zero Page - 127 bytes
 };
 
