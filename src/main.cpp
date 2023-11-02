@@ -2,6 +2,7 @@
 #include "GameBoy.h"
 #include "Cpu.h"
 #include "Cartridge.h"
+#include "Defines.h"
 
 #include <fstream>
 #include <vector>
@@ -36,14 +37,14 @@ public:
 	void DrawCpu(int x, int y)
 	{
 		DrawString(x, y, "CPU STATUS:", olc::WHITE);
-		DrawString(x, y + 10, "Cycles: " + FormatInt(gb.cpu.TotalCycles, 1));
+		DrawString(x, y + 10, "Cycles: " + FormatInt(gb.cpu.m_TotalCycles, 1));
 		DrawString(x, y + 20, "SP: $" + FormatHex(gb.cpu.State.SP, 4));
 		DrawString(x, y + 30, "PC: $" + FormatHex(gb.cpu.State.PC, 4));
 		DrawString(x, y + 40, "AF: $" + FormatHex(gb.cpu.State.AF, 4));
 		DrawString(x, y + 50, "BC: $" + FormatHex(gb.cpu.State.BC, 4));
 		DrawString(x, y + 60, "DE: $" + FormatHex(gb.cpu.State.DE, 4));
 		DrawString(x, y + 70, "HL: $" + FormatHex(gb.cpu.State.HL, 4));
-		DrawString(x, y + 80, "IE: " + FormatInt(gb.ReadFromMemoryMap(0xFFFF), 1));
+		DrawString(x, y + 80, "IE: " + FormatInt(gb.ReadFromMemoryMap(INTERRUPT_ENABLE), 1));
 	}
 
 	void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns)
@@ -121,11 +122,16 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime)
 	{
+		//// Wait for the remaining time to maintain the desired clock speed
+		//if (fElapsedTime < INSTRUCTION_TIME_SEC) {
+		//	std::this_thread::sleep_for(std::chrono::duration<double>(INSTRUCTION_TIME_SEC - fElapsedTime));
+		//}
+
 		Clear(olc::BLACK);
 
 		if (GetKey(olc::Key::SPACE).bPressed)
 		{
-			gb.cpu.Clock(gb);
+			gb.Clock();
 		}
 
 		if (GetKey(olc::Key::P).bPressed)
@@ -135,12 +141,12 @@ public:
 
 		if (!isPaused)
 		{
-			gb.cpu.Clock(gb);
+			gb.Clock();
 		}
 
 		DrawCpu(10, 10);
-		DrawRam(160, 10, 0xC000, 48, 16);
-		DrawCharacterRam(10, 110);
+		//DrawRam(160, 10, 0x9800, 48, 16);
+		//DrawCharacterRam(10, 110);
 		return true;
 	}
 };

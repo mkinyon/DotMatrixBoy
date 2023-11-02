@@ -145,14 +145,17 @@
   <ItemGroup>
     <ClInclude Include="Cartridge.h" />
     <ClInclude Include="Cpu.h" />
+    <ClInclude Include="Defines.h" />
     <ClInclude Include="GameBoy.h" />
     <ClInclude Include="olcPixelGameEngine.h" />
+    <ClInclude Include="Ppu.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Cartridge.cpp" />
     <ClCompile Include="GameBoy.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Cpu.cpp" />
+    <ClCompile Include="Ppu.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

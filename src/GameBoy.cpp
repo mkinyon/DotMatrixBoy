@@ -1,7 +1,7 @@
 #include "GameBoy.h"
 
 
-GameBoy::GameBoy() : cpu() {}
+GameBoy::GameBoy() : cpu(), ppu() {}
 
 GameBoy::~GameBoy() {}
 
@@ -20,6 +20,12 @@ void GameBoy::Run()
 	//{
 	//	pc += cpu.Disassemble(&ReadFromMemoryMap(pc), pc);
 	//}
+}
+
+void GameBoy::Clock()
+{
+	cpu.Clock(*this);
+	ppu.Clock(*this);
 }
 
 void GameBoy::InsertCartridge(Cartridge &cartridge)

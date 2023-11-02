@@ -1,5 +1,6 @@
 #include "Cpu.h"
 #include "GameBoy.h"
+#include "Defines.h"
 
 enum Cpu::Flags
 {
@@ -9,20 +10,29 @@ enum Cpu::Flags
 	FLAG_ZERO = 0x80 // Z 1000
 };
 
-int TotalCycles;
-
 Cpu::Cpu() {}
 Cpu::~Cpu() {}
 
 void Cpu::Clock(GameBoy& gb)
 {
-	// this is just temporary to make it easier to visualize the console output
-	//std::this_thread::sleep_for(std::chrono::nanoseconds(20000));
-	uint8_t* opcode = &gb.ReadFromMemoryMap(State.PC);
+	Cpu::m_TotalCycles++;
 
+	// Each instruction takes a certain amount of cycles to complete so
+	// if there are still cycles to remaining then we shoud just decrement 
+	// the cycles and return;
+	if (m_cycles > 0)
+	{
+		m_cycles--;
+		return;
+	}
+	
+	// read opcode from memory
+	uint8_t* opcode = &gb.ReadFromMemoryMap(State.PC);
+	
+	// write disassembly to console
 	Disassemble(opcode, State.PC);
 
-	TotalCycles++;
+	// increment program counter
 	State.PC++;
 
 	switch (*opcode)
@@ -46,7 +56,9 @@ void Cpu::Clock(GameBoy& gb)
 		// "DI" B:1 C:4 FLAGS: - - - -
 		case 0xF3:
 		{
-			State.int_enable = 0;
+			gb.WriteToMemoryMap(INTERRUPT_ENABLE, 0);
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -62,10 +74,12 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x18:
 		{
 			State.PC += (int8_t)opcode[1] + 1;
+
+			m_cycles = 12;
 			break;
 		}
 
-		// "JR NZ e8" B:2 C:128 FLAGS: - - - -
+		// "JR NZ e8" B:2 C:12/8 FLAGS: - - - -
 		case 0x20:
 		{
 			// note: "e8" in the description refers to a signed char
@@ -73,11 +87,15 @@ void Cpu::Clock(GameBoy& gb)
 			if (getFlag(FLAG_ZERO) == 0)
 			{
 				State.PC += offset + 1;
+				m_cycles = 12;
 			}
 			else
 			{
 				State.PC++;
+				m_cycles = 8;
 			}
+
+			
 			break;
 		}
 
@@ -87,7 +105,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "JR NC e8" B:2 C:128 FLAGS: - - - -
 		case 0x30: { unimplementedInstruction(State, *opcode); break; }
 
-		// "JR C e8" B:2 C:128 FLAGS: - - - -
+		// "JR C e8" B:2 C:12/8 FLAGS: - - - -
 		case 0x38:
 		{
 			// note: "s8" in the description refers to a signed char
@@ -95,20 +113,28 @@ void Cpu::Clock(GameBoy& gb)
 			if (getFlag(FLAG_CARRY))
 			{
 				State.PC += offset;
+				m_cycles = 12;
 			}
 			else
 			{
 				State.PC++;
+				m_cycles = 8;
 			}
+			
 			break;
 		}
 
-		// "RET NZ" B:1 C:208 FLAGS: - - - -
+		// "RET NZ" B:1 C:20/8 FLAGS: - - - -
 		case 0xC0:
 		{
 			if (!getFlag(FLAG_ZERO))
+			{
 				State.PC = popSP(gb);
+				m_cycles = 20;
+				break;
+			}
 
+			m_cycles = 8;
 			break;
 		}
 
@@ -120,6 +146,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			uint16_t offset = (opcode[2] << 8) | (opcode[1]);
 			State.PC = offset;
+
+			m_cycles = 16;
 			break;
 		}
 
@@ -136,6 +164,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xC9:
 		{
 			State.PC = popSP(gb);
+
+			m_cycles = 16;
 			break;
 		}
 
@@ -150,6 +180,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			pushSP(gb, (opcode[2] << 8) | (opcode[1]));
 			State.PC = (opcode[2] << 8) | (opcode[1]);
+
+			m_cycles = 24;
 			break;
 		}
 
@@ -200,6 +232,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			pushSP(gb, State.PC);
 			State.PC = 0x00 + 0x38;
+
+			m_cycles = 16;
 			break;
 		}
 
@@ -213,6 +247,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			uint16_t offset = State.BC;
 			gb.WriteToMemoryMap(offset, State.A);
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -221,6 +257,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.B = opcode[1];
 			State.PC++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -228,6 +266,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x0A:
 		{
 			State.A = gb.ReadFromMemoryMap(State.BC);
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -236,6 +276,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.C = opcode[1];
 			State.PC++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -243,6 +285,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x12:
 		{
 			gb.WriteToMemoryMap(State.DE, State.A);
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -251,6 +295,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.D = opcode[1];
 			State.PC++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -258,6 +304,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x1A:
 		{
 			State.A = gb.ReadFromMemoryMap(State.DE);
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -266,6 +314,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.E = opcode[1];
 			State.PC++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -274,6 +324,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			gb.WriteToMemoryMap(State.HL, State.A);
 			State.HL++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -282,6 +334,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.H = opcode[1];
 			State.PC++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -290,6 +344,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.A = gb.ReadFromMemoryMap(State.HL);
 			State.HL++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -298,6 +354,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.L = opcode[1];
 			State.PC++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -305,6 +363,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x32:
 		{
 			gb.WriteToMemoryMap(State.HL, State.A);
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -313,6 +373,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.HL = opcode[1];
 			State.PC++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -321,6 +383,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.A = gb.ReadFromMemoryMap(State.HL);
 			State.HL--;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -329,6 +393,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.A = opcode[1];
 			State.PC++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -336,6 +402,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x40:
 		{
 			State.B = State.B;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -343,6 +411,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x41:
 		{
 			State.B = State.C;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -350,18 +420,24 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x42:
 		{
 			State.B = State.D;
+
+			m_cycles = 4;
 			break;
 		}
 
 		// "LD B E" B:1 C:4 FLAGS: - - - -
 		case 0x43: {
 			State.B = State.E;
+
+			m_cycles = 4;
 			break;
 		}
 
 		// "LD B H" B:1 C:4 FLAGS: - - - -
 		case 0x44: {
 			State.B = State.H;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -369,6 +445,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x45:
 		{
 			State.B = State.L;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -376,6 +454,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x46:
 		{
 			State.B = State.HL;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -383,6 +463,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x47:
 		{
 			State.B = State.A;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -390,6 +472,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x48:
 		{
 			State.C = State.B;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -397,6 +481,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x49:
 		{
 			State.C = State.C;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -404,6 +490,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x4A:
 		{
 			State.C = State.D;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -411,6 +499,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x4B:
 		{
 			State.C = State.E;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -418,6 +508,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x4C:
 		{
 			State.C = State.H;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -425,6 +517,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x4D:
 		{
 			State.C = State.L;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -432,6 +526,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x4E:
 		{
 			State.C = State.HL;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -439,6 +535,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x4F:
 		{
 			State.C = State.A;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -446,6 +544,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x50:
 		{
 			State.D = State.B;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -453,6 +553,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x51:
 		{
 			State.D = State.C;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -460,6 +562,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x52:
 		{
 			State.D = State.D;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -467,6 +571,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x53:
 		{
 			State.D = State.E;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -474,6 +580,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x54:
 		{
 			State.D = State.H;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -481,6 +589,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x55:
 		{
 			State.D = State.L;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -488,6 +598,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x56:
 		{
 			State.D = State.HL;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -495,6 +607,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x57:
 		{
 			State.D = State.A;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -502,6 +616,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x58:
 		{
 			State.E = State.B;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -509,6 +625,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x59:
 		{
 			State.E = State.C;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -516,6 +634,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x5A:
 		{
 			State.E = State.D;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -523,6 +643,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x5B:
 		{
 			State.E = State.E;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -530,6 +652,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x5C:
 		{
 			State.E = State.H;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -537,6 +661,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x5D:
 		{
 			State.E = State.L;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -544,6 +670,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x5E:
 		{
 			State.E = State.HL;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -551,6 +679,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x5F:
 		{
 			State.E = State.A;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -558,6 +688,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x60:
 		{
 			State.H = State.B;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -565,6 +697,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x61:
 		{
 			State.H = State.C;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -572,6 +706,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x62:
 		{
 			State.H = State.D;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -579,6 +715,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x63:
 		{
 			State.H = State.E;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -586,6 +724,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x64:
 		{
 			State.H = State.H;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -593,6 +733,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x65:
 		{
 			State.H = State.L;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -600,6 +742,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x66: 
 		{
 			State.H = State.HL;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -607,6 +751,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x67:
 		{
 			State.H = State.A;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -614,6 +760,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x68:
 		{
 			State.L = State.B;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -621,6 +769,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x69:
 		{
 			State.L = State.C;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -628,6 +778,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x6A:
 		{
 			State.L = State.D;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -635,6 +787,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x6B:
 		{
 			State.L = State.E;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -642,6 +796,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x6C:
 		{
 			State.L = State.H;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -649,6 +805,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x6D:
 		{
 			State.L = State.L;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -656,6 +814,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x6E:
 		{
 			State.L = State.HL;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -664,6 +824,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x6F:
 		{
 			State.L = State.A;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -671,6 +833,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x70:
 		{
 			State.HL = State.L;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -678,6 +842,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x71:
 		{
 			State.HL = State.C;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -685,6 +851,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x72:
 		{
 			State.HL = State.D;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -692,6 +860,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x73:
 		{
 			State.HL = State.E;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -699,6 +869,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x74:
 		{
 			State.HL = State.H;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -706,6 +878,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x75:
 		{
 			State.HL = State.L;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -713,6 +887,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x77:
 		{
 			State.HL = State.A;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -720,6 +896,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x78:
 		{
 			State.A = State.B;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -727,6 +905,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x79:
 		{
 			State.A = State.C;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -734,6 +914,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x7A:
 		{
 			State.A = State.D;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -741,6 +923,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x7B:
 		{
 			State.A = State.E;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -748,6 +932,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x7C:
 		{
 			State.A = State.H;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -755,6 +941,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x7D:
 		{
 			State.A = State.L;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -762,6 +950,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x7E:
 		{
 			State.A = State.HL;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -769,6 +959,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x7F:
 		{
 			State.A = State.A;
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -778,6 +970,8 @@ void Cpu::Clock(GameBoy& gb)
 			uint8_t offset = opcode[1];
 			gb.WriteToMemoryMap(0xFF00 + offset, State.A);
 			State.PC++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -785,6 +979,9 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xE2:
 		{
 			gb.WriteToMemoryMap(0xFF00 + State.C, State.A);
+
+			m_cycles = 8;
+			break;
 		}
 
 		// "LD [a16] A" B:3 C:16 FLAGS: - - - -
@@ -792,6 +989,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			gb.WriteToMemoryMap((opcode[2] << 8) | (opcode[1]), State.A);
 			State.PC += 2;
+
+			m_cycles = 16;
 			break;
 		}
 
@@ -800,6 +999,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.A = gb.ReadFromMemoryMap(0xFF00 + opcode[1]);
 			State.PC++;
+
+			m_cycles = 12;
 			break;
 		}
 
@@ -807,6 +1008,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xF2:
 		{
 			State.A = gb.ReadFromMemoryMap(0xFF00 + State.C);
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -815,6 +1018,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.A = gb.ReadFromMemoryMap(0xFF00 + (opcode[2] << 8) | (opcode[1]));
 			State.PC += 2;
+
+			m_cycles = 16;
 			break;
 		}
 
@@ -828,6 +1033,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.BC = (opcode[2] << 8) | (opcode[1]);
 			State.PC += 2;
+
+			m_cycles = 12;
 			break;
 		}
 
@@ -839,6 +1046,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.DE = (opcode[2] << 8) | (opcode[1]);
 			State.PC += 2;
+
+			m_cycles = 12;
 			break;
 		}
 
@@ -847,6 +1056,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.HL = (opcode[2] << 8) | (opcode[1]);
 			State.PC += 2;
+
+			m_cycles = 12;
 			break;
 		}
 
@@ -855,6 +1066,8 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			pushSP(gb, (opcode[2] << 8) | (opcode[1]));
 			State.PC += 2;
+
+			m_cycles = 12;
 			break;
 		}
 
@@ -889,6 +1102,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xF9:
 		{
 			pushSP(gb, State.HL);
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -909,6 +1124,8 @@ void Cpu::Clock(GameBoy& gb)
 				setFlag(FLAG_ZERO);
 
 			setFlag(FLAG_SUBTRACT);
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -924,6 +1141,8 @@ void Cpu::Clock(GameBoy& gb)
 				setFlag(FLAG_ZERO);
 
 			setFlag(FLAG_SUBTRACT);
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -960,6 +1179,8 @@ void Cpu::Clock(GameBoy& gb)
 			State.A = ~State.A;
 			setFlag(FLAG_SUBTRACT);
 			setFlag(FLAG_HALF_CARRY);
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -1111,6 +1332,8 @@ void Cpu::Clock(GameBoy& gb)
 			clearFlag(FLAG_SUBTRACT);
 			setFlag(FLAG_HALF_CARRY);
 			clearFlag(FLAG_CARRY);
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -1148,6 +1371,8 @@ void Cpu::Clock(GameBoy& gb)
 			clearFlag(FLAG_SUBTRACT);
 			clearFlag(FLAG_HALF_CARRY);
 			clearFlag(FLAG_CARRY);
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -1167,6 +1392,8 @@ void Cpu::Clock(GameBoy& gb)
 			clearFlag(FLAG_SUBTRACT);
 			clearFlag(FLAG_HALF_CARRY);
 			clearFlag(FLAG_CARRY);
+
+			m_cycles = 4;
 			break;
 		}
 
@@ -1252,6 +1479,8 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			State.PC++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -1263,6 +1492,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x03:
 		{
 			State.BC++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -1273,6 +1504,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x0B:
 		{
 			State.BC--;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -1280,6 +1513,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x13:
 		{
 			State.DE++;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -1296,6 +1531,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x29:
 		{
 			State.HL += State.HL;
+
+			m_cycles = 8;
 			break;
 		}
 
@@ -1344,7 +1581,7 @@ void Cpu::unimplementedInstruction(Cpu::m_CpuState& State, uint8_t opcode)
 	printf("Error: Unimplemented instruction: %02x \n", opcode);
 	printf("######################################################\n");
 	printf("# CPU Details:\n");
-	printf("# Total Cycles: %d \n", TotalCycles);
+	printf("# Total Cycles: %d \n", Cpu::m_TotalCycles);
 	printf("# Program Counter: %04x \n", State.PC);
 	printf("#\n");
 	printf("# Registers: \n");
@@ -1986,7 +2223,7 @@ void Cpu::outputDisassembledInstruction(const char* instructionName, int pc, uin
 
 void Cpu::Reset(GameBoy& gb)
 {
-	TotalCycles = 0;
+	Cpu::m_TotalCycles = 0;
 
 	// registers
 	State.AF = 0x01B0;
@@ -2057,7 +2294,7 @@ void Cpu::Reset(GameBoy& gb)
 	gb.WriteToMemoryMap(0xFF6A, 0xFF);
 	gb.WriteToMemoryMap(0xFF6B, 0xFF);
 	gb.WriteToMemoryMap(0xFF70, 0xFF);
-	gb.WriteToMemoryMap(0xFFFF, 0x00);
+	gb.WriteToMemoryMap(INTERRUPT_ENABLE, 0x00);
 }
 
 bool Cpu::getFlag(Flags flag)

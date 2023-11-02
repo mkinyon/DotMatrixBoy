@@ -2,8 +2,6 @@
 #include <stdint.h>
 #include <iostream>
 #include <vector>
-#include <chrono>
-#include <thread>
 
 class GameBoy;
 
@@ -64,10 +62,11 @@ public:
 
 		uint16_t SP = 0x00; // stack pointer
 		uint16_t PC = 0x100; // the gameboy program counter starts at $100
-
-		uint8_t	int_enable;
 	} State;
-	int TotalCycles = 0;
+	int m_TotalCycles = 0;
+
+private:
+	int m_cycles = 0; // how many cycles remain before the cpu can fetch another instruction
 
 public:
 	void Reset(GameBoy& gb);
