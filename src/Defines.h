@@ -3,7 +3,7 @@
 constexpr double CLOCK_SPEED_MHZ = 4.194304; // 4.194304 MHz
 constexpr double INSTRUCTION_TIME_SEC = 1.0 / CLOCK_SPEED_MHZ;
 
-enum HardwareAddresses
+typedef enum
 {
 	/* Input */
 	P1JOYP_JOYPAD = 0xFF00,
@@ -66,12 +66,12 @@ enum HardwareAddresses
 	/* Interrupt Toggle */
 	INTERRUPT_ENABLE = 0xFFFF
 	
-};
+} HardwareAddresses;
 
-enum PPUMode
+typedef enum
 {
-	MODE_0 = 0, // Horizontal Blank
-	MODE_1 = 1, // Vertical Blank
-	MODE_2 = 2, // OAM Scan
-	MODE_3 = 3  // Drawing Pixels
-};
+	MODE_0_HBLANK =  0,  // Horizontal Blank
+	MODE_1_VBLANK =  1,  // Vertical Blank
+	MODE_2_OAMSCAN = 2, // OAM Scan
+	MODE_3_DRAWING = 3  // Drawing Pixels
+} LCD_Mode;

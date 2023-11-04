@@ -81,7 +81,7 @@ public:
 				uint8_t secondBit = (firstByte >> iBit) & 0x01;
 				int color = (secondBit << 1) | firstBit;
 
-				int draw_x = x + iBit; // Adjusted x coordinate for drawing
+				int draw_x = x - iBit; // Adjusted x coordinate for drawing
 				int draw_y = y + count; // Adjusted y coordinate for drawing
 
 				if (color == 0)
@@ -108,6 +108,20 @@ public:
 				y -= 8;
 			}
 		}
+	}
+
+	void DrawPPUStats(int x, int y)
+	{
+		DrawString(x, y, "PPU STATUS:", olc::WHITE);
+
+		if (gb.ppu.m_CurrentMode == MODE_0_HBLANK  ) DrawString(x, y + 10, "Mode: MODE_0_HBLANK");
+		if (gb.ppu.m_CurrentMode == MODE_1_VBLANK  ) DrawString(x, y + 10, "Mode: MODE_1_VBLANK");
+		if (gb.ppu.m_CurrentMode == MODE_2_OAMSCAN ) DrawString(x, y + 10, "Mode: MODE_2_OAMSCAN");
+		if (gb.ppu.m_CurrentMode == MODE_3_DRAWING ) DrawString(x, y + 10, "Mode: MODE_3_DRAWING");
+
+		DrawString(x, y + 20, "Scanline: " + FormatInt(gb.ppu.m_CurrentScanLine, 1));
+		DrawString(x, y + 30, "Dots This Frame: " + FormatInt(gb.ppu.m_TotalDotsThisFrame, 1));
+		DrawString(x, y + 40, "Total Frames: " + FormatInt(gb.ppu.m_TotalFrames, 1));
 	}
 
 	bool OnUserCreate()
@@ -146,7 +160,8 @@ public:
 
 		DrawCpu(10, 10);
 		//DrawRam(160, 10, 0x9800, 48, 16);
-		//DrawCharacterRam(10, 110);
+		DrawCharacterRam(10, 110);
+		DrawPPUStats(160, 10);
 		return true;
 	}
 };
