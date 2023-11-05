@@ -400,3 +400,4 @@ FodyWeavers.xsd
 # misc 
 *.gb
 tools/
+*.sav

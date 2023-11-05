@@ -28,12 +28,24 @@ private:
 		uint8_t priority;
 	} pixelFIFO_Item;
 
+	typedef enum
+	{
+		FIFO_GET_TILE,
+		FIFO_GET_TILE_LOW,
+		FIFO_GET_TILE_HIGH,
+		FIFO_SLEEP,
+		FIFO_PUSH
+	} FIFO_State;
+
 	typedef struct 
 	{
 		pixelFIFO_Item fifo[8];
 		uint8_t read_end;
 		uint8_t size;
+		FIFO_State fifo_state;
 	} pixelFIFO;
+
+	void UpdateFIFO(pixelFIFO& fifo);
 
 	pixelFIFO bgFIFO;
 	pixelFIFO oamFIFO;

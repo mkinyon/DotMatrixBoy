@@ -159,7 +159,7 @@ public:
 		}
 
 		DrawCpu(10, 10);
-		//DrawRam(160, 10, 0x9800, 48, 16);
+		DrawRam(160, 110, LY_LCD_Y_COORD, 5, 16);
 		DrawCharacterRam(10, 110);
 		DrawPPUStats(160, 10);
 		return true;

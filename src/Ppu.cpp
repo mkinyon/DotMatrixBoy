@@ -30,15 +30,31 @@ void Ppu::Clock(GameBoy& gb)
 	else if (dotsThisScanline >= 81)
 	{
 		m_CurrentMode = MODE_3_DRAWING;
+
+		 
 	}
 	
 	if (dotsThisScanline % 456 == 0)
+	{
 		m_CurrentScanLine += 1;
+		gb.WriteToMemoryMap(LY_LCD_Y_COORD, m_CurrentScanLine);
+	}	
 
 	if (m_TotalDotsThisFrame == 70224)
 	{
 		m_TotalFrames += 1;
 		m_TotalDotsThisFrame = 0;
 		m_CurrentScanLine = 0;
+	}
+}
+
+void Ppu::UpdateFIFO(pixelFIFO& fifo)
+{
+	switch (fifo.fifo_state)
+	{
+		case FIFO_GET_TILE:
+		{
+
+		}
 	}
 }
