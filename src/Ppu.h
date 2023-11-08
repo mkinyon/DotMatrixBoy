@@ -18,7 +18,7 @@ public:
 	unsigned int m_CurrentScanLine = 0;
 	unsigned int m_TotalDotsThisFrame = 0;
 
-	uint8_t lcdPixels[160 * 144];
+	uint8_t m_lcdPixels[160 * 144];
 
 private:
 	typedef struct 
@@ -45,7 +45,7 @@ private:
 		FIFO_State fifo_state;
 	} pixelFIFO;
 
-	void UpdateFIFO(pixelFIFO& fifo);
+	void UpdateFIFO(pixelFIFO& fifo, uint8_t ly, uint8_t scy);
 
 	pixelFIFO bgFIFO;
 	pixelFIFO oamFIFO;

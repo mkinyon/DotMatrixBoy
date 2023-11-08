@@ -44,7 +44,7 @@ public:
 		DrawString(x, y + 50, "BC: $" + FormatHex(gb.cpu.State.BC, 4));
 		DrawString(x, y + 60, "DE: $" + FormatHex(gb.cpu.State.DE, 4));
 		DrawString(x, y + 70, "HL: $" + FormatHex(gb.cpu.State.HL, 4));
-		DrawString(x, y + 80, "IE: " + FormatInt(gb.ReadFromMemoryMap(INTERRUPT_ENABLE), 1));
+		DrawString(x, y + 80, "IE: " + FormatInt(gb.ReadFromMemoryMap(HW_INTERRUPT_ENABLE), 1));
 	}
 
 	void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns)
@@ -110,6 +110,40 @@ public:
 		}
 	}
 
+	void DrawLCDScreen(int x, int y)
+	{
+		DrawString(x, y, "LCD", olc::WHITE);
+
+		y += 10;
+
+		for ( int i= 1; i <= 23040; i++ )
+		{
+			uint8_t pixel = gb.ppu.m_lcdPixels[i];
+
+			if (pixel == 0)
+				Draw(x, y, olc::Pixel(155, 188, 15));
+
+			if (pixel == 1)
+				Draw(x, y, olc::Pixel(139, 172, 15));
+
+			if (pixel == 2)
+				Draw(x, y, olc::Pixel(48, 98, 48));
+
+			if (pixel == 3)
+				Draw(x, y, olc::Pixel(15, 56, 15));
+
+			if (i > 0 && (i % 160) == 0)
+			{
+				x -= 159;
+				y++;
+			}
+			else
+			{
+				x++;
+			}
+		}
+	}
+
 	void DrawPPUStats(int x, int y)
 	{
 		DrawString(x, y, "PPU STATUS:", olc::WHITE);
@@ -159,9 +193,10 @@ public:
 		}
 
 		DrawCpu(10, 10);
-		DrawRam(160, 110, LY_LCD_Y_COORD, 5, 16);
+		DrawRam(160, 110, HW_STAT_LCD_STATUS, 5, 16);
 		DrawCharacterRam(10, 110);
 		DrawPPUStats(160, 10);
+		DrawLCDScreen(160, 200);
 		return true;
 	}
 };

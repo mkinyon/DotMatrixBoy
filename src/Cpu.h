@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdint.h>
 #include <iostream>
 #include <vector>
@@ -79,10 +80,6 @@ private:
 	void unimplementedInstruction(Cpu::m_CpuState &state, uint8_t opcode);
 
 	enum Flags;
-
-	bool getFlag(Flags flag);
-	void setFlag(Flags flag);
-	void clearFlag(Flags flag);
 
 	void pushSP(GameBoy& gb, uint16_t value);
 	uint16_t popSP(GameBoy& gb);

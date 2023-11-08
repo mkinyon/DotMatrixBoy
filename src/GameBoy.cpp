@@ -1,8 +1,6 @@
 #include "GameBoy.h"
 
-
 GameBoy::GameBoy() : cpu(), ppu() {}
-
 GameBoy::~GameBoy() {}
 
 void GameBoy::Run()

@@ -1,13 +1,14 @@
 #include "Cpu.h"
 #include "GameBoy.h"
 #include "Defines.h"
+#include "Utils.h"
 
 enum Cpu::Flags
 {
-	FLAG_CARRY = 0x10, // C 0001
-	FLAG_HALF_CARRY = 0x20, // H 0010
-	FLAG_SUBTRACT = 0x40, // N 0100
-	FLAG_ZERO = 0x80 // Z 1000
+	FLAG_CARRY = 0x10, // C 0001 0000
+	FLAG_HALF_CARRY = 0x20, // H 0010 0000
+	FLAG_SUBTRACT = 0x40, // N 0100 0000
+	FLAG_ZERO = 0x80 // Z 1000 0000
 };
 
 Cpu::Cpu() {}
@@ -56,7 +57,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "DI" B:1 C:4 FLAGS: - - - -
 		case 0xF3:
 		{
-			gb.WriteToMemoryMap(INTERRUPT_ENABLE, 0);
+			gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, 0);
 
 			m_cycles = 4;
 			break;
@@ -84,7 +85,7 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			// note: "e8" in the description refers to a signed char
 			int8_t offset = opcode[1];
-			if (getFlag(FLAG_ZERO) == 0)
+			if (getFlag(State.F, FLAG_ZERO) == 0)
 			{
 				State.PC += offset + 1;
 				m_cycles = 12;
@@ -110,7 +111,7 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			// note: "s8" in the description refers to a signed char
 			int8_t offset = opcode[1];
-			if (getFlag(FLAG_CARRY))
+			if (getFlag(State.F, FLAG_CARRY))
 			{
 				State.PC += offset;
 				m_cycles = 12;
@@ -127,7 +128,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "RET NZ" B:1 C:20/8 FLAGS: - - - -
 		case 0xC0:
 		{
-			if (!getFlag(FLAG_ZERO))
+			if (!getFlag(State.F, FLAG_ZERO))
 			{
 				State.PC = popSP(gb);
 				m_cycles = 20;
@@ -1121,9 +1122,9 @@ void Cpu::Clock(GameBoy& gb)
 			State.B--;
 
 			if (State.B == 0)
-				setFlag(FLAG_ZERO);
+				setFlag(State.F, FLAG_ZERO);
 
-			setFlag(FLAG_SUBTRACT);
+			setFlag(State.F, FLAG_SUBTRACT);
 
 			m_cycles = 4;
 			break;
@@ -1138,9 +1139,9 @@ void Cpu::Clock(GameBoy& gb)
 			State.C--;
 
 			if (State.C == 0)
-				setFlag(FLAG_ZERO);
+				setFlag(State.F, FLAG_ZERO);
 
-			setFlag(FLAG_SUBTRACT);
+			setFlag(State.F, FLAG_SUBTRACT);
 
 			m_cycles = 4;
 			break;
@@ -1177,8 +1178,8 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x2F:
 		{
 			State.A = ~State.A;
-			setFlag(FLAG_SUBTRACT);
-			setFlag(FLAG_HALF_CARRY);
+			setFlag(State.F, FLAG_SUBTRACT);
+			setFlag(State.F, FLAG_HALF_CARRY);
 
 			m_cycles = 4;
 			break;
@@ -1325,13 +1326,13 @@ void Cpu::Clock(GameBoy& gb)
 			State.A = State.A & State.A;
 
 			if (State.A == 0)
-				setFlag(FLAG_ZERO);
+				setFlag(State.F, FLAG_ZERO);
 			else
-				clearFlag(FLAG_ZERO);
+				clearFlag(State.F, FLAG_ZERO);
 
-			clearFlag(FLAG_SUBTRACT);
-			setFlag(FLAG_HALF_CARRY);
-			clearFlag(FLAG_CARRY);
+			clearFlag(State.F, FLAG_SUBTRACT);
+			setFlag(State.F, FLAG_HALF_CARRY);
+			clearFlag(State.F, FLAG_CARRY);
 
 			m_cycles = 4;
 			break;
@@ -1364,13 +1365,13 @@ void Cpu::Clock(GameBoy& gb)
 			State.A = State.A ^ State.A;
 			
 			if (State.A == 0)
-				setFlag(FLAG_ZERO);
+				setFlag(State.F, FLAG_ZERO);
 			else
-				clearFlag(FLAG_ZERO);
+				clearFlag(State.F, FLAG_ZERO);
 
-			clearFlag(FLAG_SUBTRACT);
-			clearFlag(FLAG_HALF_CARRY);
-			clearFlag(FLAG_CARRY);
+			clearFlag(State.F, FLAG_SUBTRACT);
+			clearFlag(State.F, FLAG_HALF_CARRY);
+			clearFlag(State.F, FLAG_CARRY);
 
 			m_cycles = 4;
 			break;
@@ -1385,13 +1386,13 @@ void Cpu::Clock(GameBoy& gb)
 			State.A = State.A | State.C;
 			
 			if (State.A == 0)
-				setFlag(FLAG_ZERO);
+				setFlag(State.F, FLAG_ZERO);
 			else
-				clearFlag(FLAG_ZERO);
+				clearFlag(State.F, FLAG_ZERO);
 			
-			clearFlag(FLAG_SUBTRACT);
-			clearFlag(FLAG_HALF_CARRY);
-			clearFlag(FLAG_CARRY);
+			clearFlag(State.F, FLAG_SUBTRACT);
+			clearFlag(State.F, FLAG_HALF_CARRY);
+			clearFlag(State.F, FLAG_CARRY);
 
 			m_cycles = 4;
 			break;
@@ -1465,17 +1466,17 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			if (State.A == opcode[1])
 			{
-				setFlag(FLAG_ZERO);
+				setFlag(State.F, FLAG_ZERO);
 			}
 
 			if ((State.A & 0xF) < (opcode[1] & 0xF))
 			{
-				clearFlag(FLAG_HALF_CARRY);
+				clearFlag(State.F, FLAG_HALF_CARRY);
 			}
 
 			if (State.A < opcode[1])
 			{
-				clearFlag(FLAG_CARRY);
+				clearFlag(State.F, FLAG_CARRY);
 			}
 
 			State.PC++;
@@ -1591,10 +1592,10 @@ void Cpu::unimplementedInstruction(Cpu::m_CpuState& State, uint8_t opcode)
 	printf("#    HL: %04x \n", State.HL);
 	printf("#\n");
 	printf("# Flags:\n");
-	printf("#    Zero flag (Z): %02x \n", getFlag(FLAG_ZERO));
-	printf("#    Subtract flag (N): %02x \n", getFlag(FLAG_SUBTRACT));
-	printf("#    Half Carry Flag (H): %02x \n", getFlag(FLAG_HALF_CARRY));
-	printf("#    Carry flag (C): %02x \n", getFlag(FLAG_CARRY));
+	printf("#    Zero flag (Z): %02x \n", getFlag(State.F, FLAG_ZERO));
+	printf("#    Subtract flag (N): %02x \n", getFlag(State.F, FLAG_SUBTRACT));
+	printf("#    Half Carry Flag (H): %02x \n", getFlag(State.F, FLAG_HALF_CARRY));
+	printf("#    Carry flag (C): %02x \n", getFlag(State.F, FLAG_CARRY));
 	printf("######################################################\n");
 	exit(1);
 }
@@ -2234,10 +2235,10 @@ void Cpu::Reset(GameBoy& gb)
 	State.SP = 0xFFFE;
 
 	// flags - should be reset to $B0
-	setFlag(FLAG_CARRY);
-	setFlag(FLAG_HALF_CARRY); 
-	clearFlag(FLAG_SUBTRACT);   
-	setFlag(FLAG_ZERO);
+	setFlag(State.F, FLAG_CARRY);
+	setFlag(State.F, FLAG_HALF_CARRY);
+	clearFlag(State.F, FLAG_SUBTRACT);
+	setFlag(State.F, FLAG_ZERO);
 
 	// hardware registers
 	gb.WriteToMemoryMap(0xFF00, 0xCF);
@@ -2294,22 +2295,7 @@ void Cpu::Reset(GameBoy& gb)
 	gb.WriteToMemoryMap(0xFF6A, 0xFF);
 	gb.WriteToMemoryMap(0xFF6B, 0xFF);
 	gb.WriteToMemoryMap(0xFF70, 0xFF);
-	gb.WriteToMemoryMap(INTERRUPT_ENABLE, 0x00);
-}
-
-bool Cpu::getFlag(Flags flag)
-{
-	return (State.F & flag) != 0;
-}
-
-void Cpu::setFlag(Flags flag)
-{
-	State.F |= flag;
-}
-
-void Cpu::clearFlag(Flags flag)
-{
-	State.F &= ~flag;
+	gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, 0x00);
 }
 
 void Cpu::pushSP(GameBoy& gb, uint16_t value)
