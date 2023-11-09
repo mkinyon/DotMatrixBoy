@@ -21,13 +21,6 @@ public:
 	uint8_t m_lcdPixels[160 * 144];
 
 private:
-	typedef struct 
-	{
-		uint8_t pixel; // 2 bit color
-		uint8_t palette; // 0 or 1
-		uint8_t priority;
-	} pixelFIFO_Item;
-
 	typedef enum
 	{
 		FIFO_GET_TILE,
@@ -39,13 +32,23 @@ private:
 
 	typedef struct 
 	{
+		uint8_t pixel; // 2 bit color
+		uint8_t palette; // 0 or 1
+		uint8_t priority;
+	} pixelFIFO_Item;
+
+	typedef struct 
+	{
 		pixelFIFO_Item fifo[8];
 		uint8_t read_end;
 		uint8_t size;
 		FIFO_State fifo_state;
 	} pixelFIFO;
 
-	void UpdateFIFO(pixelFIFO& fifo, uint8_t ly, uint8_t scy);
+	void enqueueFIFO(pixelFIFO* fifo, pixelFIFO_Item item);
+	pixelFIFO_Item dequeueFIFO(pixelFIFO* fifo);
+
+	void updateFIFO(pixelFIFO& fifo, uint8_t ly, uint8_t scy);
 
 	pixelFIFO bgFIFO;
 	pixelFIFO oamFIFO;

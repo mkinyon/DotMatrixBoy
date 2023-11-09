@@ -23,7 +23,12 @@ void GameBoy::Run()
 void GameBoy::Clock()
 {
 	cpu.Clock(*this);
-	ppu.Clock(*this);
+
+
+	for (int i = 0; i < 4; i++)
+	{
+		ppu.Clock(*this);
+	}
 }
 
 void GameBoy::InsertCartridge(Cartridge &cartridge)

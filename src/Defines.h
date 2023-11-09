@@ -68,6 +68,14 @@ typedef enum
 	
 } HardwareAddresses;
 
+/********************************************************************************************
+	PPU Specific
+*********************************************************************************************/
+
+#define LCD_WIDTH 160
+#define LCD_HEIGHT 144
+#define FIFO_SIZE 8
+
 typedef enum
 {
 	MODE_0_HBLANK =  0,  // Horizontal Blank
@@ -78,22 +86,22 @@ typedef enum
 
 typedef enum
 {
-	LCDC_BG_WINDOW_ENABLE_PRIORITY = 0x01,
-	LCDC_OBJ_ENABLE = 0x02,
-	LCDC_OBJ_SIZE = 0x04,
-	LCDC_BG_TILE_MAP = 0x08,
-	LCDC_BG_AND_WINDOW_TILES = 0x10,
-	LCDC_WINDOW_ENABLE = 0x20,
-	LCDC_WINDOW_TILE_MAP = 0x40,
-	LCDC_LCD_PPU_ENABLE = 0x80
+	LCDC_BG_WINDOW_ENABLE_PRIORITY = (0x01 << 1),
+	LCDC_OBJ_ENABLE = (0x01 << 2),
+	LCDC_OBJ_SIZE = (0x01 << 3),
+	LCDC_BG_TILE_MAP = (0x01 << 4),
+	LCDC_BG_AND_WINDOW_TILES = (0x01 << 5),
+	LCDC_WINDOW_ENABLE = (0x01 << 6),
+	LCDC_WINDOW_TILE_MAP = (0x01 << 7),
+	LCDC_LCD_PPU_ENABLE = (0x01 << 8)
 } LCDC_Flags;
 
 typedef enum
 {
-	STAT_PPU_MODE = 0x01, // this is two bits !!
-	STAT_LYC_EQUAL_LY = 0x04,
-	STAT_MODE_0_INT_SELECT = 0x08,
-	STAT_MODE_1_INT_SELECT = 0x10,
-	STAT_MODE_2_INT_SELECT = 0x20,
-	STATE_LYC_INT_SELECT = 0x40
+	STAT_PPU_MODE = (0x01 << 1), // this is two bits !!
+	STAT_LYC_EQUAL_LY = (0x01 << 3),
+	STAT_MODE_0_INT_SELECT = (0x01 << 4),
+	STAT_MODE_1_INT_SELECT = (0x01 << 5),
+	STAT_MODE_2_INT_SELECT = (0x01 << 6),
+	STATE_LYC_INT_SELECT = (0x01 << 7)
 } STAT_FLags;

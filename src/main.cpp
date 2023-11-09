@@ -34,7 +34,7 @@ public:
 		return s;
 	};
 
-	void DrawCpu(int x, int y)
+	void DrawCpuStats(int x, int y)
 	{
 		DrawString(x, y, "CPU STATUS:", olc::WHITE);
 		DrawString(x, y + 10, "Cycles: " + FormatInt(gb.cpu.m_TotalCycles, 1));
@@ -116,9 +116,9 @@ public:
 
 		y += 10;
 
-		for ( int i= 1; i <= 23040; i++ )
+		for ( int i= 1; i <= LCD_WIDTH * LCD_HEIGHT; i++ )
 		{
-			uint8_t pixel = gb.ppu.m_lcdPixels[i];
+			uint8_t pixel = gb.ppu.m_lcdPixels[i - 1];
 
 			if (pixel == 0)
 				Draw(x, y, olc::Pixel(155, 188, 15));
@@ -153,9 +153,20 @@ public:
 		if (gb.ppu.m_CurrentMode == MODE_2_OAMSCAN ) DrawString(x, y + 10, "Mode: MODE_2_OAMSCAN");
 		if (gb.ppu.m_CurrentMode == MODE_3_DRAWING ) DrawString(x, y + 10, "Mode: MODE_3_DRAWING");
 
-		DrawString(x, y + 20, "Scanline: " + FormatInt(gb.ppu.m_CurrentScanLine, 1));
-		DrawString(x, y + 30, "Dots This Frame: " + FormatInt(gb.ppu.m_TotalDotsThisFrame, 1));
-		DrawString(x, y + 40, "Total Frames: " + FormatInt(gb.ppu.m_TotalFrames, 1));
+		DrawString(x, y + 20, "LCDC: " + FormatInt(gb.ReadFromMemoryMap(HW_LCDC_LCD_CONTROL), 1));
+		DrawString(x, y + 30, "STAT: " + FormatInt(gb.ReadFromMemoryMap(HW_STAT_LCD_STATUS), 1));
+
+		DrawString(x, y + 40, "SCX: " + FormatInt(gb.ReadFromMemoryMap(HW_SCX_VIEWPORT_X_POS), 1));
+		DrawString(x, y + 50, "SCY: " + FormatInt(gb.ReadFromMemoryMap(HW_SCY_VIEWPORT_Y_POS), 1));
+
+		DrawString(x, y + 60, "LY (Scanline): " + FormatInt(gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD), 1));
+		DrawString(x, y + 70, "LYC: " + FormatInt(gb.ReadFromMemoryMap(HW_LYC_LY_COMPARE), 1));
+
+		DrawString(x, y + 80, "WX: " + FormatInt(gb.ReadFromMemoryMap(HW_WX_WINDOW_X_POS), 1));
+		DrawString(x, y + 90, "WY: " + FormatInt(gb.ReadFromMemoryMap(HW_WY_WINDOW_Y_POS), 1));
+
+		DrawString(x, y + 100, "Dots This Frame: " + FormatInt(gb.ppu.m_TotalDotsThisFrame, 1));
+		DrawString(x, y + 110, "Total Frames: " + FormatInt(gb.ppu.m_TotalFrames, 1));
 	}
 
 	bool OnUserCreate()
@@ -192,11 +203,12 @@ public:
 			gb.Clock();
 		}
 
-		DrawCpu(10, 10);
-		DrawRam(160, 110, HW_STAT_LCD_STATUS, 5, 16);
-		DrawCharacterRam(10, 110);
-		DrawPPUStats(160, 10);
-		DrawLCDScreen(160, 200);
+		DrawCpuStats(10, 10);
+		DrawPPUStats(10, 110);
+		DrawRam(200, 10, HW_STAT_LCD_STATUS, 5, 16);
+		DrawCharacterRam(220, 110);		
+		DrawLCDScreen(360, 110);
+
 		return true;
 	}
 };
