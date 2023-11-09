@@ -47,8 +47,9 @@ private:
 
 	void enqueueFIFO(pixelFIFO* fifo, pixelFIFO_Item item);
 	pixelFIFO_Item dequeueFIFO(pixelFIFO* fifo);
+	void clearFIFO(pixelFIFO* fifo);
 
-	void updateFIFO(pixelFIFO& fifo, uint8_t ly, uint8_t scy);
+	void pixelFetcher(pixelFIFO& fifo, uint8_t scx, uint8_t scy);
 
 	pixelFIFO bgFIFO;
 	pixelFIFO oamFIFO;

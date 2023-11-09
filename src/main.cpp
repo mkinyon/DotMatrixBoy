@@ -181,11 +181,6 @@ public:
 
 	bool OnUserUpdate(float fElapsedTime)
 	{
-		//// Wait for the remaining time to maintain the desired clock speed
-		//if (fElapsedTime < INSTRUCTION_TIME_SEC) {
-		//	std::this_thread::sleep_for(std::chrono::duration<double>(INSTRUCTION_TIME_SEC - fElapsedTime));
-		//}
-
 		Clear(olc::BLACK);
 
 		if (GetKey(olc::Key::SPACE).bPressed)
@@ -205,7 +200,7 @@ public:
 
 		DrawCpuStats(10, 10);
 		DrawPPUStats(10, 110);
-		DrawRam(200, 10, HW_STAT_LCD_STATUS, 5, 16);
+		DrawRam(200, 10, 0x9900, 5, 16);
 		DrawCharacterRam(220, 110);		
 		DrawLCDScreen(360, 110);
 

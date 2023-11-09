@@ -64,18 +64,23 @@ void Ppu::Clock(GameBoy& gb)
 	{
 		m_CurrentMode = MODE_3_DRAWING; 
 
+		// screen test - alternating pixel pattern per frame
 		int x = dotsThisScanline - 81;
 		int y = m_CurrentScanLine;
 		int index = y * LCD_WIDTH + x;
-
+		static int pixel = 0;
 		if (index < 23040)
 		{
-			uint8_t dot = m_lcdPixels[index];
-			m_lcdPixels[index] = dot == 1 ? 0x03 : 0x01;
+			m_lcdPixels[index] = pixel % 4;
+			pixel++;
+			pixel += m_TotalFrames;
 		}
 
-		/*int x = (scx / 8) + (dotsThisScanline - 81) & 0x1F;
-		int y = (ly + scy) / 8;*/
+		pixelFetcher(bgFIFO, scx, scy);
+		// TODO
+		int tilemapIndex = (y / 8) * (160 / 8) + (x / 8);
+		int tileId = gb.ReadFromMemoryMap(0x9800 + tilemapIndex);
+		tileId = tileId;
 	}
 	
 	if (dotsThisScanline % 456 == 0)
@@ -116,13 +121,27 @@ Ppu::pixelFIFO_Item Ppu::dequeueFIFO(pixelFIFO* fifo)
 	return item;
 }
 
-void Ppu::updateFIFO(pixelFIFO& fifo, uint8_t ly, uint8_t scy )
+void Ppu::clearFIFO(pixelFIFO* fifo)
 {
+	fifo->read_end = 0;
+	fifo->size = 0;
+}
+
+void Ppu::pixelFetcher(pixelFIFO& fifo, uint8_t scx, uint8_t scy)
+{
+	static int cycle = 0;
+	static int x = 0;
+	static int y = 0;
+
 	switch (fifo.fifo_state)
 	{
 		case FIFO_GET_TILE:
 		{
-			(ly + scy) / 8;
+			int xOffset = ((scx / 8) + x) & 0x1F;
+			int yOffset = (m_CurrentScanLine + scy) & 255;
+			int tileId = 0;
 		}
 	}
+
+	cycle++;
 }
