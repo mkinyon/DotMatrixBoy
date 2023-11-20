@@ -78,7 +78,7 @@ void Ppu::Clock(GameBoy& gb)
 
 		pixelFetcher(bgFIFO, scx, scy);
 		// TODO
-		int tilemapIndex = (y / 8) * (160 / 8) + (x / 8);
+		int tilemapIndex = (((y / 8) * 160) + x) / 8;
 		int tileId = gb.ReadFromMemoryMap(0x9800 + tilemapIndex);
 		tileId = tileId;
 	}
