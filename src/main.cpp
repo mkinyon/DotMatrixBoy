@@ -171,7 +171,7 @@ public:
 
 	bool OnUserCreate()
 	{
-		cart = std::make_shared<Cartridge>("../hello-world.gb");
+		cart = std::make_shared<Cartridge>("../hello-world.gb", false);
 
 		gb.InsertCartridge(*cart);
 		gb.Run();

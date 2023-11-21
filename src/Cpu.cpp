@@ -52,7 +52,12 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x76: { unimplementedInstruction(State, *opcode); break; }
 
 		// "PREFIX" B:1 C:4 FLAGS: - - - -
-		case 0xCB: { unimplementedInstruction(State, *opcode); break; }
+		case 0xCB: 
+		{
+			uint16_t opcode16 = (opcode[0] << 8) | (opcode[1]);
+			process16bitInstruction(gb, opcode16, State);
+			break; 
+		}
 
 		// "DI" B:1 C:4 FLAGS: - - - -
 		case 0xF3:
@@ -174,7 +179,19 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xCA: { unimplementedInstruction(State, *opcode); break; }
 
 		// "CALL Z a16" B:3 C:2412 FLAGS: - - - -
-		case 0xCC: { unimplementedInstruction(State, *opcode); break; }
+		case 0xCC:
+		{
+			if (getFlag(State.F, FLAG_ZERO))
+			{
+				pushSP(gb, (opcode[2] << 8) | (opcode[1]));
+				State.PC = (opcode[2] << 8) | (opcode[1]);
+				m_cycles = 24;
+				break;
+			}
+
+			m_cycles = 12;
+			break;
+		}
 
 		// "CALL a16" B:3 C:24 FLAGS: - - - -
 		case 0xCD:
@@ -1073,28 +1090,76 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "POP BC" B:1 C:12 FLAGS: - - - -
-		case 0xC1: { unimplementedInstruction(State, *opcode); break; }
+		case 0xC1:
+		{
+			State.BC = popSP(gb);
+
+			m_cycles = 12;
+			break;
+		}
 
 		// "PUSH BC" B:1 C:16 FLAGS: - - - -
-		case 0xC5: { unimplementedInstruction(State, *opcode); break; }
+		case 0xC5:
+		{
+			pushSP(gb, State.BC);
+
+			m_cycles = 16;
+			break;
+		}
 
 		// "POP DE" B:1 C:12 FLAGS: - - - -
-		case 0xD1: { unimplementedInstruction(State, *opcode); break; }
+		case 0xD1:
+		{
+			State.DE = popSP(gb);
+
+			m_cycles = 12;
+			break;
+		}
 
 		// "PUSH DE" B:1 C:16 FLAGS: - - - -
-		case 0xD5: { unimplementedInstruction(State, *opcode); break; }
+		case 0xD5:
+		{
+			pushSP(gb, State.DE);
+
+			m_cycles = 16;
+			break;
+		}
 
 		// "POP HL" B:1 C:12 FLAGS: - - - -
-		case 0xE1: { unimplementedInstruction(State, *opcode); break; }
+		case 0xE1:
+		{
+			State.HL = popSP(gb);
+
+			m_cycles = 12;
+			break;
+		}
 
 		// "PUSH HL" B:1 C:16 FLAGS: - - - -
-		case 0xE5: { unimplementedInstruction(State, *opcode); break; }
+		case 0xE5:
+		{
+			pushSP(gb, State.HL);
+
+			m_cycles = 16;
+			break;
+		}
 
 		// "POP AF" B:1 C:12 FLAGS: Z N H C
-		case 0xF1: { unimplementedInstruction(State, *opcode); break; }
+		case 0xF1:
+		{
+			State.AF = popSP(gb);
+
+			m_cycles = 12;
+			break;
+		}
 
 		// "PUSH AF" B:1 C:16 FLAGS: - - - -
-		case 0xF5: { unimplementedInstruction(State, *opcode); break; }
+		case 0xF5:
+		{
+			pushSP(gb, State.AF);
+
+			m_cycles = 16;
+			break;
+		}
 
 		// "LD HL SP e8" B:2 C:12 FLAGS: 0 0 H C
 		case 0xF8: { unimplementedInstruction(State, *opcode); break; }
@@ -1131,7 +1196,17 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "INC C" B:1 C:4 FLAGS: Z 0 H -
-		case 0x0C: { unimplementedInstruction(State, *opcode); break; }
+		case 0x0C:
+		{
+			State.C++;
+
+			if (State.C == 0)
+				setFlag(State.F, FLAG_ZERO);
+
+			clearFlag(State.F, FLAG_SUBTRACT);
+
+			break;
+		}
 
 		// "DEC C" B:1 C:4 FLAGS: Z 1 H -
 		case 0x0D:
@@ -1526,7 +1601,13 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x1B: { unimplementedInstruction(State, *opcode); break; }
 
 		// "INC HL" B:1 C:8 FLAGS: - - - -
-		case 0x23: { unimplementedInstruction(State, *opcode); break; }
+		case 0x23:
+		{
+			State.HL++;
+
+			m_cycles = 8;
+			break;
+		}
 
 		// "ADD HL HL" B:1 C:8 FLAGS: - 0 H C
 		case 0x29:
@@ -1572,6 +1653,26 @@ void Cpu::Clock(GameBoy& gb)
 		default:
 			unimplementedInstruction(State, *opcode);
 			break;
+	}
+}
+
+void Cpu::process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState& state)
+{
+	switch (opcode)
+	{
+		// "BIT 7 H" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB7C:
+		{
+			uint8_t bit = (State.H & 0x80) >> 7;
+
+			if (bit == 1)
+				setFlag(State.F, FLAG_ZERO);
+			else
+				clearFlag(State.F, FLAG_ZERO);
+
+			m_cycles = 8;
+			break;
+		}
 	}
 }
 
@@ -1826,9 +1927,6 @@ int Cpu::Disassemble(uint8_t* opcode, int pc)
 		// Address CB triggers a 16 bit opcode 
 		case 0xCB:
 		{
-			//uint8_t firstChar = *opcode;
-			//uint8_t secondChar = opcode[1];
-			//uint16_t opcode16 = ((uint16_t)firstChar << 8) | secondChar;
 			disasseble16bit(opcode, pc);
 			opBytes = 2;
 			break;
@@ -1898,9 +1996,10 @@ int Cpu::Disassemble(uint8_t* opcode, int pc)
 
 void Cpu::disasseble16bit(uint8_t* opcode, int pc)
 {
-	// Note: All 16 bit opcodes appear to be 2 bytes.
+	// Note: All 16 bit opcodes are 2 bytes.
+	uint16_t opcode16bit = (opcode[0] << 8) | opcode[1];
 
-	switch (*opcode)
+	switch (opcode16bit)
 	{
 		case 0xCB00: outputDisassembledInstruction("RLC B", pc, opcode, 2); break; // "RLC B" B:2 C:8 FLAGS: Z 0 0 C
 		case 0xCB01: outputDisassembledInstruction("RLC C", pc, opcode, 2); break; // "RLC C" B:2 C:8 FLAGS: Z 0 0 C

@@ -78,6 +78,8 @@ void Ppu::Clock(GameBoy& gb)
 
 		pixelFetcher(bgFIFO, scx, scy);
 		// TODO
+		int test = 32 * (((ly + scy) & 0xFF) / 8);
+
 		int tilemapIndex = (((y / 8) * 160) + x) / 8;
 		int tileId = gb.ReadFromMemoryMap(0x9800 + tilemapIndex);
 		tileId = tileId;
@@ -127,6 +129,7 @@ void Ppu::clearFIFO(pixelFIFO* fifo)
 	fifo->size = 0;
 }
 
+// todo
 void Ppu::pixelFetcher(pixelFIFO& fifo, uint8_t scx, uint8_t scy)
 {
 	static int cycle = 0;

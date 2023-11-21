@@ -8,7 +8,7 @@ class Cartridge
 {
 public:
 	Cartridge();
-	Cartridge(const std::string& fileName);
+	Cartridge(const std::string& fileName, bool enableBootRom);
 	~Cartridge();
 
 	uint8_t& Read(uint16_t address );

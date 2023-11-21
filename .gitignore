@@ -401,3 +401,4 @@ FodyWeavers.xsd
 *.gb
 tools/
 *.sav
+dmg_boot.bin

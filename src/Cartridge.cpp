@@ -2,7 +2,7 @@
 
 Cartridge::Cartridge() {}
 
-Cartridge::Cartridge(const std::string& fileName)
+Cartridge::Cartridge(const std::string& fileName, bool enableBootRom)
 {
 	// GB header
 	struct sHeader
@@ -37,6 +37,18 @@ Cartridge::Cartridge(const std::string& fileName)
 			file.seekg(0); // reset to beginning
 			romData = new std::vector<uint8_t>(32768);
 			file.read((char*)romData->data(), romData->size());
+		}
+	}
+
+	// load bootrom
+	if (enableBootRom)
+	{
+		std::ifstream bootrom;
+		bootrom.open("../dmg_boot.bin", std::ifstream::binary);
+		if (bootrom.is_open())
+		{
+			bootrom.seekg(0);
+			bootrom.read((char*)romData->data(), 256);
 		}
 	}
 }

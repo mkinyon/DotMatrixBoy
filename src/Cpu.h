@@ -75,6 +75,7 @@ public:
 	int Disassemble(uint8_t *opcode, int pc);
 
 private:
+	void process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState& state);
 	void disasseble16bit(uint8_t *opcode, int pc);
 	void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t *opcode, int totalOpBytes);
 	void unimplementedInstruction(Cpu::m_CpuState &state, uint8_t opcode);
