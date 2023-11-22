@@ -17,7 +17,7 @@ public:
 
 	GameBoy gb;
 	std::shared_ptr<Cartridge> cart;
-	bool isPaused = false;
+	bool isPaused = true;
 
 	std::string FormatInt(uint32_t n, uint8_t d)
 	{
@@ -171,7 +171,7 @@ public:
 
 	bool OnUserCreate()
 	{
-		cart = std::make_shared<Cartridge>("../hello-world.gb", false);
+		cart = std::make_shared<Cartridge>("../hello-world.gb", true);
 
 		gb.InsertCartridge(*cart);
 		gb.Run();
@@ -195,12 +195,16 @@ public:
 
 		if (!isPaused)
 		{
-			gb.Clock();
+			// for now lets just tick the system 100 times per frame
+			for (int i = 0; i < 1000; i++)
+			{
+				gb.Clock();
+			}
 		}
 
 		DrawCpuStats(10, 10);
 		DrawPPUStats(10, 110);
-		DrawRam(200, 10, 0x9900, 5, 16);
+		DrawRam(200, 10, 0xFFC0, 5, 16);
 		DrawCharacterRam(220, 110);		
 		DrawLCDScreen(360, 110);
 
