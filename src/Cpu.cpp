@@ -11,6 +11,14 @@ enum Cpu::Flags
 	FLAG_ZERO = 0x80 // Z 1000 0000
 };
 
+enum Cpu::FlagSetting
+{
+	SET_FALSE = 0,
+	SET_TRUE = 1,
+	SET_BY_RESULT = 2,
+	IGNORE = 3
+};
+
 Cpu::Cpu() {}
 Cpu::~Cpu() {}
 
@@ -31,7 +39,7 @@ void Cpu::Clock(GameBoy& gb)
 	uint8_t* opcode = &gb.ReadFromMemoryMap(State.PC);
 	
 	// write disassembly to console
-	//Disassemble(opcode, State.PC);
+	Disassemble(opcode, State.PC);
 
 	// increment program counter
 	State.PC++;
@@ -381,6 +389,7 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x32:
 		{
 			gb.WriteToMemoryMap(State.HL, State.A);
+			State.HL--;
 
 			m_cycles = 8;
 			break;
@@ -1202,8 +1211,12 @@ void Cpu::Clock(GameBoy& gb)
 
 			if (State.C == 0)
 				setFlag(State.F, FLAG_ZERO);
+			else
+				clearFlag(State.F, FLAG_ZERO);
 
 			clearFlag(State.F, FLAG_SUBTRACT);
+
+			// TODO: fix missing half carry
 
 			break;
 		}
@@ -1315,7 +1328,33 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x8B: { unimplementedInstruction(State, *opcode); break; }
 
 		// "ADC A H" B:1 C:4 FLAGS: Z 0 H C
-		case 0x8C: { unimplementedInstruction(State, *opcode); break; }
+		case 0x8C:
+		{
+			uint8_t result = State.A + getFlag(State.F, FLAG_ZERO);
+
+			// Update flags
+			if ((result & 0xFF) == 0)
+				setFlag(State.F, FLAG_ZERO);
+			else
+				clearFlag(State.F, FLAG_ZERO);
+
+			clearFlag(State.F, FLAG_SUBTRACT);
+			
+			if ((((State.A & 0xF) + (State.H & 0xF) + (getFlag(State.F, FLAG_CARRY) ? 1 : 0)) & 0x10) != 0)
+				setFlag(State.F, FLAG_HALF_CARRY);
+			else
+				clearFlag(State.F, FLAG_HALF_CARRY);
+			
+			if (result > 0xFF)
+				setFlag(State.F, FLAG_CARRY);
+			else
+				clearFlag(State.F, FLAG_CARRY);
+
+			State.A = result;
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "ADC A L" B:1 C:4 FLAGS: Z 0 H C
 		case 0x8D: { unimplementedInstruction(State, *opcode); break; }
@@ -1426,7 +1465,22 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xAB: { unimplementedInstruction(State, *opcode); break; }
 
 		// "XOR A H" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xAC: { unimplementedInstruction(State, *opcode); break; }
+		case 0xAC:
+		{
+			State.A = State.A ^ State.H;
+
+			if (State.A == 0)
+				setFlag(State.F, FLAG_ZERO);
+			else
+				clearFlag(State.F, FLAG_ZERO);
+
+			clearFlag(State.F, FLAG_SUBTRACT);
+			clearFlag(State.F, FLAG_HALF_CARRY);
+			clearFlag(State.F, FLAG_CARRY);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "XOR A L" B:1 C:4 FLAGS: Z 0 0 0
 		case 0xAD: { unimplementedInstruction(State, *opcode); break; }
@@ -1439,14 +1493,7 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.A = State.A ^ State.A;
 			
-			if (State.A == 0)
-				setFlag(State.F, FLAG_ZERO);
-			else
-				clearFlag(State.F, FLAG_ZERO);
-
-			clearFlag(State.F, FLAG_SUBTRACT);
-			clearFlag(State.F, FLAG_HALF_CARRY);
-			clearFlag(State.F, FLAG_CARRY);
+			applyFlags(SET_TRUE, SET_FALSE, SET_FALSE, SET_FALSE);
 
 			m_cycles = 4;
 			break;
@@ -1660,19 +1707,37 @@ void Cpu::process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState&
 {
 	switch (opcode)
 	{
-		// "BIT 7 H" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB7C:
+		// "RL C" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB11:
 		{
-			uint8_t bit = (State.H & 0x80) >> 7;
+			// Rotate left through carry
+			bool carryFlag = getFlag(State.F, FLAG_CARRY);
+			uint8_t temp = (State.C << 1) | (carryFlag ? 1 : 0);
+			carryFlag = (State.C & 0x80) != 0;
+			State.C = temp;
 
-			if (bit == 1)
-				setFlag(State.F, FLAG_ZERO);
-			else
-				clearFlag(State.F, FLAG_ZERO);
+			// Update flags
+			applyFlags(SET_BY_RESULT, SET_FALSE, SET_FALSE, SET_BY_RESULT, State.C);
 
 			m_cycles = 8;
 			break;
 		}
+
+		// "BIT 7 H" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB7C:
+		{
+			uint8_t bit = (State.H >> 7) & 0x01;
+
+			// Update flags
+			applyFlags(SET_BY_RESULT, SET_FALSE, SET_TRUE, IGNORE, bit);
+
+			m_cycles = 8;
+			break;
+		}
+
+		default:
+			unimplementedInstruction(State, opcode);
+			break;
 	}
 }
 
@@ -2271,6 +2336,16 @@ void Cpu::outputDisassembledInstruction(const char* instructionName, int pc, uin
 	printf("%04x", pc);
 	printf(" ");
 
+	// print flags
+	printf("Z%01x", getFlag(State.F,FLAG_ZERO));
+	printf(" ");
+	printf("N%01x", getFlag(State.F, FLAG_SUBTRACT)); ("%04x", pc);
+	printf(" ");
+	printf("H%01x", getFlag(State.F, FLAG_HALF_CARRY)); ("%04x", pc);
+	printf(" ");
+	printf("C%01x", getFlag(State.F, FLAG_CARRY)); ("%04x", pc);
+	printf(" ");
+
 	// print address values
 	if (totalOpBytes == 3)
 	{
@@ -2408,4 +2483,52 @@ uint16_t Cpu::popSP(GameBoy& gb)
 	uint8_t firstByte = gb.ReadFromMemoryMap(State.SP++);
 	uint8_t secondByte = gb.ReadFromMemoryMap(State.SP++);
 	return (secondByte << 8) | (firstByte);
+}
+
+void Cpu::applyFlags(FlagSetting zero, FlagSetting subtract, FlagSetting halfCarry, FlagSetting carry,
+	uint8_t result, uint8_t operand1, uint8_t operand2)
+{
+	// handle zero flag
+	if (zero == SET_BY_RESULT && result == 0)
+		setFlag(State.F, FLAG_ZERO);
+	else if (zero == SET_BY_RESULT && result != 0)
+		clearFlag(State.F, FLAG_ZERO);
+	else if (zero == SET_TRUE)
+		setFlag(State.F, FLAG_ZERO);
+	else if (zero == SET_FALSE)
+		clearFlag(State.F, FLAG_ZERO);
+
+	// handle subtract flag
+	if (subtract == SET_BY_RESULT && result == 0)
+		setFlag(State.F, FLAG_SUBTRACT);
+	else if (subtract == SET_BY_RESULT && result != 0)
+		clearFlag(State.F, FLAG_SUBTRACT);
+	else if (subtract == SET_TRUE)
+		setFlag(State.F, FLAG_SUBTRACT);
+	else if (subtract == SET_FALSE)
+		clearFlag(State.F, FLAG_SUBTRACT);
+
+
+	// handle half carry flag
+	if (halfCarry == SET_BY_RESULT)
+	{
+		if ((((operand1 & 0xF) + (operand2 & 0xF) + (getFlag(State.F, FLAG_CARRY) ? 1 : 0)) & 0x10) != 0)
+			setFlag(State.F, FLAG_HALF_CARRY);
+		else
+			clearFlag(State.F, FLAG_HALF_CARRY);
+	}
+	else if (halfCarry == SET_TRUE)
+		setFlag(State.F, FLAG_HALF_CARRY);
+	else if (halfCarry == SET_FALSE)
+		clearFlag(State.F, FLAG_HALF_CARRY);
+
+	// handle carry flag
+	if (carry == SET_BY_RESULT && result > 0xFF)
+		setFlag(State.F, FLAG_CARRY);
+	else if (carry == SET_BY_RESULT)
+		clearFlag(State.F, FLAG_CARRY);
+	else if (carry == SET_TRUE)
+		setFlag(State.F, FLAG_CARRY);
+	else if (carry == SET_FALSE)
+		clearFlag(State.F, FLAG_CARRY);
 }

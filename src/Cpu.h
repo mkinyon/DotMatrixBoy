@@ -81,7 +81,11 @@ private:
 	void unimplementedInstruction(Cpu::m_CpuState &state, uint8_t opcode);
 
 	enum Flags;
+	enum FlagSetting;
 
 	void pushSP(GameBoy& gb, uint16_t value);
 	uint16_t popSP(GameBoy& gb);
+
+	void applyFlags(FlagSetting zero, FlagSetting subtract, FlagSetting halfCarry, FlagSetting carry,
+		uint8_t result = 0, uint8_t operand1 = 0, uint8_t operand2 = 0);
 };
