@@ -8,11 +8,6 @@ void GameBoy::Run()
 	cpu.Reset(*this);
 	int pc = 0x100; // game boy execution start point
 
-	//while (true)
-	//{
-	//	cpu.Clock(*this);
-	//}
-
 	//// disassemble all instructions (for testing)
 	//while (pc < cart.romData->size())
 	//{
@@ -23,7 +18,6 @@ void GameBoy::Run()
 void GameBoy::Clock()
 {
 	cpu.Clock(*this);
-
 
 	for (int i = 0; i < 4; i++)
 	{

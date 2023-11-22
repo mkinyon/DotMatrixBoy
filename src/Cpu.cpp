@@ -64,6 +64,9 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			uint16_t opcode16 = (opcode[0] << 8) | (opcode[1]);
 			process16bitInstruction(gb, opcode16, State);
+
+			State.PC++;
+			m_cycles = 4;
 			break; 
 		}
 
@@ -1390,7 +1393,15 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x97: { unimplementedInstruction(State, *opcode); break; }
 
 		// "SBC A B" B:1 C:4 FLAGS: Z 1 H C
-		case 0x98: { unimplementedInstruction(State, *opcode); break; }
+		case 0x98:
+		{
+			uint8_t result = State.A - State.B - getFlag(State.F, FLAG_CARRY);
+
+			applyFlags(SET_BY_RESULT, SET_TRUE, SET_BY_RESULT, SET_BY_RESULT, result, State.A, State.B);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "SBC A C" B:1 C:4 FLAGS: Z 1 H C
 		case 0x99: { unimplementedInstruction(State, *opcode); break; }
@@ -1691,7 +1702,22 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x0F: { unimplementedInstruction(State, *opcode); break; }
 
 		// "RLA" B:1 C:4 FLAGS: 0 0 0 C
-		case 0x17: { unimplementedInstruction(State, *opcode); break; }
+		case 0x17:
+		{
+			uint8_t result = (State.A << 1) | (getFlag(State.F, FLAG_CARRY) ? 1 : 0);
+			State.A = result;
+
+			// this seems like a special case....
+			if ((State.A & 0x80) != 0)
+				setFlag(State.F, FLAG_CARRY);
+			else
+				clearFlag(State.F, FLAG_CARRY);
+
+			applyFlags(SET_FALSE, SET_FALSE, SET_FALSE, IGNORE, result);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "RRA" B:1 C:4 FLAGS: 0 0 0 C
 		case 0x1F: { unimplementedInstruction(State, *opcode); break; }
@@ -1717,7 +1743,7 @@ void Cpu::process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState&
 			State.C = temp;
 
 			// Update flags
-			applyFlags(SET_BY_RESULT, SET_FALSE, SET_FALSE, SET_BY_RESULT, State.C);
+			applyFlags(SET_BY_RESULT, SET_FALSE, SET_FALSE, (FlagSetting)carryFlag, State.C);
 
 			m_cycles = 8;
 			break;
