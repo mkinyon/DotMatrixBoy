@@ -1094,7 +1094,8 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD SP n16" B:3 C:12 FLAGS: - - - -
 		case 0x31:
 		{
-			pushSP(gb, (opcode[2] << 8) | (opcode[1]));
+			// set the stack pointer to the 2 byte address
+			State.SP = (gb, (opcode[2] << 8) | (opcode[1]));
 			State.PC += 2;
 
 			m_cycles = 12;
@@ -2431,7 +2432,7 @@ void Cpu::Reset(GameBoy& gb)
 	State.BC = 0x0013;
 	State.DE = 0x00D8;
 	State.HL = 0x014D;
-	State.PC = 0x100; // game boy execution start point
+	State.PC = 0x000; // game boy execution start point
 	State.SP = 0xFFFE;
 
 	// flags - should be reset to $B0

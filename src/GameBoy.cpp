@@ -6,9 +6,9 @@ GameBoy::~GameBoy() {}
 void GameBoy::Run()
 {
 	cpu.Reset(*this);
-	int pc = 0x100; // game boy execution start point
-
+	
 	//// disassemble all instructions (for testing)
+	// int pc = 0x100; // game boy execution start point
 	//while (pc < cart.romData->size())
 	//{
 	//	pc += cpu.Disassemble(&ReadFromMemoryMap(pc), pc);
