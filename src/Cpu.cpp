@@ -30,7 +30,7 @@ void Cpu::Clock(GameBoy& gb)
 	uint8_t* opcode = &gb.ReadFromMemoryMap(State.PC);
 	
 	// write disassembly to console
-	//Disassemble(opcode, State.PC);
+	Disassemble(opcode, State.PC);
 
 	// increment program counter
 	State.PC++;
@@ -470,7 +470,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD [HL] n8" B:2 C:12 FLAGS: - - - -
 		case 0x36:
 		{
-			State.HL = opcode[1];
+			gb.WriteToMemoryMap(State.HL, opcode[1]);
 			State.PC++;
 
 			m_cycles = 8;
@@ -552,7 +552,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD B [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x46:
 		{
-			State.B = State.HL;
+			State.B = gb.ReadFromMemoryMap(State.HL);
 
 			m_cycles = 8;
 			break;
@@ -624,7 +624,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD C [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x4E:
 		{
-			State.C = State.HL;
+			State.C = gb.ReadFromMemoryMap(State.HL);
 
 			m_cycles = 8;
 			break;
@@ -696,7 +696,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD D [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x56:
 		{
-			State.D = State.HL;
+			State.D = gb.ReadFromMemoryMap(State.HL);
 
 			m_cycles = 8;
 			break;
@@ -768,7 +768,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD E [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x5E:
 		{
-			State.E = State.HL;
+			State.E = gb.ReadFromMemoryMap(State.HL);
 
 			m_cycles = 8;
 			break;
@@ -840,7 +840,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD H [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x66: 
 		{
-			State.H = State.HL;
+			State.H = gb.ReadFromMemoryMap(State.HL);
 
 			m_cycles = 8;
 			break;
@@ -912,7 +912,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD L [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x6E:
 		{
-			State.L = State.HL;
+			State.L = gb.ReadFromMemoryMap(State.HL);
 
 			m_cycles = 8;
 			break;
@@ -931,7 +931,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD [HL] B" B:1 C:8 FLAGS: - - - -
 		case 0x70:
 		{
-			State.HL = State.L;
+			gb.WriteToMemoryMap(State.HL, State.L);
 
 			m_cycles = 8;
 			break;
@@ -940,7 +940,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD [HL] C" B:1 C:8 FLAGS: - - - -
 		case 0x71:
 		{
-			State.HL = State.C;
+			gb.WriteToMemoryMap(State.HL, State.C);
 
 			m_cycles = 8;
 			break;
@@ -949,7 +949,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD [HL] D" B:1 C:8 FLAGS: - - - -
 		case 0x72:
 		{
-			State.HL = State.D;
+			gb.WriteToMemoryMap(State.HL, State.D);
 
 			m_cycles = 8;
 			break;
@@ -967,7 +967,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD [HL] H" B:1 C:8 FLAGS: - - - -
 		case 0x74:
 		{
-			State.HL = State.H;
+			gb.WriteToMemoryMap(State.HL, State.H);
 
 			m_cycles = 8;
 			break;
@@ -976,7 +976,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD [HL] L" B:1 C:8 FLAGS: - - - -
 		case 0x75:
 		{
-			State.HL = State.L;
+			gb.WriteToMemoryMap(State.HL, State.L);
 
 			m_cycles = 8;
 			break;
@@ -985,7 +985,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
 		case 0x77:
 		{
-			State.HL = State.A;
+			gb.WriteToMemoryMap(State.HL, State.A);
 
 			m_cycles = 8;
 			break;
@@ -1048,7 +1048,7 @@ void Cpu::Clock(GameBoy& gb)
 		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
 		case 0x7E:
 		{
-			State.A = State.HL;
+			State.A = gb.ReadFromMemoryMap(State.HL);
 
 			m_cycles = 8;
 			break;

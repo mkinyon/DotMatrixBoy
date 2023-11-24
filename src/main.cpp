@@ -18,6 +18,7 @@ public:
 	GameBoy gb;
 	std::shared_ptr<Cartridge> cart;
 	bool isPaused = true;
+	bool enableBootRom = true;
 
 	std::string FormatInt(uint32_t n, uint8_t d)
 	{
@@ -171,10 +172,10 @@ public:
 
 	bool OnUserCreate()
 	{
-		cart = std::make_shared<Cartridge>("../hello-world.gb", true);
+		cart = std::make_shared<Cartridge>("../hello-world.gb", enableBootRom);
 
 		gb.InsertCartridge(*cart);
-		gb.Run();
+		gb.Run(enableBootRom);
 
 		return true;
 	}
@@ -185,7 +186,10 @@ public:
 
 		if (GetKey(olc::Key::SPACE).bPressed)
 		{
-			gb.Clock();
+			for (int i = 0; i < 4; i++)
+			{
+				gb.Clock();
+			}
 		}
 
 		if (GetKey(olc::Key::P).bPressed)
@@ -196,7 +200,7 @@ public:
 		if (!isPaused)
 		{
 			// for now lets just tick the system 100 times per frame
-			for (int i = 0; i < 1000; i++)
+			for (int i = 0; i < 10000; i++)
 			{
 				gb.Clock();
 			}
