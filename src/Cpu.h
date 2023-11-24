@@ -86,6 +86,6 @@ private:
 	void pushSP(GameBoy& gb, uint16_t value);
 	uint16_t popSP(GameBoy& gb);
 
-	void applyFlags(FlagSetting zero, FlagSetting subtract, FlagSetting halfCarry, FlagSetting carry,
-		uint8_t result = 0, uint8_t operand1 = 0, uint8_t operand2 = 0);
+	bool getCPUFlag(int flag);
+	void setCPUFlag(int flag, bool enable);
 };
