@@ -30,7 +30,7 @@ void Cpu::Clock(GameBoy& gb)
 	uint8_t* opcode = &gb.ReadFromMemoryMap(State.PC);
 	
 	// write disassembly to console
-	Disassemble(opcode, State.PC);
+	//Disassemble(opcode, State.PC);
 
 	// increment program counter
 	State.PC++;
@@ -71,7 +71,13 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "EI" B:1 C:4 FLAGS: - - - -
-		case 0xFB: { unimplementedInstruction(State, *opcode); break; }
+		case 0xFB:
+		{
+			gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, 1);
+
+			m_cycles = 4;
+			break;
+		}
 
 
 		/********************************************************************************************
@@ -178,7 +184,14 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xC4: { unimplementedInstruction(State, *opcode); break; }
 
 		// "RST $00" B:1 C:16 FLAGS: - - - -
-		case 0xC7: { unimplementedInstruction(State, *opcode); break; }
+		case 0xC7: 
+		{
+			pushSP(gb, State.PC);
+			State.PC = 0x00;
+
+			m_cycles = 16;
+			break;
+		}
 
 		// "RET Z" B:1 C:208 FLAGS: - - - -
 		case 0xC8: { unimplementedInstruction(State, *opcode); break; }
@@ -221,7 +234,14 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "RST $08" B:1 C:16 FLAGS: - - - -
-		case 0xCF: { unimplementedInstruction(State, *opcode); break; }
+		case 0xCF:
+		{
+			pushSP(gb, State.PC);
+			State.PC = 0x08;
+
+			m_cycles = 16;
+			break;
+		}
 
 		// "RET NC" B:1 C:208 FLAGS: - - - -
 		case 0xD0: { unimplementedInstruction(State, *opcode); break; }
@@ -233,7 +253,14 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xD4: { unimplementedInstruction(State, *opcode); break; }
 
 		// "RST $10" B:1 C:16 FLAGS: - - - -
-		case 0xD7: { unimplementedInstruction(State, *opcode); break; }
+		case 0xD7:
+		{
+			pushSP(gb, State.PC);
+			State.PC = 0x10;
+
+			m_cycles = 16;
+			break;
+		}
 
 		// "RET C" B:1 C:208 FLAGS: - - - -
 		case 0xD8: { unimplementedInstruction(State, *opcode); break; }
@@ -248,25 +275,61 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xDC: { unimplementedInstruction(State, *opcode); break; }
 
 		// "RST $18" B:1 C:16 FLAGS: - - - -
-		case 0xDF: { unimplementedInstruction(State, *opcode); break; }
+		case 0xDF:
+		{
+			pushSP(gb, State.PC);
+			State.PC = 0x18;
+
+			m_cycles = 16;
+			break;
+		}
 
 		// "RST $20" B:1 C:16 FLAGS: - - - -
-		case 0xE7: { unimplementedInstruction(State, *opcode); break; }
+		case 0xE7:
+		{
+			pushSP(gb, State.PC);
+			State.PC = 0x20;
+
+			m_cycles = 16;
+			break;
+		}
 
 		// "JP HL" B:1 C:4 FLAGS: - - - -
-		case 0xE9: { unimplementedInstruction(State, *opcode); break; }
+		case 0xE9:
+		{
+			State.PC = State.HL;
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "RST $28" B:1 C:16 FLAGS: - - - -
-		case 0xEF: { unimplementedInstruction(State, *opcode); break; }
+		case 0xEF:
+		{
+			pushSP(gb, State.PC);
+			State.PC = 0x28;
+
+			m_cycles = 16;
+			break;
+		}
+
 
 		// "RST $30" B:1 C:16 FLAGS: - - - -
-		case 0xF7: { unimplementedInstruction(State, *opcode); break; }
+		case 0xF7:
+		{
+			pushSP(gb, State.PC);
+			State.PC = 0x30;
+
+			m_cycles = 16;
+			break;
+		}
+
 
 		// "RST $38" B:1 C:16 FLAGS: - - - -
 		case 0xFF:
 		{
 			pushSP(gb, State.PC);
-			State.PC = 0x00 + 0x38;
+			State.PC = 0x38;
 
 			m_cycles = 16;
 			break;
@@ -1327,7 +1390,23 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "DAA" B:1 C:4 FLAGS: Z - 0 C
-		case 0x27: { unimplementedInstruction(State, *opcode); break; }
+		case 0x27:
+		{
+			if ((State.A & 0x0F) > 9 || getCPUFlag(FLAG_HALF_CARRY)) {
+				State.A += 6;
+			}
+			if ((State.A & 0xF0) > 0x90 || getCPUFlag(FLAG_CARRY)) {
+				State.A += 0x60;
+			}
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, (State.A & 0x100) != 0);
+
+			m_cycles = 4;
+			break;
+		}
+
 
 		// "INC L" B:1 C:4 FLAGS: Z 0 H -
 		case 0x2C:
@@ -1373,7 +1452,15 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x35: { unimplementedInstruction(State, *opcode); break; }
 
 		// "SCF" B:1 C:4 FLAGS: - 0 0 1
-		case 0x37: { unimplementedInstruction(State, *opcode); break; }
+		case 0x37:
+		{
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, true);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "INC A" B:1 C:4 FLAGS: Z 0 H -
 		case 0x3C: { unimplementedInstruction(State, *opcode); break; }
@@ -1413,22 +1500,111 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x85: { unimplementedInstruction(State, *opcode); break; }
 
 		// "ADD A [HL]" B:1 C:8 FLAGS: Z 0 H C
-		case 0x86: { unimplementedInstruction(State, *opcode); break; }
+		case 0x86:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+			uint8_t result = State.A + value;
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (value & 0x0F) > 0x0F));
+			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
+
+			m_cycles = 8;
+			break;
+		}
 
 		// "ADD A A" B:1 C:4 FLAGS: Z 0 H C
-		case 0x87: { unimplementedInstruction(State, *opcode); break; }
+		case 0x87:
+		{
+			uint8_t result = State.A + State.A;
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.A & 0x0F) > 0x0F));
+			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "ADC A B" B:1 C:4 FLAGS: Z 0 H C
-		case 0x88: { unimplementedInstruction(State, *opcode); break; }
+		case 0x88:
+		{
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t result = State.A + State.B + (carry ? 1 : 0);
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.B & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "ADC A C" B:1 C:4 FLAGS: Z 0 H C
-		case 0x89: { unimplementedInstruction(State, *opcode); break; }
+		case 0x89:
+		{
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t result = State.A + State.C + (carry ? 1 : 0);
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.C & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "ADC A D" B:1 C:4 FLAGS: Z 0 H C
-		case 0x8A: { unimplementedInstruction(State, *opcode); break; }
+		case 0x8A:
+		{
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t result = State.A + State.D + (carry ? 1 : 0);
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.D & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "ADC A E" B:1 C:4 FLAGS: Z 0 H C
-		case 0x8B: { unimplementedInstruction(State, *opcode); break; }
+		case 0x8B:
+		{
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t result = State.A + State.E + (carry ? 1 : 0);
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.E & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "ADC A H" B:1 C:4 FLAGS: Z 0 H C
 		case 0x8C:
@@ -1449,13 +1625,43 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "ADC A L" B:1 C:4 FLAGS: Z 0 H C
-		case 0x8D: { unimplementedInstruction(State, *opcode); break; }
+		case 0x8D:
+		{
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t result = State.A + State.L + (carry ? 1 : 0);
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.L & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "ADC A [HL]" B:1 C:8 FLAGS: Z 0 H C
 		case 0x8E: { unimplementedInstruction(State, *opcode); break; }
 
 		// "ADC A A" B:1 C:4 FLAGS: Z 0 H C
-		case 0x8F: { unimplementedInstruction(State, *opcode); break; }
+		case 0x8F:
+		{
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t result = State.A + State.A + (carry ? 1 : 0);
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.A & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "SUB A B" B:1 C:4 FLAGS: Z 1 H C
 		case 0x90:
@@ -1596,25 +1802,102 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x9F: { unimplementedInstruction(State, *opcode); break; }
 
 		// "AND A B" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA0: { unimplementedInstruction(State, *opcode); break; }
+		case 0xA0:
+		{
+			State.A = State.A & State.B;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "AND A C" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA1: { unimplementedInstruction(State, *opcode); break; }
+		case 0xA1:
+		{
+			State.A = State.A & State.C;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "AND A D" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA2: { unimplementedInstruction(State, *opcode); break; }
+		case 0xA2:
+		{
+			State.A = State.A & State.D;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "AND A E" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA3: { unimplementedInstruction(State, *opcode); break; }
+		case 0xA3:
+		{
+			State.A = State.A & State.E;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "AND A H" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA4: { unimplementedInstruction(State, *opcode); break; }
+		case 0xA4:
+		{
+			State.A = State.A & State.H;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "AND A L" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA5: { unimplementedInstruction(State, *opcode); break; }
+		case 0xA5:
+		{
+			State.A = State.A & State.L;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "AND A [HL]" B:1 C:8 FLAGS: Z 0 1 0
-		case 0xA6: { unimplementedInstruction(State, *opcode); break; }
+		case 0xA6:
+		{
+			State.A = State.A & gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "AND A A" B:1 C:4 FLAGS: Z 0 1 0
 		case 0xA7:
@@ -1631,16 +1914,60 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "XOR A B" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xA8: { unimplementedInstruction(State, *opcode); break; }
+		case 0xA8:
+		{
+			State.A = State.A ^ State.B;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "XOR A C" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xA9: { unimplementedInstruction(State, *opcode); break; }
+		case 0xA9:
+		{
+			State.A = State.A ^ State.C;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "XOR A D" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xAA: { unimplementedInstruction(State, *opcode); break; }
+		case 0xAA:
+		{
+			State.A = State.A ^ State.D;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "XOR A E" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xAB: { unimplementedInstruction(State, *opcode); break; }
+		case 0xAB:
+		{
+			State.A = State.A ^ State.E;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "XOR A H" B:1 C:4 FLAGS: Z 0 0 0
 		case 0xAC:
@@ -1657,7 +1984,18 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "XOR A L" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xAD: { unimplementedInstruction(State, *opcode); break; }
+		case 0xAD:
+		{
+			State.A = State.A ^ State.L;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "XOR A [HL]" B:1 C:8 FLAGS: Z 0 0 0
 		case 0xAE: { unimplementedInstruction(State, *opcode); break; }
@@ -1677,7 +2015,18 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "OR A B" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB0: { unimplementedInstruction(State, *opcode); break; }
+		case 0xB0:
+		{
+			State.A = State.A | State.B;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "OR A C" B:1 C:4 FLAGS: Z 0 0 0
 		case 0xB1:
@@ -1694,22 +2043,77 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "OR A D" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB2: { unimplementedInstruction(State, *opcode); break; }
+		case 0xB2:
+		{
+			State.A = State.A | State.D;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "OR A E" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB3: { unimplementedInstruction(State, *opcode); break; }
+		case 0xB3:
+		{
+			State.A = State.A | State.E;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "OR A H" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB4: { unimplementedInstruction(State, *opcode); break; }
+		case 0xB4:
+		{
+			State.A = State.A | State.H;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "OR A L" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB5: { unimplementedInstruction(State, *opcode); break; }
+		case 0xB5:
+		{
+			State.A = State.A | State.L;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "OR A [HL]" B:1 C:8 FLAGS: Z 0 0 0
 		case 0xB6: { unimplementedInstruction(State, *opcode); break; }
 
 		// "OR A A" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB7: { unimplementedInstruction(State, *opcode); break; }
+		case 0xB7:
+		{
+			State.A = State.A | State.A;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "CP A B" B:1 C:4 FLAGS: Z 1 H C
 		case 0xB8: { unimplementedInstruction(State, *opcode); break; }
@@ -1730,7 +2134,19 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xBD: { unimplementedInstruction(State, *opcode); break; }
 
 		// "CP A [HL]" B:1 C:8 FLAGS: Z 1 H C
-		case 0xBE: { unimplementedInstruction(State, *opcode); break; }
+		case 0xBE:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+			uint8_t result = State.A - value;
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, (result == 0));
+			setCPUFlag(FLAG_SUBTRACT, true);
+			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (value & 0x0F));
+
+			m_cycles = 8;
+			break;
+		}
 
 		// "CP A A" B:1 C:4 FLAGS: 1 1 0 0
 		case 0xBF: { unimplementedInstruction(State, *opcode); break; }
@@ -1748,7 +2164,18 @@ void Cpu::Clock(GameBoy& gb)
 		case 0xDE: { unimplementedInstruction(State, *opcode); break; }
 
 		// "AND A n8" B:2 C:8 FLAGS: Z 0 1 0
-		case 0xE6: { unimplementedInstruction(State, *opcode); break; }
+		case 0xE6:
+		{
+			State.A = State.A & opcode[1];
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
 
 		// "XOR A n8" B:2 C:8 FLAGS: Z 0 0 0
 		case 0xEE: { unimplementedInstruction(State, *opcode); break; }
@@ -1764,7 +2191,7 @@ void Cpu::Clock(GameBoy& gb)
 			setCPUFlag(FLAG_ZERO, (result == 0));
 			setCPUFlag(FLAG_SUBTRACT, true);
 			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (opcode[1] & 0x0F));
-			// carry is unaffected
+			setCPUFlag(FLAG_CARRY, State.A < opcode[1]);
 
 			State.PC++;
 
@@ -1807,7 +2234,19 @@ void Cpu::Clock(GameBoy& gb)
 		}
 
 		// "ADD HL DE" B:1 C:8 FLAGS: - 0 H C
-		case 0x19: { unimplementedInstruction(State, *opcode); break; }
+		case 0x19:
+		{
+			uint16_t result = State.HL + State.DE;
+
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, ((State.HL & 0xFFF) + (State.DE & 0xFFF)) & 0x1000);
+			setCPUFlag(FLAG_CARRY, result > 0xFFFF);
+
+			State.HL = result;
+
+			m_cycles = 8;
+			break;
+		}
 
 		// "DEC DE" B:1 C:8 FLAGS: - - - -
 		case 0x1B: { unimplementedInstruction(State, *opcode); break; }
@@ -1824,7 +2263,13 @@ void Cpu::Clock(GameBoy& gb)
 		// "ADD HL HL" B:1 C:8 FLAGS: - 0 H C
 		case 0x29:
 		{
-			State.HL += State.HL;
+			uint16_t result = State.HL + State.HL;
+
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, ((State.HL & 0xFFF) + (State.HL & 0xFFF)) & 0x1000);
+			setCPUFlag(FLAG_CARRY, result > 0xFFFF);
+
+			State.HL = result;
 
 			m_cycles = 8;
 			break;
@@ -1853,7 +2298,22 @@ void Cpu::Clock(GameBoy& gb)
 		case 0x07: { unimplementedInstruction(State, *opcode); break; }
 
 		// "RRCA" B:1 C:4 FLAGS: 0 0 0 C
-		case 0x0F: { unimplementedInstruction(State, *opcode); break; }
+		case 0x0F:
+		{
+			// Get the least significant bit (bit 0) before the rotation
+			bool bit0 = (State.A & 0x01) != 0;
+
+			// Perform the rotation to the right through the carry flag
+			State.A = (State.A >> 1) | (bit0 << 7);
+
+			setCPUFlag(FLAG_ZERO, false);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, bit0);
+
+			m_cycles = 4;
+			break;
+		}
 
 		// "RLA" B:1 C:4 FLAGS: 0 0 0 C
 		case 0x17:
@@ -1899,6 +2359,15 @@ void Cpu::process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState&
 			setCPUFlag(FLAG_SUBTRACT, false);
 			setCPUFlag(FLAG_HALF_CARRY, false);
 			setCPUFlag(FLAG_CARRY, carry);
+
+			m_cycles = 8;
+			break;
+		}
+
+		case 0xCB37:
+		{
+			// Perform the swap of nibbles in A
+			State.A = ((State.A & 0x0F) << 4) | ((State.A & 0xF0) >> 4);
 
 			m_cycles = 8;
 			break;
@@ -2579,7 +3048,7 @@ void Cpu::outputDisassembledInstruction(const char* instructionName, int pc, uin
 	//printf("\n");
 }
 
-void Cpu::Reset(GameBoy& gb)
+void Cpu::Reset(GameBoy& gb, bool enableBootRom)
 {
 	Cpu::m_TotalCycles = 0;
 
@@ -2588,7 +3057,7 @@ void Cpu::Reset(GameBoy& gb)
 	State.BC = 0x0013;
 	State.DE = 0x00D8;
 	State.HL = 0x014D;
-	State.PC = 0x000; // game boy execution start point
+	State.PC = enableBootRom ? 0x000 : 0x100; // game boy execution start point
 	State.SP = 0xFFFE;
 
 	// flags - should be reset to $B0

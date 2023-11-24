@@ -70,7 +70,7 @@ private:
 	int m_cycles = 0; // how many cycles remain before the cpu can fetch another instruction
 
 public:
-	void Reset(GameBoy& gb);
+	void Reset(GameBoy& gb, bool enableBootRom);
 	void Clock(GameBoy& gb);
 	int Disassemble(uint8_t *opcode, int pc);
 
@@ -81,7 +81,6 @@ private:
 	void unimplementedInstruction(Cpu::m_CpuState &state, uint8_t opcode);
 
 	enum Flags;
-	enum FlagSetting;
 
 	void pushSP(GameBoy& gb, uint16_t value);
 	uint16_t popSP(GameBoy& gb);

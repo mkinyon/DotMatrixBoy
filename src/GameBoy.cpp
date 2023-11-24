@@ -3,9 +3,9 @@
 GameBoy::GameBoy() : cpu(), ppu() {}
 GameBoy::~GameBoy() {}
 
-void GameBoy::Run()
+void GameBoy::Run(bool enableBootRom)
 {
-	cpu.Reset(*this);
+	cpu.Reset(*this, enableBootRom);
 	
 	//// disassemble all instructions (for testing)
 	// int pc = 0x100; // game boy execution start point

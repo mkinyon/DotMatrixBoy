@@ -13,7 +13,7 @@ public:
 	~GameBoy();
 
 public:
-	void Run();
+	void Run(bool enableBootRom);
 	void Clock();
 	void InsertCartridge(Cartridge &cart);
 	uint8_t& ReadFromMemoryMap(uint16_t address);
