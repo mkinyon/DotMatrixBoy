@@ -18,7 +18,7 @@ public:
 	GameBoy gb;
 	std::shared_ptr<Cartridge> cart;
 	bool isPaused = true;
-	bool enableBootRom = true;
+	bool enableBootRom = false;
 
 	std::string FormatInt(uint32_t n, uint8_t d)
 	{
@@ -172,7 +172,7 @@ public:
 
 	bool OnUserCreate()
 	{
-		cart = std::make_shared<Cartridge>("../hello-world.gb", enableBootRom);
+		cart = std::make_shared<Cartridge>("../cpu_instrs.gb", enableBootRom);
 
 		gb.InsertCartridge(*cart);
 		gb.Run(enableBootRom);
