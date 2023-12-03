@@ -5,6 +5,7 @@
 #include "Cpu.h"
 #include "Ppu.h"
 #include "Cartridge.h"
+#include "Utils.h"
 
 class GameBoy
 {
@@ -18,6 +19,8 @@ public:
 	void InsertCartridge(Cartridge &cart);
 	uint8_t& ReadFromMemoryMap(uint16_t address);
 	void WriteToMemoryMap(uint16_t address, uint8_t value);
+	bool ReadFromMemoryMapRegister(uint16_t address, int flag);
+	void WriteToMemoryMapRegister(uint16_t address, int flag, bool isEnabled);
 
 public:
 	Cpu cpu;

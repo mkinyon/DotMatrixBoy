@@ -72,9 +72,14 @@ typedef enum
 	PPU Specific
 *********************************************************************************************/
 
-#define LCD_WIDTH 160
+#define LCD_WIDTH  160
 #define LCD_HEIGHT 144
-#define FIFO_SIZE 8
+#define FIFO_SIZE  8
+
+#define OAM_CYCLES     80
+#define VBLANK_CYCLES  456
+#define HBLANK_CYCLES  204
+#define DRAWING_CYCLES 173
 
 typedef enum
 {
@@ -98,7 +103,8 @@ typedef enum
 
 typedef enum
 {
-	STAT_PPU_MODE = (0x01 << 1), // this is two bits !!
+	STAT_PPU_MODE_LBIT = (0x01 << 1), // this is two bits !!
+	STAT_PPU_MODE_HBIT = (0x01 << 2), 
 	STAT_LYC_EQUAL_LY = (0x01 << 3),
 	STAT_MODE_0_INT_SELECT = (0x01 << 4),
 	STAT_MODE_1_INT_SELECT = (0x01 << 5),

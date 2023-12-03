@@ -149,10 +149,10 @@ public:
 	{
 		DrawString(x, y, "PPU STATUS:", olc::WHITE);
 
-		if (gb.ppu.m_CurrentMode == MODE_0_HBLANK  ) DrawString(x, y + 10, "Mode: MODE_0_HBLANK");
-		if (gb.ppu.m_CurrentMode == MODE_1_VBLANK  ) DrawString(x, y + 10, "Mode: MODE_1_VBLANK");
-		if (gb.ppu.m_CurrentMode == MODE_2_OAMSCAN ) DrawString(x, y + 10, "Mode: MODE_2_OAMSCAN");
-		if (gb.ppu.m_CurrentMode == MODE_3_DRAWING ) DrawString(x, y + 10, "Mode: MODE_3_DRAWING");
+		if (gb.ppu.GetMode(gb) == MODE_0_HBLANK) DrawString(x, y + 10, "Mode: MODE_0_HBLANK");
+		if (gb.ppu.GetMode(gb) == MODE_1_VBLANK  ) DrawString(x, y + 10, "Mode: MODE_1_VBLANK");
+		if (gb.ppu.GetMode(gb) == MODE_2_OAMSCAN ) DrawString(x, y + 10, "Mode: MODE_2_OAMSCAN");
+		if (gb.ppu.GetMode(gb) == MODE_3_DRAWING ) DrawString(x, y + 10, "Mode: MODE_3_DRAWING");
 
 		DrawString(x, y + 20, "LCDC: " + FormatInt(gb.ReadFromMemoryMap(HW_LCDC_LCD_CONTROL), 1));
 		DrawString(x, y + 30, "STAT: " + FormatInt(gb.ReadFromMemoryMap(HW_STAT_LCD_STATUS), 1));
@@ -172,7 +172,7 @@ public:
 
 	bool OnUserCreate()
 	{
-		cart = std::make_shared<Cartridge>("../cpu_instrs.gb", enableBootRom);
+		cart = std::make_shared<Cartridge>("../hello-world.gb", enableBootRom);
 
 		gb.InsertCartridge(*cart);
 		gb.Run(enableBootRom);
@@ -208,7 +208,7 @@ public:
 
 		DrawCpuStats(10, 10);
 		DrawPPUStats(10, 110);
-		DrawRam(200, 10, 0xFFC0, 5, 16);
+		DrawRam(200, 10, 0x9900, 5, 16);
 		DrawCharacterRam(220, 110);		
 		DrawLCDScreen(360, 110);
 

@@ -1,4 +1,5 @@
 #include "GameBoy.h"
+#include "Utils.h"
 
 GameBoy::GameBoy() : cpu(), ppu() {}
 GameBoy::~GameBoy() {}
@@ -137,4 +138,22 @@ void GameBoy::WriteToMemoryMap(uint16_t address, uint8_t value)
 	{
 		int test = 0;
 	}
+}
+
+bool GameBoy::ReadFromMemoryMapRegister(uint16_t address, int flag)
+{
+	uint8_t value = ReadFromMemoryMap(address);
+	return getFlag(value, flag);
+}
+
+void GameBoy::WriteToMemoryMapRegister(uint16_t address, int flag, bool isEnabled)
+{
+	uint8_t value = ReadFromMemoryMap(address);
+	
+	if (isEnabled)
+		setFlag(value, flag);
+	else
+		clearFlag(value, flag);
+
+	WriteToMemoryMap(address, value);
 }

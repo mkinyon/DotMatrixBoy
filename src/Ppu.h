@@ -11,9 +11,10 @@ public:
 
 public:
 	void Clock(GameBoy& gb);
+	LCD_Mode GetMode(GameBoy& gb);
 
 public:
-	LCD_Mode m_CurrentMode;
+	unsigned int m_CycleCount = 0; // each cycle equates to one dot (pixel)
 	unsigned int m_TotalFrames = 0;
 	unsigned int m_CurrentScanLine = 0;
 	unsigned int m_TotalDotsThisFrame = 0;
@@ -30,28 +31,39 @@ private:
 		FIFO_PUSH
 	} FIFO_State;
 
-	typedef struct 
-	{
-		uint8_t pixel; // 2 bit color
-		uint8_t palette; // 0 or 1
-		uint8_t priority;
-	} pixelFIFO_Item;
+	//typedef struct 
+	//{
+	//	uint8_t pixel; // 2 bit color
+	//	uint8_t palette; // 0 or 1
+	//	uint8_t priority;
+	//} pixelFIFO_Item;
 
-	typedef struct 
-	{
-		pixelFIFO_Item fifo[8];
-		uint8_t read_end;
-		uint8_t size;
-		FIFO_State fifo_state;
-	} pixelFIFO;
+	//typedef struct 
+	//{
+	//	pixelFIFO_Item fifo[8];
+	//	uint8_t read_end;
+	//	uint8_t size;
+	//	FIFO_State fifo_state;
+	//} pixelFIFO;
 
-	void enqueueFIFO(pixelFIFO* fifo, pixelFIFO_Item item);
-	pixelFIFO_Item dequeueFIFO(pixelFIFO* fifo);
-	void clearFIFO(pixelFIFO* fifo);
+	// lcd mode functions
+	void processOAM(GameBoy& gb);
+	void processDrawing(GameBoy& gb);
+	void processHBlank(GameBoy& gb);
+	void processVBlank(GameBoy& gb);
+	LCD_Mode readLCDMode(GameBoy& gb);
+	void writeLCDMode(GameBoy& gb, LCD_Mode mode);
 
-	void pixelFetcher(pixelFIFO& fifo, uint8_t scx, uint8_t scy);
+	// drawing functions
+	void drawBGToBuffer(GameBoy& gb);
 
-	pixelFIFO bgFIFO;
-	pixelFIFO oamFIFO;
+	//void enqueueFIFO(pixelFIFO* fifo, pixelFIFO_Item item);
+	//pixelFIFO_Item dequeueFIFO(pixelFIFO* fifo);
+	//void clearFIFO(pixelFIFO* fifo);
+
+	//void pixelFetcher(pixelFIFO& fifo, uint8_t scx, uint8_t scy);
+
+	//pixelFIFO bgFIFO;
+	//pixelFIFO oamFIFO;
 };
 
