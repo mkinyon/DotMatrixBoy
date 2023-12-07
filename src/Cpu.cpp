@@ -1507,7 +1507,7 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.HL--;
 
-			setCPUFlag(FLAG_ZERO, State.HL);
+			setCPUFlag(FLAG_ZERO, State.HL  == 0);
 			setCPUFlag(FLAG_SUBTRACT, true);
 			setCPUFlag(FLAG_HALF_CARRY, (State.HL & 0x0F) == 0x0F);
 
@@ -1544,7 +1544,7 @@ void Cpu::Clock(GameBoy& gb)
 		{
 			State.A--;
 
-			setCPUFlag(FLAG_ZERO, State.A);
+			setCPUFlag(FLAG_ZERO, State.A == 0);
 			setCPUFlag(FLAG_SUBTRACT, true);
 			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) == 0x0F);
 
@@ -1848,6 +1848,8 @@ void Cpu::Clock(GameBoy& gb)
 			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.B & 0x0F));
 			setCPUFlag(FLAG_CARRY, (result > 0xFF));
 
+			State.A = result;
+
 			m_cycles = 4;
 			break;
 		}
@@ -1862,6 +1864,8 @@ void Cpu::Clock(GameBoy& gb)
 			setCPUFlag(FLAG_SUBTRACT, true);
 			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.C & 0x0F));
 			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
 
 			m_cycles = 4;
 			break;
@@ -1878,6 +1882,8 @@ void Cpu::Clock(GameBoy& gb)
 			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.D & 0x0F));
 			setCPUFlag(FLAG_CARRY, (result > 0xFF));
 
+			State.A = result;
+
 			m_cycles = 4;
 			break;
 		}
@@ -1892,6 +1898,8 @@ void Cpu::Clock(GameBoy& gb)
 			setCPUFlag(FLAG_SUBTRACT, true);
 			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.E & 0x0F));
 			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
 
 			m_cycles = 4;
 			break;
@@ -1908,6 +1916,8 @@ void Cpu::Clock(GameBoy& gb)
 			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.H & 0x0F));
 			setCPUFlag(FLAG_CARRY, (result > 0xFF));
 
+			State.A = result;
+
 			m_cycles = 4;
 			break;
 		}
@@ -1922,6 +1932,8 @@ void Cpu::Clock(GameBoy& gb)
 			setCPUFlag(FLAG_SUBTRACT, true);
 			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.L & 0x0F));
 			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
 
 			m_cycles = 4;
 			break;
@@ -1939,6 +1951,8 @@ void Cpu::Clock(GameBoy& gb)
 			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (value & 0x0F));
 			setCPUFlag(FLAG_CARRY, (result > 0xFF));
 
+			State.A = result;
+
 			m_cycles = 8;
 			break;
 		}
@@ -1954,6 +1968,8 @@ void Cpu::Clock(GameBoy& gb)
 			setCPUFlag(FLAG_HALF_CARRY, false);
 			setCPUFlag(FLAG_CARRY, false);
 
+			State.A = result;
+
 			m_cycles = 4;
 			break;
 		}
@@ -1968,6 +1984,8 @@ void Cpu::Clock(GameBoy& gb)
 			setCPUFlag(FLAG_SUBTRACT, true);
 			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) - (State.B & 0xF) - (carry ? 1 : 0)) & 0x10) != 0);
 			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
 
 			m_cycles = 4;
 			break;
@@ -2376,6 +2394,8 @@ void Cpu::Clock(GameBoy& gb)
 			setCPUFlag(FLAG_SUBTRACT, true);
 			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (opcode[1] & 0x0F));
 			setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+			State.A = result;
 
 			State.PC++;
 
@@ -3318,6 +3338,12 @@ void Cpu::Reset(GameBoy& gb, bool enableBootRom)
 	setCPUFlag(FLAG_HALF_CARRY, true);
 	setCPUFlag(FLAG_SUBTRACT, false);
 	setCPUFlag(FLAG_ZERO, true);
+
+	// randomize memory to mimick real gameboy
+	for (uint16_t address = 0x8000; address <= 0x97FF; address++)
+	{
+		gb.WriteToMemoryMap(address, generateRandomNumber(0, 255));
+	}
 
 	// hardware registers
 	gb.WriteToMemoryMap(0xFF00, 0xCF);

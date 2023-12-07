@@ -200,7 +200,7 @@ public:
 		if (!isPaused)
 		{
 			// for now lets just tick the system 100 times per frame
-			for (int i = 0; i < 24; i++)
+			for (int i = 0; i < 24000; i++)
 			{
 				gb.Clock();
 			}
@@ -208,9 +208,9 @@ public:
 
 		DrawCpuStats(10, 10);
 		DrawPPUStats(10, 110);
-		DrawRam(200, 10, 0x9480, 5, 16);
-		DrawCharacterRam(220, 110);		
-		DrawLCDScreen(360, 110);
+		DrawRam(200, 10, 0x9900, 20, 16);
+		DrawCharacterRam(220, 240);		
+		DrawLCDScreen(360, 240);
 
 		return true;
 	}

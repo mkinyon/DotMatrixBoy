@@ -126,18 +126,14 @@ void Ppu::drawBGToBuffer(GameBoy& gb)
 			? (startBackgroundTileX + i) % 32
 			: startBackgroundTileX + i;
 
-		int currentTilePos = startBackgroundTileY * 32 + tileNrX;
-		uint8_t tileId = gb.ReadFromMemoryMap(0x9800 + currentTilePos);
+		bool bgTileMapArea = gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_TILE_MAP);
+		bool bgTileDataArea = gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_AND_WINDOW_TILES);
 
+		int currentTilePos = startBackgroundTileY * 32 + tileNrX;
+		uint8_t tileId = gb.ReadFromMemoryMap( bgTileMapArea ? 0x9C00 + currentTilePos : 0x9800 + currentTilePos);
+		
 		uint16_t address;
-		if (tileId < 128) {
-			// Tiles 0-127 are located in the Tile Data Table at addresses 0x8800 to 0x97FF
-			address = 0x9000 + (tileId * 16);  // Each tile is 16 bytes
-		}
-		else {
-			// Tiles 128-255 are located in the Tile Data Table at addresses 0x8000 to 0x8FFF
-			address = 0x8000 + ((tileId - 128) * 16);  // Each tile is 16 bytes
-		}
+		address = bgTileDataArea ? 0x8000 + (tileId * 16) : 0x8800 + ((tileId + 128) * 16);  // Each tile is 16 bytes TODO: Might be a bug here
 
 		// need to offset the address based on the y position (backgroundTileYOffset) inside the tile
 		uint8_t firstByte = gb.ReadFromMemoryMap(address + (backgroundTileYOffset * 2));

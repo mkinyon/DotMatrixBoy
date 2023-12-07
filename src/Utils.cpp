@@ -14,3 +14,13 @@ void clearFlag(uint8_t& variable, int flag)
 {
 	variable &= ~flag;
 }
+
+int generateRandomNumber(int start, int end)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    std::uniform_int_distribution<int> distribution(0, 255);
+
+    return distribution(gen);
+}
