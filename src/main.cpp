@@ -18,7 +18,7 @@ public:
 	GameBoy gb;
 	std::shared_ptr<Cartridge> cart;
 	bool isPaused = true;
-	bool enableBootRom = false;
+	bool enableBootRom = true;
 
 	std::string FormatInt(uint32_t n, uint8_t d)
 	{
@@ -200,7 +200,7 @@ public:
 		if (!isPaused)
 		{
 			// for now lets just tick the system 100 times per frame
-			for (int i = 0; i < 10000; i++)
+			for (int i = 0; i < 24; i++)
 			{
 				gb.Clock();
 			}

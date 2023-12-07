@@ -82,7 +82,7 @@ void Ppu::processVBlank(GameBoy& gb)
 		
 		if (ly == 144)
 		{
-			//clearBuffer();
+			clearBuffer();
 		}
 		
 		if (ly == 153)
@@ -140,8 +140,8 @@ void Ppu::drawBGToBuffer(GameBoy& gb)
 		}
 
 		// need to offset the address based on the y position (backgroundTileYOffset) inside the tile
-		uint8_t firstByte = gb.ReadFromMemoryMap(address + backgroundTileYOffset);
-		uint8_t secondByte = gb.ReadFromMemoryMap(address + backgroundTileYOffset + 1);
+		uint8_t firstByte = gb.ReadFromMemoryMap(address + (backgroundTileYOffset * 2));
+		uint8_t secondByte = gb.ReadFromMemoryMap(address + (backgroundTileYOffset * 2) + 1);
 
 		// each tile is 8 pixels wide
 		for (int j = 0; j < 8; j++)
@@ -154,7 +154,7 @@ void Ppu::drawBGToBuffer(GameBoy& gb)
 			uint8_t secondBit = (secondByte >> j) & 0x01;
 			int color = (secondBit << 1) | firstBit;
 
-			int x = (i * 8) - backgroundTileXOffset;
+			int x = (i * 8) - backgroundTileXOffset - 1;
 			x = x + 8 - j; // fixes reversed pixels
 			writeToBuffer(x, lcdY, color);
 		}
