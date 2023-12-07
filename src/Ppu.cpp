@@ -79,6 +79,12 @@ void Ppu::processVBlank(GameBoy& gb)
 	if (m_CycleCount >= VBLANK_CYCLES)
 	{
 		uint8_t ly = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
+		
+		if (ly == 144)
+		{
+			//clearBuffer();
+		}
+		
 		if (ly == 153)
 		{
 			writeLCDMode(gb, LCD_Mode::MODE_2_OAMSCAN);
@@ -94,10 +100,10 @@ void Ppu::processVBlank(GameBoy& gb)
 // This will draw one line of the background to the buffer 
 void Ppu::drawBGToBuffer(GameBoy& gb)
 {
-	/*if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_Flags::LCDC_BG_WINDOW_ENABLE_PRIORITY))
-	{
-		return;
-	}*/
+	//if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_Flags::LCDC_BG_WINDOW_ENABLE_PRIORITY))
+	//{
+	//	return;
+	//}
 
 	uint8_t lcdY = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
 	uint8_t scrollY = gb.ReadFromMemoryMap(HW_SCY_VIEWPORT_Y_POS);
@@ -112,8 +118,7 @@ void Ppu::drawBGToBuffer(GameBoy& gb)
 	uint8_t startBackgroundTileX = scrollX / 8;
 	uint8_t backgroundTileXOffset = scrollX % 8;
 
-	// The Game Boy screen is able to display 20 tiles horizontal (160 pixel / 8 pixel per Tile)
-	// We will render 21 tiles to scroll correctly
+	// The screen is 20 tiles horizontal (160 pixel / 8 pixel per Tile) but will render 21 tiles to scroll correctly
 	for (int i = 0; i < 21; i++)
 	{
 		// Wrap the viewport around X
@@ -121,7 +126,7 @@ void Ppu::drawBGToBuffer(GameBoy& gb)
 			? (startBackgroundTileX + i) % 32
 			: startBackgroundTileX + i;
 
-		int currentTilePos = startBackgroundTileY * 32  + tileNrX;
+		int currentTilePos = startBackgroundTileY * 32 + tileNrX;
 		uint8_t tileId = gb.ReadFromMemoryMap(0x9800 + currentTilePos);
 
 		uint16_t address;
@@ -134,27 +139,40 @@ void Ppu::drawBGToBuffer(GameBoy& gb)
 			address = 0x8000 + ((tileId - 128) * 16);  // Each tile is 16 bytes
 		}
 
-		uint8_t firstByte = gb.ReadFromMemoryMap(address);// + (tileId * 10) + j);
-		uint8_t secondByte = gb.ReadFromMemoryMap(address + 1);// +(tileId * 10) + j + 1);
+		// need to offset the address based on the y position (backgroundTileYOffset) inside the tile
+		uint8_t firstByte = gb.ReadFromMemoryMap(address + backgroundTileYOffset);
+		uint8_t secondByte = gb.ReadFromMemoryMap(address + backgroundTileYOffset + 1);
 
 		// each tile is 8 pixels wide
 		for (int j = 0; j < 8; j++)
 		{
-			// Skip the first pixels, if the window start in the middle of the first tile
-			// And skip the last few pixels of the end tile
+			// make sure we are in bounds
 			if (i == 0 && j < backgroundTileXOffset) continue;
 			if (i == 20 && j >= backgroundTileXOffset) continue;
-
-			int x = (i * 8) + j - backgroundTileXOffset;
-			int y = lcdY;
-			int index = y * LCD_WIDTH + x;
-
 			
 			uint8_t firstBit = (firstByte >> j) & 0x01;
-			uint8_t secondBit = (firstByte >> j) & 0x01;
+			uint8_t secondBit = (secondByte >> j) & 0x01;
 			int color = (secondBit << 1) | firstBit;
 
-			m_lcdPixels[index] = color;
+			int x = (i * 8) - backgroundTileXOffset;
+			x = x + 8 - j; // fixes reversed pixels
+			writeToBuffer(x, lcdY, color);
+		}
+	}
+}
+
+void Ppu::writeToBuffer(int x, int y, int color)
+{
+	m_lcdPixels[y * LCD_WIDTH + x] = color;
+}
+
+void Ppu::clearBuffer()
+{
+	for (int y = 0; y < LCD_HEIGHT; y++)
+	{
+		for (int x = 0; x < LCD_WIDTH; x++)
+		{
+			m_lcdPixels[y * LCD_WIDTH + x] = 0;
 		}
 	}
 }
@@ -180,56 +198,3 @@ void Ppu::writeLCDMode(GameBoy& gb, LCD_Mode mode)
 	gb.WriteToMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT, (value >> 1) & 0x1);
 	gb.WriteToMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT, value & 0x1);
 }
-
-/*
-void Ppu::enqueueFIFO(pixelFIFO* fifo, pixelFIFO_Item item)
-{
-	if ( fifo->size < 8 )
-	{
-		// Add item to the FIFO at the write_end
-		fifo->fifo[(fifo->read_end + fifo->size) % FIFO_SIZE] = item;
-
-		// Increment the size
-		fifo->size++;
-	}
-	else
-	{
-		// TODO RESEARCH: we may need to ignore this or pause the fetcher
-	}
-}
-
-Ppu::pixelFIFO_Item Ppu::dequeueFIFO(pixelFIFO* fifo)
-{
-	pixelFIFO_Item item = fifo->fifo[fifo->read_end];
-	fifo->read_end = (fifo->read_end + 1) % FIFO_SIZE;
-	fifo->size--;
-	return item;
-}
-
-void Ppu::clearFIFO(pixelFIFO* fifo)
-{
-	fifo->read_end = 0;
-	fifo->size = 0;
-}
-
-// todo
-void Ppu::pixelFetcher(pixelFIFO& fifo, uint8_t scx, uint8_t scy)
-{
-	static int cycle = 0;
-	static int x = 0;
-	static int y = 0;
-
-	switch (fifo.fifo_state)
-	{
-		case FIFO_GET_TILE:
-		{
-			int xOffset = ((scx / 8) + x) & 0x1F;
-			int yOffset = (m_CurrentScanLine + scy) & 255;
-			int tileId = 0;
-		}
-	}
-
-	cycle++;
-}
-
-*/

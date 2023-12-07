@@ -79,7 +79,7 @@ public:
 			for (int iBit = 0; iBit < 8; iBit++)
 			{
 				uint8_t firstBit = (firstByte >> iBit) & 0x01;
-				uint8_t secondBit = (firstByte >> iBit) & 0x01;
+				uint8_t secondBit = (secondByte >> iBit) & 0x01;
 				int color = (secondBit << 1) | firstBit;
 
 				int draw_x = x - iBit; // Adjusted x coordinate for drawing
@@ -208,7 +208,7 @@ public:
 
 		DrawCpuStats(10, 10);
 		DrawPPUStats(10, 110);
-		DrawRam(200, 10, 0x9900, 5, 16);
+		DrawRam(200, 10, 0x9480, 5, 16);
 		DrawCharacterRam(220, 110);		
 		DrawLCDScreen(360, 110);
 

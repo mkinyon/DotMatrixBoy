@@ -22,30 +22,6 @@ public:
 	uint8_t m_lcdPixels[160 * 144];
 
 private:
-	typedef enum
-	{
-		FIFO_GET_TILE,
-		FIFO_GET_TILE_LOW,
-		FIFO_GET_TILE_HIGH,
-		FIFO_SLEEP,
-		FIFO_PUSH
-	} FIFO_State;
-
-	//typedef struct 
-	//{
-	//	uint8_t pixel; // 2 bit color
-	//	uint8_t palette; // 0 or 1
-	//	uint8_t priority;
-	//} pixelFIFO_Item;
-
-	//typedef struct 
-	//{
-	//	pixelFIFO_Item fifo[8];
-	//	uint8_t read_end;
-	//	uint8_t size;
-	//	FIFO_State fifo_state;
-	//} pixelFIFO;
-
 	// lcd mode functions
 	void processOAM(GameBoy& gb);
 	void processDrawing(GameBoy& gb);
@@ -57,13 +33,7 @@ private:
 	// drawing functions
 	void drawBGToBuffer(GameBoy& gb);
 
-	//void enqueueFIFO(pixelFIFO* fifo, pixelFIFO_Item item);
-	//pixelFIFO_Item dequeueFIFO(pixelFIFO* fifo);
-	//void clearFIFO(pixelFIFO* fifo);
-
-	//void pixelFetcher(pixelFIFO& fifo, uint8_t scx, uint8_t scy);
-
-	//pixelFIFO bgFIFO;
-	//pixelFIFO oamFIFO;
+	void writeToBuffer(int x, int y, int color);
+	void clearBuffer();
 };
 
