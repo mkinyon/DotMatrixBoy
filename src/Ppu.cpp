@@ -82,7 +82,8 @@ void Ppu::processVBlank(GameBoy& gb)
 		
 		if (ly == 144)
 		{
-			clearBuffer();
+			copyBackBufferToLCD();
+			clearBackBuffer();
 		}
 		
 		if (ly == 153)
@@ -139,6 +140,9 @@ void Ppu::drawBGToBuffer(GameBoy& gb)
 		uint8_t firstByte = gb.ReadFromMemoryMap(address + (backgroundTileYOffset * 2));
 		uint8_t secondByte = gb.ReadFromMemoryMap(address + (backgroundTileYOffset * 2) + 1);
 
+		// get the background palette
+		uint8_t bgPalette = gb.ReadFromMemoryMap(HW_BGP_BG_PALETTE_DATA);
+
 		// each tile is 8 pixels wide
 		for (int j = 0; j < 8; j++)
 		{
@@ -148,27 +152,40 @@ void Ppu::drawBGToBuffer(GameBoy& gb)
 			
 			uint8_t firstBit = (firstByte >> j) & 0x01;
 			uint8_t secondBit = (secondByte >> j) & 0x01;
-			int color = (secondBit << 1) | firstBit;
+			int colorIndex = (secondBit << 1) | firstBit;
 
 			int x = (i * 8) - backgroundTileXOffset - 1;
 			x = x + 8 - j; // fixes reversed pixels
-			writeToBuffer(x, lcdY, color);
+			writeToBuffer(x, lcdY, bgPalette, colorIndex);
 		}
 	}
 }
 
-void Ppu::writeToBuffer(int x, int y, int color)
+void Ppu::writeToBuffer(int x, int y, uint8_t bgPalette, int colorIndex)
 {
-	m_lcdPixels[y * LCD_WIDTH + x] = color;
+	uint8_t color = bgPalette >> (colorIndex * 2) & 0x03;
+
+	m_backBuffer[y * LCD_WIDTH + x] = color;
 }
 
-void Ppu::clearBuffer()
+void Ppu::copyBackBufferToLCD()
 {
 	for (int y = 0; y < LCD_HEIGHT; y++)
 	{
 		for (int x = 0; x < LCD_WIDTH; x++)
 		{
-			m_lcdPixels[y * LCD_WIDTH + x] = 0;
+			m_lcdPixels[y * LCD_WIDTH + x] = m_backBuffer[y * LCD_WIDTH + x];
+		}
+	}
+}
+
+void Ppu::clearBackBuffer()
+{
+	for (int y = 0; y < LCD_HEIGHT; y++)
+	{
+		for (int x = 0; x < LCD_WIDTH; x++)
+		{
+			m_backBuffer[y * LCD_WIDTH + x] = 0;
 		}
 	}
 }

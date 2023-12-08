@@ -80,10 +80,14 @@ public:
 			{
 				uint8_t firstBit = (firstByte >> iBit) & 0x01;
 				uint8_t secondBit = (secondByte >> iBit) & 0x01;
-				int color = (secondBit << 1) | firstBit;
+				int colorIndex = (secondBit << 1) | firstBit;
 
 				int draw_x = x - iBit; // Adjusted x coordinate for drawing
 				int draw_y = y + count; // Adjusted y coordinate for drawing
+
+				// get the background palette
+				uint8_t bgPalette = gb.ReadFromMemoryMap(HW_BGP_BG_PALETTE_DATA);
+				uint8_t color = bgPalette >> (colorIndex * 2) & 0x03;
 
 				if (color == 0)
 					Draw(draw_x, draw_y, olc::Pixel(155,188,15));
@@ -199,8 +203,10 @@ public:
 
 		if (!isPaused)
 		{
-			// for now lets just tick the system 100 times per frame
-			for (int i = 0; i < 24000; i++)
+			float elapsedTimeInMS = fElapsedTime * 1000.0f;
+			float cyclesToRun = elapsedTimeInMS * CYCLES_PER_MS;
+			
+			for (int i = 0; i < cyclesToRun; i++)
 			{
 				gb.Clock();
 			}
@@ -208,7 +214,7 @@ public:
 
 		DrawCpuStats(10, 10);
 		DrawPPUStats(10, 110);
-		DrawRam(200, 10, 0x9900, 20, 16);
+		DrawRam(200, 10, 0x8000, 20, 16);
 		DrawCharacterRam(220, 240);		
 		DrawLCDScreen(360, 240);
 

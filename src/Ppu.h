@@ -20,6 +20,7 @@ public:
 	unsigned int m_TotalDotsThisFrame = 0;
 
 	uint8_t m_lcdPixels[160 * 144];
+	uint8_t m_backBuffer[160 * 144];
 
 private:
 	// lcd mode functions
@@ -33,7 +34,8 @@ private:
 	// drawing functions
 	void drawBGToBuffer(GameBoy& gb);
 
-	void writeToBuffer(int x, int y, int color);
-	void clearBuffer();
+	void writeToBuffer(int x, int y, uint8_t bgPalette, int colorIndex);
+	void copyBackBufferToLCD();
+	void clearBackBuffer();
 };
 

@@ -1,7 +1,6 @@
 #pragma once
 
-constexpr double CLOCK_SPEED_MHZ = 4.194304; // 4.194304 MHz
-constexpr double INSTRUCTION_TIME_SEC = 1.0 / CLOCK_SPEED_MHZ;
+constexpr double CYCLES_PER_MS = 4194.304;
 
 typedef enum
 {
