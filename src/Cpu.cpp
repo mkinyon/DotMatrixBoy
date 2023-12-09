@@ -35,2582 +35,2646 @@ void Cpu::Clock(GameBoy& gb)
 	// increment program counter
 	State.PC++;
 
-	switch (*opcode)
+	if (!m_isHalted)
 	{
-		/********************************************************************************************
-			Misc / Control Instructions
-		*********************************************************************************************/
-
-		// "NOP" B:1 C:4 FLAGS: - - - -
-		case 0x00: break;
-
-		// "STOP n8" B:2 C:4 FLAGS: - - - -
-		case 0x10:
+		switch (*opcode)
 		{
-			// TODO
+			/********************************************************************************************
+				Misc / Control Instructions
+			*********************************************************************************************/
 
-			State.PC++;
+			// "NOP" B:1 C:4 FLAGS: - - - -
+			case 0x00: break;
 
-			m_cycles = 4;
-			break;
-		}
-
-		// "HALT" B:1 C:4 FLAGS: - - - -
-		case 0x76: { unimplementedInstruction(State, *opcode); break; }
-
-		// "PREFIX" B:1 C:4 FLAGS: - - - -
-		case 0xCB: 
-		{
-			uint16_t opcode16 = (opcode[0] << 8) | (opcode[1]);
-			process16bitInstruction(gb, opcode16, State);
-
-			State.PC++;
-			m_cycles = 4;
-			break; 
-		}
-
-		// "DI" B:1 C:4 FLAGS: - - - -
-		case 0xF3:
-		{
-			gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, 0);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "EI" B:1 C:4 FLAGS: - - - -
-		case 0xFB:
-		{
-			gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, 1);
-
-			m_cycles = 4;
-			break;
-		}
-
-
-		/********************************************************************************************
-			Jumps/Calls
-		*********************************************************************************************/
-
-		// "JR e8" B:2 C:12 FLAGS: - - - -
-		case 0x18:
-		{
-			State.PC += (int8_t)opcode[1] + 1;
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "JR NZ e8" B:2 C:12/8 FLAGS: - - - -
-		case 0x20:
-		{
-			// note: "e8" in the description refers to a signed char
-			int8_t offset = opcode[1];
-			if (getCPUFlag(FLAG_ZERO) == 0)
+			// "STOP n8" B:2 C:4 FLAGS: - - - -
+			case 0x10:
 			{
-				State.PC += offset + 1;
-				m_cycles = 12;
-			}
-			else
-			{
+				// TODO
+
 				State.PC++;
-				m_cycles = 8;
-			}
-			
-			break;
-		}
 
-		// "JR Z e8" B:2 C:128 FLAGS: - - - -
-		case 0x28:
-		{
-			// note: "e8" in the description refers to a signed char
-			int8_t offset = opcode[1];
-			if (getCPUFlag(FLAG_ZERO) == 1)
-			{
-				State.PC += offset + 1;
-				m_cycles = 12;
+				m_cycles = 4;
+				break;
 			}
-			else
+
+			// "HALT" B:1 C:4 FLAGS: - - - -
+			case 0x76:
 			{
+				m_isHalted = true;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "PREFIX" B:1 C:4 FLAGS: - - - -
+			case 0xCB:
+			{
+				uint16_t opcode16 = (opcode[0] << 8) | (opcode[1]);
+				process16bitInstruction(gb, opcode16, State);
+
 				State.PC++;
-				m_cycles = 8;
+				m_cycles = 4;
+				break;
 			}
 
-			break;
-		}
-
-		// "JR NC e8" B:2 C:128 FLAGS: - - - -
-		case 0x30:
-		{
-			// note: "s8" in the description refers to a signed char
-			int8_t offset = opcode[1];
-			if (!getCPUFlag(FLAG_CARRY))
+			// "DI" B:1 C:4 FLAGS: - - - -
+			case 0xF3:
 			{
-				State.PC += offset + 1;
+				gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, 0);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "EI" B:1 C:4 FLAGS: - - - -
+			case 0xFB:
+			{
+				gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, 1);
+
+				m_cycles = 4;
+				break;
+			}
+
+
+			/********************************************************************************************
+				Jumps/Calls
+			*********************************************************************************************/
+
+			// "JR e8" B:2 C:12 FLAGS: - - - -
+			case 0x18:
+			{
+				State.PC += (int8_t)opcode[1] + 1;
+
 				m_cycles = 12;
+				break;
 			}
-			else
-			{
-				State.PC++;
-				m_cycles = 8;
-			}
-			
-			break;
-		}
 
-		// "JR C e8" B:2 C:12/8 FLAGS: - - - -
-		case 0x38:
-		{
-			// note: "s8" in the description refers to a signed char
-			int8_t offset = opcode[1];
-			if (getCPUFlag(FLAG_CARRY))
+			// "JR NZ e8" B:2 C:12/8 FLAGS: - - - -
+			case 0x20:
 			{
-				State.PC += offset + 1;
+				// note: "e8" in the description refers to a signed char
+				int8_t offset = opcode[1];
+				if (getCPUFlag(FLAG_ZERO) == 0)
+				{
+					State.PC += offset + 1;
+					m_cycles = 12;
+				}
+				else
+				{
+					State.PC++;
+					m_cycles = 8;
+				}
+
+				break;
+			}
+
+			// "JR Z e8" B:2 C:128 FLAGS: - - - -
+			case 0x28:
+			{
+				// note: "e8" in the description refers to a signed char
+				int8_t offset = opcode[1];
+				if (getCPUFlag(FLAG_ZERO) == 1)
+				{
+					State.PC += offset + 1;
+					m_cycles = 12;
+				}
+				else
+				{
+					State.PC++;
+					m_cycles = 8;
+				}
+
+				break;
+			}
+
+			// "JR NC e8" B:2 C:128 FLAGS: - - - -
+			case 0x30:
+			{
+				// note: "s8" in the description refers to a signed char
+				int8_t offset = opcode[1];
+				if (!getCPUFlag(FLAG_CARRY))
+				{
+					State.PC += offset + 1;
+					m_cycles = 12;
+				}
+				else
+				{
+					State.PC++;
+					m_cycles = 8;
+				}
+
+				break;
+			}
+
+			// "JR C e8" B:2 C:12/8 FLAGS: - - - -
+			case 0x38:
+			{
+				// note: "s8" in the description refers to a signed char
+				int8_t offset = opcode[1];
+				if (getCPUFlag(FLAG_CARRY))
+				{
+					State.PC += offset + 1;
+					m_cycles = 12;
+				}
+				else
+				{
+					State.PC++;
+					m_cycles = 8;
+				}
+
+				break;
+			}
+
+			// "RET NZ" B:1 C:20/8 FLAGS: - - - -
+			case 0xC0:
+			{
+				if (!getCPUFlag(FLAG_ZERO))
+				{
+					State.PC = popSP(gb);
+					m_cycles = 20;
+					break;
+				}
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "JP NZ a16" B:3 C:1612 FLAGS: - - - -
+			case 0xC2: { unimplementedInstruction(State, *opcode); break; }
+
+			// "JP a16" B:3 C:16 FLAGS: - - - -
+			case 0xC3:
+			{
+				uint16_t offset = (opcode[2] << 8) | (opcode[1]);
+				State.PC = offset;
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "CALL NZ a16" B:3 C:2412 FLAGS: - - - -
+			case 0xC4:
+			{
+				if (!getCPUFlag(FLAG_ZERO))
+				{
+					pushSP(gb, State.PC);
+					m_cycles = 24;
+					break;
+				}
+
+				State.PC += 2;
+
 				m_cycles = 12;
+				break;
 			}
-			else
-			{
-				State.PC++;
-				m_cycles = 8;
-			}
-			
-			break;
-		}
 
-		// "RET NZ" B:1 C:20/8 FLAGS: - - - -
-		case 0xC0:
-		{
-			if (!getCPUFlag(FLAG_ZERO))
+			// "RST $00" B:1 C:16 FLAGS: - - - -
+			case 0xC7:
+			{
+				pushSP(gb, State.PC);
+				State.PC = 0x00;
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "RET Z" B:1 C:208 FLAGS: - - - -
+			case 0xC8: { unimplementedInstruction(State, *opcode); break; }
+
+			// "RET" B:1 C:16 FLAGS: - - - -
+			case 0xC9:
 			{
 				State.PC = popSP(gb);
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "JP Z a16" B:3 C:1612 FLAGS: - - - -
+			case 0xCA: { unimplementedInstruction(State, *opcode); break; }
+
+			// "CALL Z a16" B:3 C:2412 FLAGS: - - - -
+			case 0xCC:
+			{
+				if (getCPUFlag(FLAG_ZERO))
+				{
+					pushSP(gb, State.PC);
+					State.PC = (opcode[2] << 8) | (opcode[1]);
+					m_cycles = 24;
+					break;
+				}
+
+				m_cycles = 12;
+				break;
+			}
+
+			// "CALL a16" B:3 C:24 FLAGS: - - - -
+			case 0xCD:
+			{
+				pushSP(gb, State.PC);
+				State.PC = (opcode[2] << 8) | (opcode[1]);
+
+				m_cycles = 24;
+				break;
+			}
+
+			// "RST $08" B:1 C:16 FLAGS: - - - -
+			case 0xCF:
+			{
+				pushSP(gb, State.PC);
+				State.PC = 0x08;
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "RET NC" B:1 C:208 FLAGS: - - - -
+			case 0xD0: { unimplementedInstruction(State, *opcode); break; }
+
+			// "JP NC a16" B:3 C:1612 FLAGS: - - - -
+			case 0xD2: { unimplementedInstruction(State, *opcode); break; }
+
+			// "CALL NC a16" B:3 C:2412 FLAGS: - - - -
+			case 0xD4: { unimplementedInstruction(State, *opcode); break; }
+
+			// "RST $10" B:1 C:16 FLAGS: - - - -
+			case 0xD7:
+			{
+				pushSP(gb, State.PC);
+				State.PC = 0x10;
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "RET C" B:1 C:208 FLAGS: - - - -
+			case 0xD8: { unimplementedInstruction(State, *opcode); break; }
+
+			// "RETI" B:1 C:16 FLAGS: - - - -
+			case 0xD9: { unimplementedInstruction(State, *opcode); break; }
+
+			// "JP C a16" B:3 C:1612 FLAGS: - - - -
+			case 0xDA: { unimplementedInstruction(State, *opcode); break; }
+
+			// "CALL C a16" B:3 C:2412 FLAGS: - - - -
+			case 0xDC: { unimplementedInstruction(State, *opcode); break; }
+
+			// "RST $18" B:1 C:16 FLAGS: - - - -
+			case 0xDF:
+			{
+				pushSP(gb, State.PC);
+				State.PC = 0x18;
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "RST $20" B:1 C:16 FLAGS: - - - -
+			case 0xE7:
+			{
+				pushSP(gb, State.PC);
+				State.PC = 0x20;
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "JP HL" B:1 C:4 FLAGS: - - - -
+			case 0xE9:
+			{
+				State.PC = State.HL;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "RST $28" B:1 C:16 FLAGS: - - - -
+			case 0xEF:
+			{
+				pushSP(gb, State.PC);
+				State.PC = 0x28;
+
+				m_cycles = 16;
+				break;
+			}
+
+
+			// "RST $30" B:1 C:16 FLAGS: - - - -
+			case 0xF7:
+			{
+				pushSP(gb, State.PC);
+				State.PC = 0x30;
+
+				m_cycles = 16;
+				break;
+			}
+
+
+			// "RST $38" B:1 C:16 FLAGS: - - - -
+			case 0xFF:
+			{
+				pushSP(gb, State.PC);
+				State.PC = 0x38;
+
+				m_cycles = 16;
+				break;
+			}
+
+
+			/********************************************************************************************
+				8-bit Load Instructions
+			*********************************************************************************************/
+
+			// "LD [BC] A" B:1 C:8 FLAGS: - - - -
+			case 0x02:
+			{
+				uint16_t offset = State.BC;
+				gb.WriteToMemoryMap(offset, State.A);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD B n8" B:2 C:8 FLAGS: - - - -
+			case 0x06:
+			{
+				State.B = opcode[1];
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD A [BC]" B:1 C:8 FLAGS: - - - -
+			case 0x0A:
+			{
+				State.A = gb.ReadFromMemoryMap(State.BC);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD C n8" B:2 C:8 FLAGS: - - - -
+			case 0x0E:
+			{
+				State.C = opcode[1];
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [DE] A" B:1 C:8 FLAGS: - - - -
+			case 0x12:
+			{
+				gb.WriteToMemoryMap(State.DE, State.A);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD D n8" B:2 C:8 FLAGS: - - - -
+			case 0x16:
+			{
+				State.D = opcode[1];
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD A [DE]" B:1 C:8 FLAGS: - - - -
+			case 0x1A:
+			{
+				State.A = gb.ReadFromMemoryMap(State.DE);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD E n8" B:2 C:8 FLAGS: - - - -
+			case 0x1E:
+			{
+				State.E = opcode[1];
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [HL] A" B:1 C:8 FLAGS: - - - -
+			case 0x22:
+			{
+				gb.WriteToMemoryMap(State.HL, State.A);
+				State.HL++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD H n8" B:2 C:8 FLAGS: - - - -
+			case 0x26:
+			{
+				State.H = opcode[1];
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD A [HL]" B:1 C:8 FLAGS: - - - -
+			case 0x2A:
+			{
+				State.A = gb.ReadFromMemoryMap(State.HL);
+				State.HL++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD L n8" B:2 C:8 FLAGS: - - - -
+			case 0x2E:
+			{
+				State.L = opcode[1];
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [HL] A" B:1 C:8 FLAGS: - - - -
+			case 0x32:
+			{
+				gb.WriteToMemoryMap(State.HL, State.A);
+				State.HL--;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [HL] n8" B:2 C:12 FLAGS: - - - -
+			case 0x36:
+			{
+				gb.WriteToMemoryMap(State.HL, opcode[1]);
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD A [HL]" B:1 C:8 FLAGS: - - - -
+			case 0x3A:
+			{
+				State.A = gb.ReadFromMemoryMap(State.HL);
+				State.HL--;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD A n8" B:2 C:8 FLAGS: - - - -
+			case 0x3E:
+			{
+				State.A = opcode[1];
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD B B" B:1 C:4 FLAGS: - - - -
+			case 0x40:
+			{
+				State.B = State.B;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD B C" B:1 C:4 FLAGS: - - - -
+			case 0x41:
+			{
+				State.B = State.C;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD B D" B:1 C:4 FLAGS: - - - -
+			case 0x42:
+			{
+				State.B = State.D;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD B E" B:1 C:4 FLAGS: - - - -
+			case 0x43: {
+				State.B = State.E;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD B H" B:1 C:4 FLAGS: - - - -
+			case 0x44: {
+				State.B = State.H;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD B L" B:1 C:4 FLAGS: - - - -
+			case 0x45:
+			{
+				State.B = State.L;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD B [HL]" B:1 C:8 FLAGS: - - - -
+			case 0x46:
+			{
+				State.B = gb.ReadFromMemoryMap(State.HL);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD B A" B:1 C:4 FLAGS: - - - -
+			case 0x47:
+			{
+				State.B = State.A;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD C B" B:1 C:4 FLAGS: - - - -
+			case 0x48:
+			{
+				State.C = State.B;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD C C" B:1 C:4 FLAGS: - - - -
+			case 0x49:
+			{
+				State.C = State.C;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD C D" B:1 C:4 FLAGS: - - - -
+			case 0x4A:
+			{
+				State.C = State.D;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD C E" B:1 C:4 FLAGS: - - - -
+			case 0x4B:
+			{
+				State.C = State.E;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD C H" B:1 C:4 FLAGS: - - - -
+			case 0x4C:
+			{
+				State.C = State.H;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD C L" B:1 C:4 FLAGS: - - - -
+			case 0x4D:
+			{
+				State.C = State.L;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD C [HL]" B:1 C:8 FLAGS: - - - -
+			case 0x4E:
+			{
+				State.C = gb.ReadFromMemoryMap(State.HL);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD C A" B:1 C:4 FLAGS: - - - -
+			case 0x4F:
+			{
+				State.C = State.A;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD D B" B:1 C:4 FLAGS: - - - -
+			case 0x50:
+			{
+				State.D = State.B;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD D C" B:1 C:4 FLAGS: - - - -
+			case 0x51:
+			{
+				State.D = State.C;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD D D" B:1 C:4 FLAGS: - - - -
+			case 0x52:
+			{
+				State.D = State.D;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD D E" B:1 C:4 FLAGS: - - - -
+			case 0x53:
+			{
+				State.D = State.E;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD D H" B:1 C:4 FLAGS: - - - -
+			case 0x54:
+			{
+				State.D = State.H;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD D L" B:1 C:4 FLAGS: - - - -
+			case 0x55:
+			{
+				State.D = State.L;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD D [HL]" B:1 C:8 FLAGS: - - - -
+			case 0x56:
+			{
+				State.D = gb.ReadFromMemoryMap(State.HL);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD D A" B:1 C:4 FLAGS: - - - -
+			case 0x57:
+			{
+				State.D = State.A;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD E B" B:1 C:4 FLAGS: - - - -
+			case 0x58:
+			{
+				State.E = State.B;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD E C" B:1 C:4 FLAGS: - - - -
+			case 0x59:
+			{
+				State.E = State.C;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD E D" B:1 C:4 FLAGS: - - - -
+			case 0x5A:
+			{
+				State.E = State.D;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD E E" B:1 C:4 FLAGS: - - - -
+			case 0x5B:
+			{
+				State.E = State.E;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD E H" B:1 C:4 FLAGS: - - - -
+			case 0x5C:
+			{
+				State.E = State.H;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD E L" B:1 C:4 FLAGS: - - - -
+			case 0x5D:
+			{
+				State.E = State.L;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD E [HL]" B:1 C:8 FLAGS: - - - -
+			case 0x5E:
+			{
+				State.E = gb.ReadFromMemoryMap(State.HL);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD E A" B:1 C:4 FLAGS: - - - -
+			case 0x5F:
+			{
+				State.E = State.A;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD H B" B:1 C:4 FLAGS: - - - -
+			case 0x60:
+			{
+				State.H = State.B;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD H C" B:1 C:4 FLAGS: - - - -
+			case 0x61:
+			{
+				State.H = State.C;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD H D" B:1 C:4 FLAGS: - - - -
+			case 0x62:
+			{
+				State.H = State.D;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD H E" B:1 C:4 FLAGS: - - - -
+			case 0x63:
+			{
+				State.H = State.E;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD H H" B:1 C:4 FLAGS: - - - -
+			case 0x64:
+			{
+				State.H = State.H;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD H L" B:1 C:4 FLAGS: - - - -
+			case 0x65:
+			{
+				State.H = State.L;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD H [HL]" B:1 C:8 FLAGS: - - - -
+			case 0x66:
+			{
+				State.H = gb.ReadFromMemoryMap(State.HL);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD H A" B:1 C:4 FLAGS: - - - -
+			case 0x67:
+			{
+				State.H = State.A;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD L B" B:1 C:4 FLAGS: - - - -
+			case 0x68:
+			{
+				State.L = State.B;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD L C" B:1 C:4 FLAGS: - - - -
+			case 0x69:
+			{
+				State.L = State.C;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD L D" B:1 C:4 FLAGS: - - - -
+			case 0x6A:
+			{
+				State.L = State.D;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD L E" B:1 C:4 FLAGS: - - - -
+			case 0x6B:
+			{
+				State.L = State.E;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD L H" B:1 C:4 FLAGS: - - - -
+			case 0x6C:
+			{
+				State.L = State.H;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD L L" B:1 C:4 FLAGS: - - - -
+			case 0x6D:
+			{
+				State.L = State.L;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD L [HL]" B:1 C:8 FLAGS: - - - -
+			case 0x6E:
+			{
+				State.L = gb.ReadFromMemoryMap(State.HL);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD L A" B:1 C:4 FLAGS: - - - -
+			case 0x6F:
+			{
+				State.L = State.A;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD [HL] B" B:1 C:8 FLAGS: - - - -
+			case 0x70:
+			{
+				gb.WriteToMemoryMap(State.HL, State.L);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [HL] C" B:1 C:8 FLAGS: - - - -
+			case 0x71:
+			{
+				gb.WriteToMemoryMap(State.HL, State.C);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [HL] D" B:1 C:8 FLAGS: - - - -
+			case 0x72:
+			{
+				gb.WriteToMemoryMap(State.HL, State.D);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [HL] E" B:1 C:8 FLAGS: - - - -
+			case 0x73:
+			{
+				State.HL = State.E;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [HL] H" B:1 C:8 FLAGS: - - - -
+			case 0x74:
+			{
+				gb.WriteToMemoryMap(State.HL, State.H);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [HL] L" B:1 C:8 FLAGS: - - - -
+			case 0x75:
+			{
+				gb.WriteToMemoryMap(State.HL, State.L);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [HL] A" B:1 C:8 FLAGS: - - - -
+			case 0x77:
+			{
+				gb.WriteToMemoryMap(State.HL, State.A);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD A B" B:1 C:4 FLAGS: - - - -
+			case 0x78:
+			{
+				State.A = State.B;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD A C" B:1 C:4 FLAGS: - - - -
+			case 0x79:
+			{
+				State.A = State.C;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD A D" B:1 C:4 FLAGS: - - - -
+			case 0x7A:
+			{
+				State.A = State.D;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD A E" B:1 C:4 FLAGS: - - - -
+			case 0x7B:
+			{
+				State.A = State.E;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD A H" B:1 C:4 FLAGS: - - - -
+			case 0x7C:
+			{
+				State.A = State.H;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD A L" B:1 C:4 FLAGS: - - - -
+			case 0x7D:
+			{
+				State.A = State.L;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LD A [HL]" B:1 C:8 FLAGS: - - - -
+			case 0x7E:
+			{
+				State.A = gb.ReadFromMemoryMap(State.HL);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD A A" B:1 C:4 FLAGS: - - - -
+			case 0x7F:
+			{
+				State.A = State.A;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "LDH [a8] A" B:2 C:12 FLAGS: - - - -
+			case 0xE0:
+			{
+				uint8_t offset = opcode[1];
+				gb.WriteToMemoryMap(0xFF00 + offset, State.A);
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [C] A" B:1 C:8 FLAGS: - - - -
+			case 0xE2:
+			{
+				gb.WriteToMemoryMap(0xFF00 + State.C, State.A);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD [a16] A" B:3 C:16 FLAGS: - - - -
+			case 0xEA:
+			{
+				gb.WriteToMemoryMap((opcode[2] << 8) | (opcode[1]), State.A);
+				State.PC += 2;
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "LDH A [a8]" B:2 C:12 FLAGS: - - - -
+			case 0xF0:
+			{
+				State.A = gb.ReadFromMemoryMap(0xFF00 + opcode[1]);
+				State.PC++;
+
+				m_cycles = 12;
+				break;
+			}
+
+			// "LD A [C]" B:1 C:8 FLAGS: - - - -
+			case 0xF2:
+			{
+				State.A = gb.ReadFromMemoryMap(0xFF00 + State.C);
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "LD A [a16]" B:3 C:16 FLAGS: - - - -
+			case 0xFA:
+			{
+				State.A = gb.ReadFromMemoryMap(0xFF00 + (opcode[2] << 8) | (opcode[1]));
+				State.PC += 2;
+
+				m_cycles = 16;
+				break;
+			}
+
+
+			/********************************************************************************************
+				16-bit Load Instructions
+			*********************************************************************************************/
+
+			// "LD BC n16" B:3 C:12 FLAGS: - - - -
+			case 0x01:
+			{
+				State.BC = (opcode[2] << 8) | (opcode[1]);
+				State.PC += 2;
+
+				m_cycles = 12;
+				break;
+			}
+
+			// "LD [a16] SP" B:3 C:20 FLAGS: - - - -
+			case 0x08:
+			{
+				gb.WriteToMemoryMap((opcode[2] << 8) | (opcode[1]), State.SP);
+				State.PC += 2;
+
 				m_cycles = 20;
 				break;
 			}
 
-			m_cycles = 8;
-			break;
-		}
-
-		// "JP NZ a16" B:3 C:1612 FLAGS: - - - -
-		case 0xC2: { unimplementedInstruction(State, *opcode); break; }
-
-		// "JP a16" B:3 C:16 FLAGS: - - - -
-		case 0xC3:
-		{
-			uint16_t offset = (opcode[2] << 8) | (opcode[1]);
-			State.PC = offset;
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "CALL NZ a16" B:3 C:2412 FLAGS: - - - -
-		case 0xC4:
-		{
-			if (!getCPUFlag(FLAG_ZERO))
+			// "LD DE n16" B:3 C:12 FLAGS: - - - -
+			case 0x11:
 			{
-				pushSP(gb, State.PC);
-				m_cycles = 24;
+				State.DE = (opcode[2] << 8) | (opcode[1]);
+				State.PC += 2;
+
+				m_cycles = 12;
 				break;
 			}
 
-			State.PC += 2;
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "RST $00" B:1 C:16 FLAGS: - - - -
-		case 0xC7: 
-		{
-			pushSP(gb, State.PC);
-			State.PC = 0x00;
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RET Z" B:1 C:208 FLAGS: - - - -
-		case 0xC8: { unimplementedInstruction(State, *opcode); break; }
-
-		// "RET" B:1 C:16 FLAGS: - - - -
-		case 0xC9:
-		{
-			State.PC = popSP(gb);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "JP Z a16" B:3 C:1612 FLAGS: - - - -
-		case 0xCA: { unimplementedInstruction(State, *opcode); break; }
-
-		// "CALL Z a16" B:3 C:2412 FLAGS: - - - -
-		case 0xCC:
-		{
-			if (getCPUFlag(FLAG_ZERO))
+			// "LD HL n16" B:3 C:12 FLAGS: - - - -
+			case 0x21:
 			{
-				pushSP(gb, State.PC);
-				State.PC = (opcode[2] << 8) | (opcode[1]);
-				m_cycles = 24;
+				State.HL = (opcode[2] << 8) | (opcode[1]);
+				State.PC += 2;
+
+				m_cycles = 12;
 				break;
 			}
 
-			m_cycles = 12;
-			break;
-		}
-
-		// "CALL a16" B:3 C:24 FLAGS: - - - -
-		case 0xCD:
-		{
-			pushSP(gb, State.PC);
-			State.PC = (opcode[2] << 8) | (opcode[1]);
-
-			m_cycles = 24;
-			break;
-		}
-
-		// "RST $08" B:1 C:16 FLAGS: - - - -
-		case 0xCF:
-		{
-			pushSP(gb, State.PC);
-			State.PC = 0x08;
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RET NC" B:1 C:208 FLAGS: - - - -
-		case 0xD0: { unimplementedInstruction(State, *opcode); break; }
-
-		// "JP NC a16" B:3 C:1612 FLAGS: - - - -
-		case 0xD2: { unimplementedInstruction(State, *opcode); break; }
-
-		// "CALL NC a16" B:3 C:2412 FLAGS: - - - -
-		case 0xD4: { unimplementedInstruction(State, *opcode); break; }
-
-		// "RST $10" B:1 C:16 FLAGS: - - - -
-		case 0xD7:
-		{
-			pushSP(gb, State.PC);
-			State.PC = 0x10;
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RET C" B:1 C:208 FLAGS: - - - -
-		case 0xD8: { unimplementedInstruction(State, *opcode); break; }
-
-		// "RETI" B:1 C:16 FLAGS: - - - -
-		case 0xD9: { unimplementedInstruction(State, *opcode); break; }
-
-		// "JP C a16" B:3 C:1612 FLAGS: - - - -
-		case 0xDA: { unimplementedInstruction(State, *opcode); break; }
-
-		// "CALL C a16" B:3 C:2412 FLAGS: - - - -
-		case 0xDC: { unimplementedInstruction(State, *opcode); break; }
-
-		// "RST $18" B:1 C:16 FLAGS: - - - -
-		case 0xDF:
-		{
-			pushSP(gb, State.PC);
-			State.PC = 0x18;
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RST $20" B:1 C:16 FLAGS: - - - -
-		case 0xE7:
-		{
-			pushSP(gb, State.PC);
-			State.PC = 0x20;
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "JP HL" B:1 C:4 FLAGS: - - - -
-		case 0xE9:
-		{
-			State.PC = State.HL;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "RST $28" B:1 C:16 FLAGS: - - - -
-		case 0xEF:
-		{
-			pushSP(gb, State.PC);
-			State.PC = 0x28;
-
-			m_cycles = 16;
-			break;
-		}
-
-
-		// "RST $30" B:1 C:16 FLAGS: - - - -
-		case 0xF7:
-		{
-			pushSP(gb, State.PC);
-			State.PC = 0x30;
-
-			m_cycles = 16;
-			break;
-		}
-
-
-		// "RST $38" B:1 C:16 FLAGS: - - - -
-		case 0xFF:
-		{
-			pushSP(gb, State.PC);
-			State.PC = 0x38;
-
-			m_cycles = 16;
-			break;
-		}
-
-
-		/********************************************************************************************
-			8-bit Load Instructions
-		*********************************************************************************************/
-
-		// "LD [BC] A" B:1 C:8 FLAGS: - - - -
-		case 0x02:
-		{
-			uint16_t offset = State.BC;
-			gb.WriteToMemoryMap(offset, State.A);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD B n8" B:2 C:8 FLAGS: - - - -
-		case 0x06:
-		{
-			State.B = opcode[1];
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD A [BC]" B:1 C:8 FLAGS: - - - -
-		case 0x0A:
-		{
-			State.A = gb.ReadFromMemoryMap(State.BC);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD C n8" B:2 C:8 FLAGS: - - - -
-		case 0x0E:
-		{
-			State.C = opcode[1];
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [DE] A" B:1 C:8 FLAGS: - - - -
-		case 0x12:
-		{
-			gb.WriteToMemoryMap(State.DE, State.A);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD D n8" B:2 C:8 FLAGS: - - - -
-		case 0x16:
-		{
-			State.D = opcode[1];
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD A [DE]" B:1 C:8 FLAGS: - - - -
-		case 0x1A:
-		{
-			State.A = gb.ReadFromMemoryMap(State.DE);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD E n8" B:2 C:8 FLAGS: - - - -
-		case 0x1E:
-		{
-			State.E = opcode[1];
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
-		case 0x22:
-		{
-			gb.WriteToMemoryMap(State.HL, State.A);
-			State.HL++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD H n8" B:2 C:8 FLAGS: - - - -
-		case 0x26:
-		{
-			State.H = opcode[1];
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x2A:
-		{
-			State.A = gb.ReadFromMemoryMap(State.HL);
-			State.HL++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD L n8" B:2 C:8 FLAGS: - - - -
-		case 0x2E:
-		{
-			State.L = opcode[1];
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
-		case 0x32:
-		{
-			gb.WriteToMemoryMap(State.HL, State.A);
-			State.HL--;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [HL] n8" B:2 C:12 FLAGS: - - - -
-		case 0x36:
-		{
-			gb.WriteToMemoryMap(State.HL, opcode[1]);
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x3A:
-		{
-			State.A = gb.ReadFromMemoryMap(State.HL);
-			State.HL--;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD A n8" B:2 C:8 FLAGS: - - - -
-		case 0x3E:
-		{
-			State.A = opcode[1];
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD B B" B:1 C:4 FLAGS: - - - -
-		case 0x40:
-		{
-			State.B = State.B;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD B C" B:1 C:4 FLAGS: - - - -
-		case 0x41:
-		{
-			State.B = State.C;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD B D" B:1 C:4 FLAGS: - - - -
-		case 0x42:
-		{
-			State.B = State.D;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD B E" B:1 C:4 FLAGS: - - - -
-		case 0x43: {
-			State.B = State.E;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD B H" B:1 C:4 FLAGS: - - - -
-		case 0x44: {
-			State.B = State.H;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD B L" B:1 C:4 FLAGS: - - - -
-		case 0x45:
-		{
-			State.B = State.L;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD B [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x46:
-		{
-			State.B = gb.ReadFromMemoryMap(State.HL);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD B A" B:1 C:4 FLAGS: - - - -
-		case 0x47:
-		{
-			State.B = State.A;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD C B" B:1 C:4 FLAGS: - - - -
-		case 0x48:
-		{
-			State.C = State.B;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD C C" B:1 C:4 FLAGS: - - - -
-		case 0x49:
-		{
-			State.C = State.C;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD C D" B:1 C:4 FLAGS: - - - -
-		case 0x4A:
-		{
-			State.C = State.D;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD C E" B:1 C:4 FLAGS: - - - -
-		case 0x4B:
-		{
-			State.C = State.E;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD C H" B:1 C:4 FLAGS: - - - -
-		case 0x4C:
-		{
-			State.C = State.H;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD C L" B:1 C:4 FLAGS: - - - -
-		case 0x4D:
-		{
-			State.C = State.L;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD C [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x4E:
-		{
-			State.C = gb.ReadFromMemoryMap(State.HL);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD C A" B:1 C:4 FLAGS: - - - -
-		case 0x4F:
-		{
-			State.C = State.A;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD D B" B:1 C:4 FLAGS: - - - -
-		case 0x50:
-		{
-			State.D = State.B;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD D C" B:1 C:4 FLAGS: - - - -
-		case 0x51:
-		{
-			State.D = State.C;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD D D" B:1 C:4 FLAGS: - - - -
-		case 0x52:
-		{
-			State.D = State.D;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD D E" B:1 C:4 FLAGS: - - - -
-		case 0x53:
-		{
-			State.D = State.E;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD D H" B:1 C:4 FLAGS: - - - -
-		case 0x54:
-		{
-			State.D = State.H;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD D L" B:1 C:4 FLAGS: - - - -
-		case 0x55:
-		{
-			State.D = State.L;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD D [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x56:
-		{
-			State.D = gb.ReadFromMemoryMap(State.HL);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD D A" B:1 C:4 FLAGS: - - - -
-		case 0x57:
-		{
-			State.D = State.A;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD E B" B:1 C:4 FLAGS: - - - -
-		case 0x58:
-		{
-			State.E = State.B;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD E C" B:1 C:4 FLAGS: - - - -
-		case 0x59:
-		{
-			State.E = State.C;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD E D" B:1 C:4 FLAGS: - - - -
-		case 0x5A:
-		{
-			State.E = State.D;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD E E" B:1 C:4 FLAGS: - - - -
-		case 0x5B:
-		{
-			State.E = State.E;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD E H" B:1 C:4 FLAGS: - - - -
-		case 0x5C:
-		{
-			State.E = State.H;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD E L" B:1 C:4 FLAGS: - - - -
-		case 0x5D:
-		{
-			State.E = State.L;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD E [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x5E:
-		{
-			State.E = gb.ReadFromMemoryMap(State.HL);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD E A" B:1 C:4 FLAGS: - - - -
-		case 0x5F:
-		{
-			State.E = State.A;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD H B" B:1 C:4 FLAGS: - - - -
-		case 0x60:
-		{
-			State.H = State.B;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD H C" B:1 C:4 FLAGS: - - - -
-		case 0x61:
-		{
-			State.H = State.C;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD H D" B:1 C:4 FLAGS: - - - -
-		case 0x62:
-		{
-			State.H = State.D;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD H E" B:1 C:4 FLAGS: - - - -
-		case 0x63:
-		{
-			State.H = State.E;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD H H" B:1 C:4 FLAGS: - - - -
-		case 0x64:
-		{
-			State.H = State.H;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD H L" B:1 C:4 FLAGS: - - - -
-		case 0x65:
-		{
-			State.H = State.L;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD H [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x66: 
-		{
-			State.H = gb.ReadFromMemoryMap(State.HL);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD H A" B:1 C:4 FLAGS: - - - -
-		case 0x67:
-		{
-			State.H = State.A;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD L B" B:1 C:4 FLAGS: - - - -
-		case 0x68:
-		{
-			State.L = State.B;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD L C" B:1 C:4 FLAGS: - - - -
-		case 0x69:
-		{
-			State.L = State.C;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD L D" B:1 C:4 FLAGS: - - - -
-		case 0x6A:
-		{
-			State.L = State.D;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD L E" B:1 C:4 FLAGS: - - - -
-		case 0x6B:
-		{
-			State.L = State.E;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD L H" B:1 C:4 FLAGS: - - - -
-		case 0x6C:
-		{
-			State.L = State.H;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD L L" B:1 C:4 FLAGS: - - - -
-		case 0x6D:
-		{
-			State.L = State.L;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD L [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x6E:
-		{
-			State.L = gb.ReadFromMemoryMap(State.HL);
-
-			m_cycles = 8;
-			break;
-		}
-
-
-		// "LD L A" B:1 C:4 FLAGS: - - - -
-		case 0x6F:
-		{
-			State.L = State.A;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD [HL] B" B:1 C:8 FLAGS: - - - -
-		case 0x70:
-		{
-			gb.WriteToMemoryMap(State.HL, State.L);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [HL] C" B:1 C:8 FLAGS: - - - -
-		case 0x71:
-		{
-			gb.WriteToMemoryMap(State.HL, State.C);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [HL] D" B:1 C:8 FLAGS: - - - -
-		case 0x72:
-		{
-			gb.WriteToMemoryMap(State.HL, State.D);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [HL] E" B:1 C:8 FLAGS: - - - -
-		case 0x73:
-		{
-			State.HL = State.E;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [HL] H" B:1 C:8 FLAGS: - - - -
-		case 0x74:
-		{
-			gb.WriteToMemoryMap(State.HL, State.H);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [HL] L" B:1 C:8 FLAGS: - - - -
-		case 0x75:
-		{
-			gb.WriteToMemoryMap(State.HL, State.L);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [HL] A" B:1 C:8 FLAGS: - - - -
-		case 0x77:
-		{
-			gb.WriteToMemoryMap(State.HL, State.A);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD A B" B:1 C:4 FLAGS: - - - -
-		case 0x78:
-		{
-			State.A = State.B;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD A C" B:1 C:4 FLAGS: - - - -
-		case 0x79:
-		{
-			State.A = State.C;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD A D" B:1 C:4 FLAGS: - - - -
-		case 0x7A:
-		{
-			State.A = State.D;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD A E" B:1 C:4 FLAGS: - - - -
-		case 0x7B:
-		{
-			State.A = State.E;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD A H" B:1 C:4 FLAGS: - - - -
-		case 0x7C:
-		{
-			State.A = State.H;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD A L" B:1 C:4 FLAGS: - - - -
-		case 0x7D:
-		{
-			State.A = State.L;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LD A [HL]" B:1 C:8 FLAGS: - - - -
-		case 0x7E:
-		{
-			State.A = gb.ReadFromMemoryMap(State.HL);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD A A" B:1 C:4 FLAGS: - - - -
-		case 0x7F:
-		{
-			State.A = State.A;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "LDH [a8] A" B:2 C:12 FLAGS: - - - -
-		case 0xE0:
-		{
-			uint8_t offset = opcode[1];
-			gb.WriteToMemoryMap(0xFF00 + offset, State.A);
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [C] A" B:1 C:8 FLAGS: - - - -
-		case 0xE2:
-		{
-			gb.WriteToMemoryMap(0xFF00 + State.C, State.A);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD [a16] A" B:3 C:16 FLAGS: - - - -
-		case 0xEA:
-		{
-			gb.WriteToMemoryMap((opcode[2] << 8) | (opcode[1]), State.A);
-			State.PC += 2;
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "LDH A [a8]" B:2 C:12 FLAGS: - - - -
-		case 0xF0:
-		{
-			State.A = gb.ReadFromMemoryMap(0xFF00 + opcode[1]);
-			State.PC++;
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "LD A [C]" B:1 C:8 FLAGS: - - - -
-		case 0xF2:
-		{
-			State.A = gb.ReadFromMemoryMap(0xFF00 + State.C);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "LD A [a16]" B:3 C:16 FLAGS: - - - -
-		case 0xFA:
-		{
-			State.A = gb.ReadFromMemoryMap(0xFF00 + (opcode[2] << 8) | (opcode[1]));
-			State.PC += 2;
-
-			m_cycles = 16;
-			break;
-		}
-
-
-		/********************************************************************************************
-			16-bit Load Instructions
-		*********************************************************************************************/
-
-		// "LD BC n16" B:3 C:12 FLAGS: - - - -
-		case 0x01:
-		{
-			State.BC = (opcode[2] << 8) | (opcode[1]);
-			State.PC += 2;
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "LD [a16] SP" B:3 C:20 FLAGS: - - - -
-		case 0x08:
-		{
-			gb.WriteToMemoryMap((opcode[2] << 8) | (opcode[1]), State.SP);
-			State.PC += 2;
-
-			m_cycles = 20;
-			break;
-		}
-
-		// "LD DE n16" B:3 C:12 FLAGS: - - - -
-		case 0x11:
-		{
-			State.DE = (opcode[2] << 8) | (opcode[1]);
-			State.PC += 2;
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "LD HL n16" B:3 C:12 FLAGS: - - - -
-		case 0x21:
-		{
-			State.HL = (opcode[2] << 8) | (opcode[1]);
-			State.PC += 2;
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "LD SP n16" B:3 C:12 FLAGS: - - - -
-		case 0x31:
-		{
-			// set the stack pointer to the 2 byte address
-			State.SP = (gb, (opcode[2] << 8) | (opcode[1]));
-			State.PC += 2;
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "POP BC" B:1 C:12 FLAGS: - - - -
-		case 0xC1:
-		{
-			State.BC = popSP(gb);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "PUSH BC" B:1 C:16 FLAGS: - - - -
-		case 0xC5:
-		{
-			pushSP(gb, State.BC);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "POP DE" B:1 C:12 FLAGS: - - - -
-		case 0xD1:
-		{
-			State.DE = popSP(gb);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "PUSH DE" B:1 C:16 FLAGS: - - - -
-		case 0xD5:
-		{
-			pushSP(gb, State.DE);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "POP HL" B:1 C:12 FLAGS: - - - -
-		case 0xE1:
-		{
-			State.HL = popSP(gb);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "PUSH HL" B:1 C:16 FLAGS: - - - -
-		case 0xE5:
-		{
-			pushSP(gb, State.HL);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "POP AF" B:1 C:12 FLAGS: Z N H C
-		case 0xF1:
-		{
-			State.AF = popSP(gb);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "PUSH AF" B:1 C:16 FLAGS: - - - -
-		case 0xF5:
-		{
-			pushSP(gb, State.AF);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "LD HL SP e8" B:2 C:12 FLAGS: 0 0 H C
-		case 0xF8: { unimplementedInstruction(State, *opcode); break; }
-
-		// "LD SP HL" B:1 C:8 FLAGS: - - - -
-		case 0xF9:
-		{
-			pushSP(gb, State.HL);
-
-			m_cycles = 8;
-			break;
-		}
-
-
-		/********************************************************************************************
-			8-bit Arithmetic/Logical Instructions
-		*********************************************************************************************/
-
-		// "INC B" B:1 C:4 FLAGS: Z 0 H -
-		case 0x04:
-		{
-			State.B++;
-
-			setCPUFlag(FLAG_ZERO, (State.B == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (State.B & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "DEC B" B:1 C:4 FLAGS: Z 1 H -
-		case 0x05:
-		{
-			State.B--;
-
-			setCPUFlag(FLAG_ZERO, (State.B == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.B & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "INC C" B:1 C:4 FLAGS: Z 0 H -
-		case 0x0C:
-		{
-			State.C++;
-
-			setCPUFlag(FLAG_ZERO, (State.C == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (State.C & 0x0F) == 0x0F);
-
-			break;
-		}
-
-		// "DEC C" B:1 C:4 FLAGS: Z 1 H -
-		case 0x0D:
-		{
-			State.C--;
-
-			setCPUFlag(FLAG_ZERO, (State.C == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.C & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "INC D" B:1 C:4 FLAGS: Z 0 H -
-		case 0x14:
-		{
-			State.D++;
-
-			setCPUFlag(FLAG_ZERO, (State.D == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (State.D & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "DEC D" B:1 C:4 FLAGS: Z 1 H -
-		case 0x15:
-		{
-			State.D--;
-
-			setCPUFlag(FLAG_ZERO, (State.D == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.D & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "INC E" B:1 C:4 FLAGS: Z 0 H -
-		case 0x1C:
-		{
-			State.E++;
-
-			setCPUFlag(FLAG_ZERO, (State.E == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (State.E & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "DEC E" B:1 C:4 FLAGS: Z 1 H -
-		case 0x1D:
-		{
-			State.E--;
-
-			setCPUFlag(FLAG_ZERO, (State.E == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.E & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "INC H" B:1 C:4 FLAGS: Z 0 H -
-		case 0x24:
-		{
-			State.H++;
-
-			setCPUFlag(FLAG_ZERO, (State.H == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (State.H & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "DEC H" B:1 C:4 FLAGS: Z 1 H -
-		case 0x25:
-		{
-			State.H--;
-
-			setCPUFlag(FLAG_ZERO, (State.H == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.H & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "DAA" B:1 C:4 FLAGS: Z - 0 C
-		case 0x27:
-		{
-			if ((State.A & 0x0F) > 9 || getCPUFlag(FLAG_HALF_CARRY)) {
-				State.A += 6;
-			}
-			if ((State.A & 0xF0) > 0x90 || getCPUFlag(FLAG_CARRY)) {
-				State.A += 0x60;
+			// "LD SP n16" B:3 C:12 FLAGS: - - - -
+			case 0x31:
+			{
+				// set the stack pointer to the 2 byte address
+				State.SP = (gb, (opcode[2] << 8) | (opcode[1]));
+				State.PC += 2;
+
+				m_cycles = 12;
+				break;
 			}
 
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, (State.A & 0x100) != 0);
-
-			m_cycles = 4;
-			break;
-		}
-
-
-		// "INC L" B:1 C:4 FLAGS: Z 0 H -
-		case 0x2C:
-		{
-			State.L++;
-
-			setCPUFlag(FLAG_ZERO, (State.L == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (State.L & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "DEC L" B:1 C:4 FLAGS: Z 1 H -
-		case 0x2D:
-		{
-			State.L--;
-
-			setCPUFlag(FLAG_ZERO, (State.L == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.L & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "CPL" B:1 C:4 FLAGS: - 1 1 -
-		case 0x2F:
-		{
-			State.A = ~State.A;
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "INC [HL]" B:1 C:12 FLAGS: Z 0 H -
-		case 0x34:
-		{
-			State.HL++;
-
-			setCPUFlag(FLAG_ZERO, (State.HL == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (State.HL & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "DEC [HL]" B:1 C:12 FLAGS: Z 1 H -
-		case 0x35:
-		{
-			State.HL--;
-
-			setCPUFlag(FLAG_ZERO, State.HL  == 0);
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.HL & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "SCF" B:1 C:4 FLAGS: - 0 0 1
-		case 0x37:
-		{
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, true);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "INC A" B:1 C:4 FLAGS: Z 0 H -
-		case 0x3C:
-		{
-			State.A++;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "DEC A" B:1 C:4 FLAGS: Z 1 H -
-		case 0x3D:
-		{
-			State.A--;
-
-			setCPUFlag(FLAG_ZERO, State.A == 0);
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) == 0x0F);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "CCF" B:1 C:4 FLAGS: - 0 0 C
-		case 0x3F: { unimplementedInstruction(State, *opcode); break; }
-
-		// "ADD A B" B:1 C:4 FLAGS: Z 0 H C
-		case 0x80:
-		{
-			uint8_t result = State.A + State.B;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.B & 0x0F) > 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADD A C" B:1 C:4 FLAGS: Z 0 H C
-		case 0x81:
-		{
-			uint8_t result = State.A + State.C;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.C & 0x0F) > 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADD A D" B:1 C:4 FLAGS: Z 0 H C
-		case 0x82:
-		{
-			uint8_t result = State.A + State.D;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.D & 0x0F) > 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADD A E" B:1 C:4 FLAGS: Z 0 H C
-		case 0x83:
-		{
-			uint8_t result = State.A + State.E;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.E & 0x0F) > 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADD A H" B:1 C:4 FLAGS: Z 0 H C
-		case 0x84:
-		{
-			uint8_t result = State.A + State.H;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.H & 0x0F) > 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADD A L" B:1 C:4 FLAGS: Z 0 H C
-		case 0x85:
-		{
-			uint8_t result = State.A + State.L;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.L & 0x0F) > 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADD A [HL]" B:1 C:8 FLAGS: Z 0 H C
-		case 0x86:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-			uint8_t result = State.A + value;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (value & 0x0F) > 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "ADD A A" B:1 C:4 FLAGS: Z 0 H C
-		case 0x87:
-		{
-			uint8_t result = State.A + State.A;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.A & 0x0F) > 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADC A B" B:1 C:4 FLAGS: Z 0 H C
-		case 0x88:
-		{
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t result = State.A + State.B + (carry ? 1 : 0);
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.B & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADC A C" B:1 C:4 FLAGS: Z 0 H C
-		case 0x89:
-		{
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t result = State.A + State.C + (carry ? 1 : 0);
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.C & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADC A D" B:1 C:4 FLAGS: Z 0 H C
-		case 0x8A:
-		{
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t result = State.A + State.D + (carry ? 1 : 0);
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.D & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADC A E" B:1 C:4 FLAGS: Z 0 H C
-		case 0x8B:
-		{
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t result = State.A + State.E + (carry ? 1 : 0);
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.E & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADC A H" B:1 C:4 FLAGS: Z 0 H C
-		case 0x8C:
-		{
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t result = State.A + State.H + (carry ? 1 : 0);
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.H & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADC A L" B:1 C:4 FLAGS: Z 0 H C
-		case 0x8D:
-		{
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t result = State.A + State.L + (carry ? 1 : 0);
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.L & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADC A [HL]" B:1 C:8 FLAGS: Z 0 H C
-		case 0x8E:
-		{
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t value = gb.ReadFromMemoryMap(State.L);
-			uint8_t result = State.A + value + (carry ? 1 : 0);
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (value & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "ADC A A" B:1 C:4 FLAGS: Z 0 H C
-		case 0x8F:
-		{
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t result = State.A + State.A + (carry ? 1 : 0);
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.A & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "SUB A B" B:1 C:4 FLAGS: Z 1 H C
-		case 0x90:
-		{
-			uint8_t result = State.A - State.B;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (result == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.B & 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "SUB A C" B:1 C:4 FLAGS: Z 1 H C
-		case 0x91:
-		{
-			uint8_t result = State.A - State.C;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (result == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.C & 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "SUB A D" B:1 C:4 FLAGS: Z 1 H C
-		case 0x92:
-		{
-			uint8_t result = State.A - State.D;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (result == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.D & 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "SUB A E" B:1 C:4 FLAGS: Z 1 H C
-		case 0x93:
-		{
-			uint8_t result = State.A - State.E;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (result == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.E & 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "SUB A H" B:1 C:4 FLAGS: Z 1 H C
-		case 0x94:
-		{
-			uint8_t result = State.A - State.H;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (result == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.H & 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "SUB A L" B:1 C:4 FLAGS: Z 1 H C
-		case 0x95:
-		{
-			uint8_t result = State.A - State.L;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (result == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.L & 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "SUB A [HL]" B:1 C:8 FLAGS: Z 1 H C
-		case 0x96:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-			uint8_t result = State.A - value;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (result == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (value & 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SUB A A" B:1 C:4 FLAGS: 1 1 0 0
-		case 0x97:
-		{
-			uint8_t result = State.A - State.A;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, true);
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "SBC A B" B:1 C:4 FLAGS: Z 1 H C
-		case 0x98:
-		{
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t result = State.A - State.B - carry;
-
-			setCPUFlag(FLAG_ZERO, (result == 0xFF));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) - (State.B & 0xF) - (carry ? 1 : 0)) & 0x10) != 0);
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "SBC A C" B:1 C:4 FLAGS: Z 1 H C
-		case 0x99: { unimplementedInstruction(State, *opcode); break; }
-
-		// "SBC A D" B:1 C:4 FLAGS: Z 1 H C
-		case 0x9A: { unimplementedInstruction(State, *opcode); break; }
-
-		// "SBC A E" B:1 C:4 FLAGS: Z 1 H C
-		case 0x9B: { unimplementedInstruction(State, *opcode); break; }
-
-		// "SBC A H" B:1 C:4 FLAGS: Z 1 H C
-		case 0x9C: { unimplementedInstruction(State, *opcode); break; }
-
-		// "SBC A L" B:1 C:4 FLAGS: Z 1 H C
-		case 0x9D: { unimplementedInstruction(State, *opcode); break; }
-
-		// "SBC A [HL]" B:1 C:8 FLAGS: Z 1 H C
-		case 0x9E: { unimplementedInstruction(State, *opcode); break; }
-
-		// "SBC A A" B:1 C:4 FLAGS: Z 1 H -
-		case 0x9F: { unimplementedInstruction(State, *opcode); break; }
-
-		// "AND A B" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA0:
-		{
-			State.A = State.A & State.B;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "AND A C" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA1:
-		{
-			State.A = State.A & State.C;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "AND A D" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA2:
-		{
-			State.A = State.A & State.D;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "AND A E" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA3:
-		{
-			State.A = State.A & State.E;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "AND A H" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA4:
-		{
-			State.A = State.A & State.H;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "AND A L" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA5:
-		{
-			State.A = State.A & State.L;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "AND A [HL]" B:1 C:8 FLAGS: Z 0 1 0
-		case 0xA6:
-		{
-			State.A = State.A & gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "AND A A" B:1 C:4 FLAGS: Z 0 1 0
-		case 0xA7:
-		{
-			State.A = State.A & State.A;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "XOR A B" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xA8:
-		{
-			State.A = State.A ^ State.B;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "XOR A C" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xA9:
-		{
-			State.A = State.A ^ State.C;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "XOR A D" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xAA:
-		{
-			State.A = State.A ^ State.D;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "XOR A E" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xAB:
-		{
-			State.A = State.A ^ State.E;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "XOR A H" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xAC:
-		{
-			State.A = State.A ^ State.H;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "XOR A L" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xAD:
-		{
-			State.A = State.A ^ State.L;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "XOR A [HL]" B:1 C:8 FLAGS: Z 0 0 0
-		case 0xAE: { unimplementedInstruction(State, *opcode); break; }
-
-		// "XOR A A" B:1 C:4 FLAGS: 1 0 0 0
-		case 0xAF:
-		{
-			State.A = State.A ^ State.A;
-			
-			setCPUFlag(FLAG_ZERO, true);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "OR A B" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB0:
-		{
-			State.A = State.A | State.B;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "OR A C" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB1:
-		{
-			State.A = State.A | State.C;
-			
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "OR A D" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB2:
-		{
-			State.A = State.A | State.D;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "OR A E" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB3:
-		{
-			State.A = State.A | State.E;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "OR A H" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB4:
-		{
-			State.A = State.A | State.H;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "OR A L" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB5:
-		{
-			State.A = State.A | State.L;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "OR A [HL]" B:1 C:8 FLAGS: Z 0 0 0
-		case 0xB6: { unimplementedInstruction(State, *opcode); break; }
-
-		// "OR A A" B:1 C:4 FLAGS: Z 0 0 0
-		case 0xB7:
-		{
-			State.A = State.A | State.A;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "CP A B" B:1 C:4 FLAGS: Z 1 H C
-		case 0xB8: { unimplementedInstruction(State, *opcode); break; }
-
-		// "CP A C" B:1 C:4 FLAGS: Z 1 H C
-		case 0xB9: { unimplementedInstruction(State, *opcode); break; }
-
-		// "CP A D" B:1 C:4 FLAGS: Z 1 H C
-		case 0xBA: { unimplementedInstruction(State, *opcode); break; }
-
-		// "CP A E" B:1 C:4 FLAGS: Z 1 H C
-		case 0xBB: { unimplementedInstruction(State, *opcode); break; }
-
-		// "CP A H" B:1 C:4 FLAGS: Z 1 H C
-		case 0xBC: { unimplementedInstruction(State, *opcode); break; }
-
-		// "CP A L" B:1 C:4 FLAGS: Z 1 H C
-		case 0xBD: { unimplementedInstruction(State, *opcode); break; }
-
-		// "CP A [HL]" B:1 C:8 FLAGS: Z 1 H C
-		case 0xBE:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-			uint8_t result = State.A - value;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (result == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (value & 0x0F));
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "CP A A" B:1 C:4 FLAGS: 1 1 0 0
-		case 0xBF: { unimplementedInstruction(State, *opcode); break; }
-
-		// "ADD A n8" B:2 C:8 FLAGS: Z 0 H C
-		case 0xC6:
-		{
-			uint8_t result = State.A + opcode[1];
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (opcode[1] & 0x0F) > 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			State.PC++;
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "ADC A n8" B:2 C:8 FLAGS: Z 0 H C
-		case 0xCE: { unimplementedInstruction(State, *opcode); break; }
-
-		// "SUB A n8" B:2 C:8 FLAGS: Z 1 H C
-		case 0xD6:
-		{
-			uint8_t result = State.A - opcode[1];
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (result == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (opcode[1] & 0x0F));
-			setCPUFlag(FLAG_CARRY, (result > 0xFF));
-
-			State.A = result;
-
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SBC A n8" B:2 C:8 FLAGS: Z 1 H C
-		case 0xDE: { unimplementedInstruction(State, *opcode); break; }
-
-		// "AND A n8" B:2 C:8 FLAGS: Z 0 1 0
-		case 0xE6:
-		{
-			State.A = State.A & opcode[1];
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-			setCPUFlag(FLAG_CARRY, false);
-
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "XOR A n8" B:2 C:8 FLAGS: Z 0 0 0
-		case 0xEE:
-		{
-			State.A = State.A ^ opcode[1];
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "OR A n8" B:2 C:8 FLAGS: Z 0 0 0
-		case 0xF6: { unimplementedInstruction(State, *opcode); break; }
-
-		// "CP A n8" B:2 C:8 FLAGS: Z 1 H C
-		case 0xFE:
-		{
-			uint8_t result = State.A - opcode[1];
-
-			setCPUFlag(FLAG_ZERO, (result == 0));
-			setCPUFlag(FLAG_SUBTRACT, true);
-			setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (opcode[1] & 0x0F));
-			setCPUFlag(FLAG_CARRY, State.A < opcode[1]);
-
-			State.PC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		/********************************************************************************************
-			16-bit Arithmetic/Logical Instructions
-		*********************************************************************************************/
-
-		// "INC BC" B:1 C:8 FLAGS: - - - -
-		case 0x03:
-		{
-			State.BC++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "ADD HL BC" B:1 C:8 FLAGS: - 0 H C
-		case 0x09: { unimplementedInstruction(State, *opcode); break; }
-
-		// "DEC BC" B:1 C:8 FLAGS: - - - -
-		case 0x0B:
-		{
-			State.BC--;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "INC DE" B:1 C:8 FLAGS: - - - -
-		case 0x13:
-		{
-			State.DE++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "ADD HL DE" B:1 C:8 FLAGS: - 0 H C
-		case 0x19:
-		{
-			uint16_t result = State.HL + State.DE;
-
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, ((State.HL & 0xFFF) + (State.DE & 0xFFF)) & 0x1000);
-			setCPUFlag(FLAG_CARRY, result > 0xFFFF);
-
-			State.HL = result;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "DEC DE" B:1 C:8 FLAGS: - - - -
-		case 0x1B: { unimplementedInstruction(State, *opcode); break; }
-
-		// "INC HL" B:1 C:8 FLAGS: - - - -
-		case 0x23:
-		{
-			State.HL++;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "ADD HL HL" B:1 C:8 FLAGS: - 0 H C
-		case 0x29:
-		{
-			uint16_t result = State.HL + State.HL;
-
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, ((State.HL & 0xFFF) + (State.HL & 0xFFF)) & 0x1000);
-			setCPUFlag(FLAG_CARRY, result > 0xFFFF);
-
-			State.HL = result;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "DEC HL" B:1 C:8 FLAGS: - - - -
-		case 0x2B: { unimplementedInstruction(State, *opcode); break; }
-
-		// "INC SP" B:1 C:8 FLAGS: - - - -
-		case 0x33: { unimplementedInstruction(State, *opcode); break; }
-
-		// "ADD HL SP" B:1 C:8 FLAGS: - 0 H C
-		case 0x39: { unimplementedInstruction(State, *opcode); break; }
-
-		// "DEC SP" B:1 C:8 FLAGS: - - - -
-		case 0x3B: { unimplementedInstruction(State, *opcode); break; }
-
-		// "ADD SP e8" B:2 C:16 FLAGS: 0 0 H C
-		case 0xE8: { unimplementedInstruction(State, *opcode); break; }
-
-		/********************************************************************************************
-			8-bit Shift. Rotate and Bit Instructions
-		*********************************************************************************************/
-
-		// "RLCA" B:1 C:4 FLAGS: 0 0 0 C
-		case 0x07:
-		{
-			// Save the previous value of bit 7 for the carry flag
-			bool oldBit7 = (State.A & 0x80) != 0;
-
-			// Perform the rotation to the right through the carry flag
-			State.A = ((State.A << 1) | oldBit7);
-
-			setCPUFlag(FLAG_ZERO, false);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, oldBit7);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "RRCA" B:1 C:4 FLAGS: 0 0 0 C
-		case 0x0F:
-		{
-			// Get the least significant bit (bit 0) before the rotation
-			bool bit0 = (State.A & 0x01) != 0;
-
-			// Perform the rotation to the right through the carry flag
-			State.A = (State.A >> 1) | (bit0 << 7);
-
-			setCPUFlag(FLAG_ZERO, false);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, bit0);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "RLA" B:1 C:4 FLAGS: 0 0 0 C
-		case 0x17:
-		{
-			uint8_t result = (State.A << 1) | (getCPUFlag(FLAG_CARRY) ? 1 : 0);
-			bool carry = (State.A & 0x80) != 0;
-			State.A = result;
-
-			setCPUFlag(FLAG_ZERO, false);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, carry);
-
-			m_cycles = 4;
-			break;
-		}
-
-		// "RRA" B:1 C:4 FLAGS: 0 0 0 C
-		case 0x1F: { unimplementedInstruction(State, *opcode); break; }
-
-
-		default:
-			unimplementedInstruction(State, *opcode);
-			break;
+			// "POP BC" B:1 C:12 FLAGS: - - - -
+			case 0xC1:
+			{
+				State.BC = popSP(gb);
+
+				m_cycles = 12;
+				break;
+			}
+
+			// "PUSH BC" B:1 C:16 FLAGS: - - - -
+			case 0xC5:
+			{
+				pushSP(gb, State.BC);
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "POP DE" B:1 C:12 FLAGS: - - - -
+			case 0xD1:
+			{
+				State.DE = popSP(gb);
+
+				m_cycles = 12;
+				break;
+			}
+
+			// "PUSH DE" B:1 C:16 FLAGS: - - - -
+			case 0xD5:
+			{
+				pushSP(gb, State.DE);
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "POP HL" B:1 C:12 FLAGS: - - - -
+			case 0xE1:
+			{
+				State.HL = popSP(gb);
+
+				m_cycles = 12;
+				break;
+			}
+
+			// "PUSH HL" B:1 C:16 FLAGS: - - - -
+			case 0xE5:
+			{
+				pushSP(gb, State.HL);
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "POP AF" B:1 C:12 FLAGS: Z N H C
+			case 0xF1:
+			{
+				State.AF = popSP(gb);
+
+				m_cycles = 12;
+				break;
+			}
+
+			// "PUSH AF" B:1 C:16 FLAGS: - - - -
+			case 0xF5:
+			{
+				pushSP(gb, State.AF);
+
+				m_cycles = 16;
+				break;
+			}
+
+			// "LD HL SP e8" B:2 C:12 FLAGS: 0 0 H C
+			case 0xF8: { unimplementedInstruction(State, *opcode); break; }
+
+					 // "LD SP HL" B:1 C:8 FLAGS: - - - -
+			case 0xF9:
+			{
+				pushSP(gb, State.HL);
+
+				m_cycles = 8;
+				break;
+			}
+
+
+			/********************************************************************************************
+				8-bit Arithmetic/Logical Instructions
+			*********************************************************************************************/
+
+			// "INC B" B:1 C:4 FLAGS: Z 0 H -
+			case 0x04:
+			{
+				State.B++;
+
+				setCPUFlag(FLAG_ZERO, (State.B == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (State.B & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "DEC B" B:1 C:4 FLAGS: Z 1 H -
+			case 0x05:
+			{
+				State.B--;
+
+				setCPUFlag(FLAG_ZERO, (State.B == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.B & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "INC C" B:1 C:4 FLAGS: Z 0 H -
+			case 0x0C:
+			{
+				State.C++;
+
+				setCPUFlag(FLAG_ZERO, (State.C == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (State.C & 0x0F) == 0x0F);
+
+				break;
+			}
+
+			// "DEC C" B:1 C:4 FLAGS: Z 1 H -
+			case 0x0D:
+			{
+				State.C--;
+
+				setCPUFlag(FLAG_ZERO, (State.C == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.C & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "INC D" B:1 C:4 FLAGS: Z 0 H -
+			case 0x14:
+			{
+				State.D++;
+
+				setCPUFlag(FLAG_ZERO, (State.D == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (State.D & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "DEC D" B:1 C:4 FLAGS: Z 1 H -
+			case 0x15:
+			{
+				State.D--;
+
+				setCPUFlag(FLAG_ZERO, (State.D == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.D & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "INC E" B:1 C:4 FLAGS: Z 0 H -
+			case 0x1C:
+			{
+				State.E++;
+
+				setCPUFlag(FLAG_ZERO, (State.E == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (State.E & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "DEC E" B:1 C:4 FLAGS: Z 1 H -
+			case 0x1D:
+			{
+				State.E--;
+
+				setCPUFlag(FLAG_ZERO, (State.E == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.E & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "INC H" B:1 C:4 FLAGS: Z 0 H -
+			case 0x24:
+			{
+				State.H++;
+
+				setCPUFlag(FLAG_ZERO, (State.H == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (State.H & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "DEC H" B:1 C:4 FLAGS: Z 1 H -
+			case 0x25:
+			{
+				State.H--;
+
+				setCPUFlag(FLAG_ZERO, (State.H == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.H & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "DAA" B:1 C:4 FLAGS: Z - 0 C
+			case 0x27:
+			{
+				if ((State.A & 0x0F) > 9 || getCPUFlag(FLAG_HALF_CARRY)) {
+					State.A += 6;
+				}
+				if ((State.A & 0xF0) > 0x90 || getCPUFlag(FLAG_CARRY)) {
+					State.A += 0x60;
+				}
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, (State.A & 0x100) != 0);
+
+				m_cycles = 4;
+				break;
+			}
+
+
+			// "INC L" B:1 C:4 FLAGS: Z 0 H -
+			case 0x2C:
+			{
+				State.L++;
+
+				setCPUFlag(FLAG_ZERO, (State.L == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (State.L & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "DEC L" B:1 C:4 FLAGS: Z 1 H -
+			case 0x2D:
+			{
+				State.L--;
+
+				setCPUFlag(FLAG_ZERO, (State.L == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.L & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "CPL" B:1 C:4 FLAGS: - 1 1 -
+			case 0x2F:
+			{
+				State.A = ~State.A;
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, true);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "INC [HL]" B:1 C:12 FLAGS: Z 0 H -
+			case 0x34:
+			{
+				State.HL++;
+
+				setCPUFlag(FLAG_ZERO, (State.HL == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (State.HL & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "DEC [HL]" B:1 C:12 FLAGS: Z 1 H -
+			case 0x35:
+			{
+				State.HL--;
+
+				setCPUFlag(FLAG_ZERO, State.HL == 0);
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.HL & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "SCF" B:1 C:4 FLAGS: - 0 0 1
+			case 0x37:
+			{
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, true);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "INC A" B:1 C:4 FLAGS: Z 0 H -
+			case 0x3C:
+			{
+				State.A++;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "DEC A" B:1 C:4 FLAGS: Z 1 H -
+			case 0x3D:
+			{
+				State.A--;
+
+				setCPUFlag(FLAG_ZERO, State.A == 0);
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) == 0x0F);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "CCF" B:1 C:4 FLAGS: - 0 0 C
+			case 0x3F: { unimplementedInstruction(State, *opcode); break; }
+
+			// "ADD A B" B:1 C:4 FLAGS: Z 0 H C
+			case 0x80:
+			{
+				uint8_t result = State.A + State.B;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.B & 0x0F) > 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADD A C" B:1 C:4 FLAGS: Z 0 H C
+			case 0x81:
+			{
+				uint8_t result = State.A + State.C;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.C & 0x0F) > 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADD A D" B:1 C:4 FLAGS: Z 0 H C
+			case 0x82:
+			{
+				uint8_t result = State.A + State.D;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.D & 0x0F) > 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADD A E" B:1 C:4 FLAGS: Z 0 H C
+			case 0x83:
+			{
+				uint8_t result = State.A + State.E;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.E & 0x0F) > 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADD A H" B:1 C:4 FLAGS: Z 0 H C
+			case 0x84:
+			{
+				uint8_t result = State.A + State.H;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.H & 0x0F) > 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADD A L" B:1 C:4 FLAGS: Z 0 H C
+			case 0x85:
+			{
+				uint8_t result = State.A + State.L;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.L & 0x0F) > 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADD A [HL]" B:1 C:8 FLAGS: Z 0 H C
+			case 0x86:
+			{
+				uint8_t value = gb.ReadFromMemoryMap(State.HL);
+				uint8_t result = State.A + value;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (value & 0x0F) > 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "ADD A A" B:1 C:4 FLAGS: Z 0 H C
+			case 0x87:
+			{
+				uint8_t result = State.A + State.A;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (State.A & 0x0F) > 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADC A B" B:1 C:4 FLAGS: Z 0 H C
+			case 0x88:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A + State.B + (carry ? 1 : 0);
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.B & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADC A C" B:1 C:4 FLAGS: Z 0 H C
+			case 0x89:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A + State.C + (carry ? 1 : 0);
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.C & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADC A D" B:1 C:4 FLAGS: Z 0 H C
+			case 0x8A:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A + State.D + (carry ? 1 : 0);
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.D & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADC A E" B:1 C:4 FLAGS: Z 0 H C
+			case 0x8B:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A + State.E + (carry ? 1 : 0);
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.E & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADC A H" B:1 C:4 FLAGS: Z 0 H C
+			case 0x8C:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A + State.H + (carry ? 1 : 0);
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.H & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADC A L" B:1 C:4 FLAGS: Z 0 H C
+			case 0x8D:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A + State.L + (carry ? 1 : 0);
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.L & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADC A [HL]" B:1 C:8 FLAGS: Z 0 H C
+			case 0x8E:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t value = gb.ReadFromMemoryMap(State.L);
+				uint8_t result = State.A + value + (carry ? 1 : 0);
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (value & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "ADC A A" B:1 C:4 FLAGS: Z 0 H C
+			case 0x8F:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A + State.A + (carry ? 1 : 0);
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (State.A & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "SUB A B" B:1 C:4 FLAGS: Z 1 H C
+			case 0x90:
+			{
+				uint8_t result = State.A - State.B;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.B & 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "SUB A C" B:1 C:4 FLAGS: Z 1 H C
+			case 0x91:
+			{
+				uint8_t result = State.A - State.C;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.C & 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "SUB A D" B:1 C:4 FLAGS: Z 1 H C
+			case 0x92:
+			{
+				uint8_t result = State.A - State.D;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.D & 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "SUB A E" B:1 C:4 FLAGS: Z 1 H C
+			case 0x93:
+			{
+				uint8_t result = State.A - State.E;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.E & 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "SUB A H" B:1 C:4 FLAGS: Z 1 H C
+			case 0x94:
+			{
+				uint8_t result = State.A - State.H;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.H & 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "SUB A L" B:1 C:4 FLAGS: Z 1 H C
+			case 0x95:
+			{
+				uint8_t result = State.A - State.L;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.L & 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "SUB A [HL]" B:1 C:8 FLAGS: Z 1 H C
+			case 0x96:
+			{
+				uint8_t value = gb.ReadFromMemoryMap(State.HL);
+				uint8_t result = State.A - value;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (value & 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "SUB A A" B:1 C:4 FLAGS: 1 1 0 0
+			case 0x97:
+			{
+				uint8_t result = State.A - State.A;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, true);
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "SBC A B" B:1 C:4 FLAGS: Z 1 H C
+			case 0x98:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A - State.B - carry;
+
+				setCPUFlag(FLAG_ZERO, (result == 0xFF));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) - (State.B & 0xF) - (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "SBC A C" B:1 C:4 FLAGS: Z 1 H C
+			case 0x99: { unimplementedInstruction(State, *opcode); break; }
+
+			 // "SBC A D" B:1 C:4 FLAGS: Z 1 H C
+			case 0x9A: { unimplementedInstruction(State, *opcode); break; }
+
+			// "SBC A E" B:1 C:4 FLAGS: Z 1 H C
+			case 0x9B: { unimplementedInstruction(State, *opcode); break; }
+
+			// "SBC A H" B:1 C:4 FLAGS: Z 1 H C
+			case 0x9C: { unimplementedInstruction(State, *opcode); break; }
+
+			// "SBC A L" B:1 C:4 FLAGS: Z 1 H C
+			case 0x9D: { unimplementedInstruction(State, *opcode); break; }
+
+			// "SBC A [HL]" B:1 C:8 FLAGS: Z 1 H C
+			case 0x9E: { unimplementedInstruction(State, *opcode); break; }
+
+			// "SBC A A" B:1 C:4 FLAGS: Z 1 H -
+			case 0x9F: { unimplementedInstruction(State, *opcode); break; }
+
+			// "AND A B" B:1 C:4 FLAGS: Z 0 1 0
+			case 0xA0:
+			{
+				State.A = State.A & State.B;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, true);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "AND A C" B:1 C:4 FLAGS: Z 0 1 0
+			case 0xA1:
+			{
+				State.A = State.A & State.C;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, true);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "AND A D" B:1 C:4 FLAGS: Z 0 1 0
+			case 0xA2:
+			{
+				State.A = State.A & State.D;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, true);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "AND A E" B:1 C:4 FLAGS: Z 0 1 0
+			case 0xA3:
+			{
+				State.A = State.A & State.E;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, true);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "AND A H" B:1 C:4 FLAGS: Z 0 1 0
+			case 0xA4:
+			{
+				State.A = State.A & State.H;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, true);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "AND A L" B:1 C:4 FLAGS: Z 0 1 0
+			case 0xA5:
+			{
+				State.A = State.A & State.L;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, true);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "AND A [HL]" B:1 C:8 FLAGS: Z 0 1 0
+			case 0xA6:
+			{
+				State.A = State.A & gb.ReadFromMemoryMap(State.HL);
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, true);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "AND A A" B:1 C:4 FLAGS: Z 0 1 0
+			case 0xA7:
+			{
+				State.A = State.A & State.A;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, true);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "XOR A B" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xA8:
+			{
+				State.A = State.A ^ State.B;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "XOR A C" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xA9:
+			{
+				State.A = State.A ^ State.C;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "XOR A D" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xAA:
+			{
+				State.A = State.A ^ State.D;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "XOR A E" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xAB:
+			{
+				State.A = State.A ^ State.E;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "XOR A H" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xAC:
+			{
+				State.A = State.A ^ State.H;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "XOR A L" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xAD:
+			{
+				State.A = State.A ^ State.L;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "XOR A [HL]" B:1 C:8 FLAGS: Z 0 0 0
+			case 0xAE: { unimplementedInstruction(State, *opcode); break; }
+
+			// "XOR A A" B:1 C:4 FLAGS: 1 0 0 0
+			case 0xAF:
+			{
+				State.A = State.A ^ State.A;
+
+				setCPUFlag(FLAG_ZERO, true);
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "OR A B" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xB0:
+			{
+				State.A = State.A | State.B;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "OR A C" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xB1:
+			{
+				State.A = State.A | State.C;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "OR A D" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xB2:
+			{
+				State.A = State.A | State.D;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "OR A E" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xB3:
+			{
+				State.A = State.A | State.E;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "OR A H" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xB4:
+			{
+				State.A = State.A | State.H;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "OR A L" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xB5:
+			{
+				State.A = State.A | State.L;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "OR A [HL]" B:1 C:8 FLAGS: Z 0 0 0
+			case 0xB6: { unimplementedInstruction(State, *opcode); break; }
+
+			// "OR A A" B:1 C:4 FLAGS: Z 0 0 0
+			case 0xB7:
+			{
+				State.A = State.A | State.A;
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "CP A B" B:1 C:4 FLAGS: Z 1 H C
+			case 0xB8: { unimplementedInstruction(State, *opcode); break; }
+
+			// "CP A C" B:1 C:4 FLAGS: Z 1 H C
+			case 0xB9: { unimplementedInstruction(State, *opcode); break; }
+
+			// "CP A D" B:1 C:4 FLAGS: Z 1 H C
+			case 0xBA: { unimplementedInstruction(State, *opcode); break; }
+
+			// "CP A E" B:1 C:4 FLAGS: Z 1 H C
+			case 0xBB: { unimplementedInstruction(State, *opcode); break; }
+
+			// "CP A H" B:1 C:4 FLAGS: Z 1 H C
+			case 0xBC: { unimplementedInstruction(State, *opcode); break; }
+
+			// "CP A L" B:1 C:4 FLAGS: Z 1 H C
+			case 0xBD: { unimplementedInstruction(State, *opcode); break; }
+
+			// "CP A [HL]" B:1 C:8 FLAGS: Z 1 H C
+			case 0xBE:
+			{
+				uint8_t value = gb.ReadFromMemoryMap(State.HL);
+				uint8_t result = State.A - value;
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (value & 0x0F));
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "CP A A" B:1 C:4 FLAGS: 1 1 0 0
+			case 0xBF: { unimplementedInstruction(State, *opcode); break; }
+
+			// "ADD A n8" B:2 C:8 FLAGS: Z 0 H C
+			case 0xC6:
+			{
+				uint8_t result = State.A + opcode[1];
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (opcode[1] & 0x0F) > 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				State.PC++;
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "ADC A n8" B:2 C:8 FLAGS: Z 0 H C
+			case 0xCE: { unimplementedInstruction(State, *opcode); break; }
+
+			// "SUB A n8" B:2 C:8 FLAGS: Z 1 H C
+			case 0xD6:
+			{
+				uint8_t result = State.A - opcode[1];
+
+				// Update flags
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (opcode[1] & 0x0F));
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "SBC A n8" B:2 C:8 FLAGS: Z 1 H C
+			case 0xDE: { unimplementedInstruction(State, *opcode); break; }
+
+			// "AND A n8" B:2 C:8 FLAGS: Z 0 1 0
+			case 0xE6:
+			{
+				State.A = State.A & opcode[1];
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, true);
+				setCPUFlag(FLAG_CARRY, false);
+
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "XOR A n8" B:2 C:8 FLAGS: Z 0 0 0
+			case 0xEE:
+			{
+				State.A = State.A ^ opcode[1];
+
+				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "OR A n8" B:2 C:8 FLAGS: Z 0 0 0
+			case 0xF6: { unimplementedInstruction(State, *opcode); break; }
+
+			// "CP A n8" B:2 C:8 FLAGS: Z 1 H C
+			case 0xFE:
+			{
+				uint8_t result = State.A - opcode[1];
+
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (opcode[1] & 0x0F));
+				setCPUFlag(FLAG_CARRY, State.A < opcode[1]);
+
+				State.PC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			/********************************************************************************************
+				16-bit Arithmetic/Logical Instructions
+			*********************************************************************************************/
+
+			// "INC BC" B:1 C:8 FLAGS: - - - -
+			case 0x03:
+			{
+				State.BC++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "ADD HL BC" B:1 C:8 FLAGS: - 0 H C
+			case 0x09: { unimplementedInstruction(State, *opcode); break; }
+
+			// "DEC BC" B:1 C:8 FLAGS: - - - -
+			case 0x0B:
+			{
+				State.BC--;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "INC DE" B:1 C:8 FLAGS: - - - -
+			case 0x13:
+			{
+				State.DE++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "ADD HL DE" B:1 C:8 FLAGS: - 0 H C
+			case 0x19:
+			{
+				uint16_t result = State.HL + State.DE;
+
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.HL & 0xFFF) + (State.DE & 0xFFF)) & 0x1000);
+				setCPUFlag(FLAG_CARRY, result > 0xFFFF);
+
+				State.HL = result;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "DEC DE" B:1 C:8 FLAGS: - - - -
+			case 0x1B: { unimplementedInstruction(State, *opcode); break; }
+
+			// "INC HL" B:1 C:8 FLAGS: - - - -
+			case 0x23:
+			{
+				State.HL++;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "ADD HL HL" B:1 C:8 FLAGS: - 0 H C
+			case 0x29:
+			{
+				uint16_t result = State.HL + State.HL;
+
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.HL & 0xFFF) + (State.HL & 0xFFF)) & 0x1000);
+				setCPUFlag(FLAG_CARRY, result > 0xFFFF);
+
+				State.HL = result;
+
+				m_cycles = 8;
+				break;
+			}
+
+			// "DEC HL" B:1 C:8 FLAGS: - - - -
+			case 0x2B: { unimplementedInstruction(State, *opcode); break; }
+
+			// "INC SP" B:1 C:8 FLAGS: - - - -
+			case 0x33: { unimplementedInstruction(State, *opcode); break; }
+
+			// "ADD HL SP" B:1 C:8 FLAGS: - 0 H C
+			case 0x39: { unimplementedInstruction(State, *opcode); break; }
+
+			// "DEC SP" B:1 C:8 FLAGS: - - - -
+			case 0x3B: { unimplementedInstruction(State, *opcode); break; }
+
+			// "ADD SP e8" B:2 C:16 FLAGS: 0 0 H C
+			case 0xE8: { unimplementedInstruction(State, *opcode); break; }
+
+			/********************************************************************************************
+				8-bit Shift. Rotate and Bit Instructions
+			*********************************************************************************************/
+
+			// "RLCA" B:1 C:4 FLAGS: 0 0 0 C
+			case 0x07:
+			{
+				// Save the previous value of bit 7 for the carry flag
+				bool oldBit7 = (State.A & 0x80) != 0;
+
+				// Perform the rotation to the right through the carry flag
+				State.A = ((State.A << 1) | oldBit7);
+
+				setCPUFlag(FLAG_ZERO, false);
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, oldBit7);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "RRCA" B:1 C:4 FLAGS: 0 0 0 C
+			case 0x0F:
+			{
+				// Get the least significant bit (bit 0) before the rotation
+				bool bit0 = (State.A & 0x01) != 0;
+
+				// Perform the rotation to the right through the carry flag
+				State.A = (State.A >> 1) | (bit0 << 7);
+
+				setCPUFlag(FLAG_ZERO, false);
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, bit0);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "RLA" B:1 C:4 FLAGS: 0 0 0 C
+			case 0x17:
+			{
+				uint8_t result = (State.A << 1) | (getCPUFlag(FLAG_CARRY) ? 1 : 0);
+				bool carry = (State.A & 0x80) != 0;
+				State.A = result;
+
+				setCPUFlag(FLAG_ZERO, false);
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, carry);
+
+				m_cycles = 4;
+				break;
+			}
+
+			// "RRA" B:1 C:4 FLAGS: 0 0 0 C
+			case 0x1F: { unimplementedInstruction(State, *opcode); break; }
+
+			default:
+				unimplementedInstruction(State, *opcode);
+				break;
+		}
+	}
+
+	processInterrupts(gb);
+}
+
+void Cpu::processInterrupts(GameBoy& gb)
+{
+	uint16_t destinationAddress = 0;
+	uint8_t interruptFlag = 0;
+
+	if (gb.ReadFromMemoryMapRegister(HW_INTERRUPT_ENABLE, IE_VBLANK) &&
+		gb.ReadFromMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_VBLANK))
+	{
+		destinationAddress = DEST_ADDRESS_VBLANK;
+		interruptFlag = IF_VBLANK;
+		m_isHalted = false;
+	}
+
+	if (gb.ReadFromMemoryMapRegister(HW_INTERRUPT_ENABLE, IE_LCD) &&
+		gb.ReadFromMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_LCD))
+	{
+			destinationAddress = DEST_ADDRESS_LCD_STAT;
+			interruptFlag = IF_LCD;
+			m_isHalted = false;
+	}
+
+	if (gb.ReadFromMemoryMapRegister(HW_INTERRUPT_ENABLE, IE_TIMER) &&
+		gb.ReadFromMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_TIMER))
+	{
+		destinationAddress = DEST_ADDRESS_TIMER;
+		interruptFlag = IF_TIMER;
+		m_isHalted = false;
+	}
+
+	if (gb.ReadFromMemoryMapRegister(HW_INTERRUPT_ENABLE, IE_SERIAL) &&
+		gb.ReadFromMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_SERIAL))
+	{
+		destinationAddress = DEST_ADDRESS_SERIAL;
+		interruptFlag = IF_SERIAL;
+		m_isHalted = false;
+	}
+
+	if (gb.ReadFromMemoryMapRegister(HW_INTERRUPT_ENABLE, IE_JOYPAD) &&
+		gb.ReadFromMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_JOYPAD))
+	{
+		destinationAddress = DEST_ADDRESS_JOYPAD;
+		interruptFlag = IF_JOYPAD;
+		m_isHalted = false;
+	}
+
+	if (destinationAddress != 0)
+	{
+		gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, false);
+		gb.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, interruptFlag, false);
+		
+		pushSP(gb, State.PC);
+		State.PC = destinationAddress;
 	}
 }
 
@@ -2618,6 +2682,288 @@ void Cpu::process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState&
 {
 	switch (opcode)
 	{
+		// "RLC B" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB00:
+		{
+			bool oldCarry = getCPUFlag(FLAG_CARRY);
+
+			setCPUFlag(FLAG_CARRY, (State.B & 0x80) != 0);
+
+			State.B = (State.B << 1) | oldCarry;
+
+			setCPUFlag(FLAG_ZERO, (State.B == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RLC C" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB01:
+		{
+			bool oldCarry = getCPUFlag(FLAG_CARRY);
+
+			setCPUFlag(FLAG_CARRY, (State.C & 0x80) != 0);
+
+			State.C = (State.C << 1) | oldCarry;
+
+			setCPUFlag(FLAG_ZERO, (State.C == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RLC D" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB02:
+		{
+			bool oldCarry = getCPUFlag(FLAG_CARRY);
+
+			setCPUFlag(FLAG_CARRY, (State.D & 0x80) != 0);
+
+			State.D = (State.D << 1) | oldCarry;
+
+			setCPUFlag(FLAG_ZERO, (State.D == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RLC E" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB03:
+		{
+			bool oldCarry = getCPUFlag(FLAG_CARRY);
+
+			setCPUFlag(FLAG_CARRY, (State.E & 0x80) != 0);
+
+			State.E = (State.E << 1) | oldCarry;
+
+			setCPUFlag(FLAG_ZERO, (State.E == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RLC H" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB04:
+		{
+			bool oldCarry = getCPUFlag(FLAG_CARRY);
+
+			setCPUFlag(FLAG_CARRY, (State.H & 0x80) != 0);
+
+			State.H = (State.H << 1) | oldCarry;
+
+			setCPUFlag(FLAG_ZERO, (State.H == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RLC L" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB05:
+		{
+			bool oldCarry = getCPUFlag(FLAG_CARRY);
+
+			setCPUFlag(FLAG_CARRY, (State.L & 0x80) != 0);
+
+			State.L = (State.L << 1) | oldCarry;
+
+			setCPUFlag(FLAG_ZERO, (State.L == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RLC [HL]" B:2 C:16 FLAGS: Z 0 0 C
+		case 0xCB06:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+			bool oldCarry = getCPUFlag(FLAG_CARRY);
+
+			setCPUFlag(FLAG_CARRY, (value & 0x80) != 0);
+
+			value = (value << 1) | oldCarry;
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			setCPUFlag(FLAG_ZERO, (value == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RLC A" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB07:
+		{
+			bool oldCarry = getCPUFlag(FLAG_CARRY);
+
+			setCPUFlag(FLAG_CARRY, (State.A & 0x80) != 0);
+
+			State.A = (State.A << 1) | oldCarry;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RRC B" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB08:
+		{
+			setCPUFlag(FLAG_CARRY, (State.B & 0x01) != 0);
+
+			State.B = (State.B >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.B == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RRC C" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB09:
+		{
+			setCPUFlag(FLAG_CARRY, (State.C & 0x01) != 0);
+
+			State.C = (State.C >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.C == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RRC D" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB0A:
+		{
+			setCPUFlag(FLAG_CARRY, (State.D & 0x01) != 0);
+
+			State.D = (State.D >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.D == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RRC E" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB0B:
+		{
+			setCPUFlag(FLAG_CARRY, (State.E & 0x01) != 0);
+
+			State.E = (State.E >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.E == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RRC H" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB0C:
+		{
+			setCPUFlag(FLAG_CARRY, (State.H & 0x01) != 0);
+
+			State.H = (State.H >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.H == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RRC L" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB0D:
+		{
+			setCPUFlag(FLAG_CARRY, (State.L & 0x01) != 0);
+
+			State.L = (State.L >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.L == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RRC [HL]" B:2 C:16 FLAGS: Z 0 0 C
+		case 0xCB0E:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_CARRY, (value & 0x01) != 0);
+
+			value = (value >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (value == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RRC A" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB0F:
+		{
+			setCPUFlag(FLAG_CARRY, (State.A & 0x01) != 0);
+
+			State.A = (State.A >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RL B" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB10:
+		{
+			// Rotate left through carry
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t temp = (State.B << 1) | (carry ? 1 : 0);
+			carry = (State.B & 0x80) != 0;
+			State.B = temp;
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, (State.B == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, carry);
+
+			m_cycles = 8;
+			break;
+		}
+
 		// "RL C" B:2 C:8 FLAGS: Z 0 0 C
 		case 0xCB11:
 		{
@@ -2637,24 +2983,2064 @@ void Cpu::process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState&
 			break;
 		}
 
-		case 0xCB37:
+		// "RL D" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB12:
 		{
-			// Perform the swap of nibbles in A
-			State.A = ((State.A & 0x0F) << 4) | ((State.A & 0xF0) >> 4);
+			// Rotate left through carry
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t temp = (State.D << 1) | (carry ? 1 : 0);
+			carry = (State.D & 0x80) != 0;
+			State.D = temp;
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, (State.D == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, carry);
 
 			m_cycles = 8;
 			break;
 		}
 
-		// "BIT 7 H" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB7C:
+		// "RL E" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB13:
 		{
-			uint8_t bit = (State.H >> 7) & 0x01;
+			// Rotate left through carry
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t temp = (State.E << 1) | (carry ? 1 : 0);
+			carry = (State.E & 0x80) != 0;
+			State.E = temp;
 
 			// Update flags
-			setCPUFlag(FLAG_ZERO, (bit == 0));
+			setCPUFlag(FLAG_ZERO, (State.E == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, carry);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RL H" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB14:
+		{
+			// Rotate left through carry
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t temp = (State.H << 1) | (carry ? 1 : 0);
+			carry = (State.H & 0x80) != 0;
+			State.H = temp;
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, (State.H == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, carry);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RL L" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB15:
+		{
+			// Rotate left through carry
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t temp = (State.L << 1) | (carry ? 1 : 0);
+			carry = (State.L & 0x80) != 0;
+			State.L = temp;
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, (State.L == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, carry);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RL [HL]" B:2 C:16 FLAGS: Z 0 0 C
+		case 0xCB16:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			// Rotate left through carry
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t temp = (value << 1) | (carry ? 1 : 0);
+			carry = (value & 0x80) != 0;
+			value = temp;
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, (value == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, carry);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RL A" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB17:
+		{
+			// Rotate left through carry
+			bool carry = getCPUFlag(FLAG_CARRY);
+			uint8_t temp = (State.A << 1) | (carry ? 1 : 0);
+			carry = (State.A & 0x80) != 0;
+			State.A = temp;
+
+			// Update flags
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, carry);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RR B" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB18:
+		{
+			bool oldCarry = (State.B & 0x01) != 0;
+			setCPUFlag(FLAG_CARRY, oldCarry);
+
+			State.B = (State.B >> 1) | (oldCarry ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.B == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RR C" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB19:
+		{
+			bool oldCarry = (State.C & 0x01) != 0;
+			setCPUFlag(FLAG_CARRY, oldCarry);
+
+			State.C = (State.C >> 1) | (oldCarry ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.C == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RR D" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB1A:
+		{
+			bool oldCarry = (State.D & 0x01) != 0;
+			setCPUFlag(FLAG_CARRY, oldCarry);
+
+			State.D = (State.D >> 1) | (oldCarry ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.D == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RR E" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB1B:
+		{
+			bool oldCarry = (State.E & 0x01) != 0;
+			setCPUFlag(FLAG_CARRY, oldCarry);
+
+			State.E = (State.E >> 1) | (oldCarry ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.E == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RR H" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB1C:
+		{
+			bool oldCarry = (State.H & 0x01) != 0;
+			setCPUFlag(FLAG_CARRY, oldCarry);
+
+			State.H = (State.H >> 1) | (oldCarry ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.H == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RR L" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB1D:
+		{
+			bool oldCarry = (State.D & 0x01) != 0;
+			setCPUFlag(FLAG_CARRY, oldCarry);
+
+			State.L = (State.L >> 1) | (oldCarry ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.L == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RR [HL]" B:2 C:16 FLAGS: Z 0 0 C
+		case 0xCB1E:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			bool oldCarry = (value & 0x01) != 0;
+			setCPUFlag(FLAG_CARRY, oldCarry);
+
+			value = (value >> 1) | (oldCarry ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (value == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RR A" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB1F:
+		{
+			bool oldCarry = (State.A & 0x01) != 0;
+			setCPUFlag(FLAG_CARRY, oldCarry);
+
+			State.A = (State.A >> 1) | (oldCarry ? 0x80 : 0x00);
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SLA B" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB20:
+		{
+			setCPUFlag(FLAG_CARRY, (State.B & 0x80) != 0);
+
+			State.B = State.B << 1;
+
+			setCPUFlag(FLAG_ZERO, (State.B == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SLA C" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB21:
+		{
+			setCPUFlag(FLAG_CARRY, (State.C & 0x80) != 0);
+
+			State.C = State.C << 1;
+
+			setCPUFlag(FLAG_ZERO, (State.C == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SLA D" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB22:
+		{
+			setCPUFlag(FLAG_CARRY, (State.D & 0x80) != 0);
+
+			State.D = State.D << 1;
+
+			setCPUFlag(FLAG_ZERO, (State.D == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SLA E" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB23:
+		{
+			setCPUFlag(FLAG_CARRY, (State.E & 0x80) != 0);
+
+			State.E = State.E << 1;
+
+			setCPUFlag(FLAG_ZERO, (State.E == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SLA H" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB24:
+		{
+			setCPUFlag(FLAG_CARRY, (State.H & 0x80) != 0);
+
+			State.H = State.H << 1;
+
+			setCPUFlag(FLAG_ZERO, (State.H == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SLA L" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB25:
+		{
+			setCPUFlag(FLAG_CARRY, (State.L & 0x80) != 0);
+
+			State.L = State.L << 1;
+
+			setCPUFlag(FLAG_ZERO, (State.L == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SLA [HL]" B:2 C:16 FLAGS: Z 0 0 C
+		case 0xCB26:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_CARRY, (value & 0x80) != 0);
+
+			value = value << 1;
+
+			setCPUFlag(FLAG_ZERO, (value == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "SLA A" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB27:
+		{
+			setCPUFlag(FLAG_CARRY, (State.A & 0x80) != 0);
+
+			State.A = State.A << 1;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRA B" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB28:
+		{
+			setCPUFlag(FLAG_CARRY, (State.B & 0x80) != 0);
+
+			State.B = (State.B >> 1) | (State.B & 0x80);
+
+			setCPUFlag(FLAG_ZERO, (State.B == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRA C" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB29:
+		{
+			setCPUFlag(FLAG_CARRY, (State.C & 0x80) != 0);
+
+			State.C = (State.C >> 1) | (State.C & 0x80);
+
+			setCPUFlag(FLAG_ZERO, (State.C == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRA D" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB2A:
+		{
+			setCPUFlag(FLAG_CARRY, (State.D & 0x80) != 0);
+
+			State.D = (State.D >> 1) | (State.D & 0x80);
+
+			setCPUFlag(FLAG_ZERO, (State.D == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRA E" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB2B:
+		{
+			setCPUFlag(FLAG_CARRY, (State.E & 0x80) != 0);
+
+			State.E = (State.E >> 1) | (State.E & 0x80);
+
+			setCPUFlag(FLAG_ZERO, (State.E == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRA H" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB2C:
+		{
+			setCPUFlag(FLAG_CARRY, (State.H & 0x80) != 0);
+
+			State.H = (State.H >> 1) | (State.H & 0x80);
+
+			setCPUFlag(FLAG_ZERO, (State.H == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRA L" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB2D:
+		{
+			setCPUFlag(FLAG_CARRY, (State.L & 0x80) != 0);
+
+			State.L = (State.L >> 1) | (State.L & 0x80);
+
+			setCPUFlag(FLAG_ZERO, (State.L == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRA [HL]" B:2 C:16 FLAGS: Z 0 0 C
+		case 0xCB2E:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_CARRY, (value & 0x80) != 0);
+
+			value = (value >> 1) | (value & 0x80);
+
+			setCPUFlag(FLAG_ZERO, (value == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "SRA A" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB2F:
+		{
+			setCPUFlag(FLAG_CARRY, (State.A & 0x80) != 0);
+
+			State.A = (State.A >> 1) | (State.A & 0x80);
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SWAP B" B:2 C:8 FLAGS: Z 0 0 0
+		case 0xCB30:
+		{
+			State.B = ((State.B & 0x0F) << 4) | ((State.B & 0xF0) >> 4);
+
+			setCPUFlag(FLAG_ZERO, (State.B == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SWAP C" B:2 C:8 FLAGS: Z 0 0 0
+		case 0xCB31:
+		{
+			State.C = ((State.C & 0x0F) << 4) | ((State.C & 0xF0) >> 4);
+
+			setCPUFlag(FLAG_ZERO, (State.C == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SWAP D" B:2 C:8 FLAGS: Z 0 0 0
+		case 0xCB32:
+		{
+			State.D = ((State.D & 0x0F) << 4) | ((State.D & 0xF0) >> 4);
+
+			setCPUFlag(FLAG_ZERO, (State.D == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SWAP E" B:2 C:8 FLAGS: Z 0 0 0
+		case 0xCB33:
+		{
+			State.E = ((State.E & 0x0F) << 4) | ((State.E & 0xF0) >> 4);
+
+			setCPUFlag(FLAG_ZERO, (State.E == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SWAP H" B:2 C:8 FLAGS: Z 0 0 0
+		case 0xCB34:
+		{
+			State.H = ((State.H & 0x0F) << 4) | ((State.H & 0xF0) >> 4);
+
+			setCPUFlag(FLAG_ZERO, (State.H == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SWAP L" B:2 C:8 FLAGS: Z 0 0 0
+		case 0xCB35:
+		{
+			State.L = ((State.L & 0x0F) << 4) | ((State.L & 0xF0) >> 4);
+
+			setCPUFlag(FLAG_ZERO, (State.L == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SWAP [HL]" B:2 C:16 FLAGS: Z 0 0 0
+		case 0xCB36:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+			value = ((value & 0x0F) << 4) | ((value & 0xF0) >> 4);
+
+			setCPUFlag(FLAG_ZERO, (value == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "SWAP A" B:2 C:8 FLAGS: Z 0 0 0
+		case 0xCB37:
+		{
+			State.A = ((State.A & 0x0F) << 4) | ((State.A & 0xF0) >> 4);
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+			setCPUFlag(FLAG_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRL B" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB38:
+		{
+			setCPUFlag(FLAG_CARRY, (State.B & 0x01) != 0);
+
+			State.B = State.B >> 1;
+
+			setCPUFlag(FLAG_ZERO, (State.B == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRL C" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB39:
+		{
+			setCPUFlag(FLAG_CARRY, (State.C & 0x01) != 0);
+
+			State.C = State.C >> 1;
+
+			setCPUFlag(FLAG_ZERO, (State.C == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRL D" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB3A:
+		{
+			setCPUFlag(FLAG_CARRY, (State.D & 0x01) != 0);
+
+			State.D = State.D >> 1;
+
+			setCPUFlag(FLAG_ZERO, (State.D == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRL E" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB3B:
+		{
+			setCPUFlag(FLAG_CARRY, (State.E & 0x01) != 0);
+
+			State.E = State.E >> 1;
+
+			setCPUFlag(FLAG_ZERO, (State.E == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRL H" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB3C:
+		{
+			setCPUFlag(FLAG_CARRY, (State.H & 0x01) != 0);
+
+			State.H = State.H >> 1;
+
+			setCPUFlag(FLAG_ZERO, (State.H == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRL L" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB3D:
+		{
+			setCPUFlag(FLAG_CARRY, (State.L & 0x01) != 0);
+
+			State.L = State.L >> 1;
+
+			setCPUFlag(FLAG_ZERO, (State.L == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "SRL [HL]" B:2 C:16 FLAGS: Z 0 0 C
+		case 0xCB3E:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_CARRY, (value & 0x01) != 0);
+
+			value = value >> 1;
+
+			setCPUFlag(FLAG_ZERO, (value == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "SRL A" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB3F:
+		{
+			setCPUFlag(FLAG_CARRY, (State.A & 0x01) != 0);
+
+			State.A = State.A >> 1;
+
+			setCPUFlag(FLAG_ZERO, (State.A == 0));
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, false);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 0, B" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB40:
+		{
+			setCPUFlag(FLAG_ZERO, (State.B & 0x01) == 0);
 			setCPUFlag(FLAG_SUBTRACT, false);
 			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 0, C" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB41:
+		{
+			setCPUFlag(FLAG_ZERO, (State.C & 0x01) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 0, D" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB42:
+		{
+			setCPUFlag(FLAG_ZERO, (State.D & 0x01) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 0, E" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB43:
+		{
+			setCPUFlag(FLAG_ZERO, (State.E & 0x01) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 0, H" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB44:
+		{
+			setCPUFlag(FLAG_ZERO, (State.H & 0x01) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 0, L" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB45:
+		{
+			setCPUFlag(FLAG_ZERO, (State.L & 0x01) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 0, [HL]" B:2 C:12 FLAGS: Z 0 1 -
+		case 0xCB46:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_ZERO, (value & 0x01) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 12;
+			break;
+		}
+
+		// "BIT 0, A" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB47:
+		{
+			setCPUFlag(FLAG_ZERO, (State.A & 0x01) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 1, B" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB48:
+		{
+			setCPUFlag(FLAG_ZERO, (State.B & 0x02) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 1, C" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB49:
+		{
+			setCPUFlag(FLAG_ZERO, (State.C & 0x02) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 1, D" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB4A:
+		{
+			setCPUFlag(FLAG_ZERO, (State.D & 0x02) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 1, E" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB4B:
+		{
+			setCPUFlag(FLAG_ZERO, (State.E & 0x02) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 1, H" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB4C:
+		{
+			setCPUFlag(FLAG_ZERO, (State.H & 0x02) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 1, L" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB4D:
+		{
+			setCPUFlag(FLAG_ZERO, (State.L & 0x02) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 1, [HL]" B:2 C:12 FLAGS: Z 0 1 -
+		case 0xCB4E:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_ZERO, (value & 0x02) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 12;
+			break;
+		}
+
+		// "BIT 1, A" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB4F:
+		{
+			setCPUFlag(FLAG_ZERO, (State.A & 0x02) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 2, B" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB50:
+		{
+			setCPUFlag(FLAG_ZERO, (State.B & 0x04) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 2, C" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB51:
+		{
+			setCPUFlag(FLAG_ZERO, (State.C & 0x02) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 2, D" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB52:
+		{
+			setCPUFlag(FLAG_ZERO, (State.D & 0x04) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 2, E" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB53:
+		{
+			setCPUFlag(FLAG_ZERO, (State.E & 0x04) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 2, H" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB54:
+		{
+			setCPUFlag(FLAG_ZERO, (State.H & 0x04) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 2, L" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB55:
+		{
+			setCPUFlag(FLAG_ZERO, (State.L & 0x04) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 2, [HL]" B:2 C:12 FLAGS: Z 0 1 -
+		case 0xCB56:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_ZERO, (value & 0x04) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 12;
+			break;
+		}
+
+		// "BIT 2, A" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB57:
+		{
+			setCPUFlag(FLAG_ZERO, (State.A & 0x04) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 3, B" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB58:
+		{
+			setCPUFlag(FLAG_ZERO, (State.B & 0x08) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 3, C" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB59:
+		{
+			setCPUFlag(FLAG_ZERO, (State.C & 0x08) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 3, D" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB5A:
+		{
+			setCPUFlag(FLAG_ZERO, (State.D & 0x08) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 3, E" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB5B:
+		{
+			setCPUFlag(FLAG_ZERO, (State.E & 0x08) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 3, H" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB5C:
+		{
+			setCPUFlag(FLAG_ZERO, (State.H & 0x08) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 3, L" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB5D:
+		{
+			setCPUFlag(FLAG_ZERO, (State.L & 0x08) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 3, [HL]" B:2 C:12 FLAGS: Z 0 1 -
+		case 0xCB5E:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_ZERO, (value & 0x08) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 12;
+			break;
+		}
+
+		// "BIT 3, A" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB5F:
+		{
+			setCPUFlag(FLAG_ZERO, (State.A & 0x08) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 4, B" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB60:
+		{
+			setCPUFlag(FLAG_ZERO, (State.B & 0x10) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 4, C" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB61:
+		{
+			setCPUFlag(FLAG_ZERO, (State.C & 0x10) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 4, D" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB62:
+		{
+			setCPUFlag(FLAG_ZERO, (State.D & 0x10) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 4, E" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB63:
+		{
+			setCPUFlag(FLAG_ZERO, (State.E & 0x10) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 4, H" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB64:
+		{
+			setCPUFlag(FLAG_ZERO, (State.H & 0x10) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 4, L" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB65:
+		{
+			setCPUFlag(FLAG_ZERO, (State.L & 0x10) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 4, [HL]" B:2 C:12 FLAGS: Z 0 1 -
+		case 0xCB66:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_ZERO, (value & 0x10) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 12;
+			break;
+		}
+
+		// "BIT 4, A" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB67:
+		{
+			setCPUFlag(FLAG_ZERO, (State.A & 0x10) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 5, B" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB68:
+		{
+			setCPUFlag(FLAG_ZERO, (State.B & 0x20) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 5, C" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB69:
+		{
+			setCPUFlag(FLAG_ZERO, (State.C & 0x20) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 5, D" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB6A:
+		{
+			setCPUFlag(FLAG_ZERO, (State.D & 0x20) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 5, E" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB6B:
+		{
+			setCPUFlag(FLAG_ZERO, (State.E & 0x20) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 5, H" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB6C:
+		{
+			setCPUFlag(FLAG_ZERO, (State.H & 0x20) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 5, L" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB6D:
+		{
+			setCPUFlag(FLAG_ZERO, (State.L & 0x20) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 5, [HL]" B:2 C:12 FLAGS: Z 0 1 -
+		case 0xCB6E:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_ZERO, (value & 0x20) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 12;
+			break;
+		}
+
+		// "BIT 5, A" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB6F:
+		{
+			setCPUFlag(FLAG_ZERO, (State.A & 0x20) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 6, B" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB70:
+		{
+			setCPUFlag(FLAG_ZERO, (State.B & 0x40) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 6, C" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB71:
+		{
+			setCPUFlag(FLAG_ZERO, (State.C & 0x40) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 6, D" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB72:
+		{
+			setCPUFlag(FLAG_ZERO, (State.D & 0x40) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 6, E" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB73:
+		{
+			setCPUFlag(FLAG_ZERO, (State.E & 0x40) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 6, H" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB74:
+		{
+			setCPUFlag(FLAG_ZERO, (State.H & 0x40) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 6, L" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB75:
+		{
+			setCPUFlag(FLAG_ZERO, (State.L & 0x40) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 6, [HL]" B:2 C:12 FLAGS: Z 0 1 -
+		case 0xCB76:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_ZERO, (value & 0x40) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 12;
+			break;
+		}
+
+		// "BIT 6, A" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB77:
+		{
+			setCPUFlag(FLAG_ZERO, (State.A & 0x40) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 7, B" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB78:
+		{
+			setCPUFlag(FLAG_ZERO, (State.B & 0x80) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 7, C" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB79:
+		{
+			setCPUFlag(FLAG_ZERO, (State.C & 0x80) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 7, D" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB7A:
+		{
+			setCPUFlag(FLAG_ZERO, (State.D & 0x80) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 7, E" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB7B:
+		{
+			setCPUFlag(FLAG_ZERO, (State.E & 0x80) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 7, H" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB7C:
+		{
+			setCPUFlag(FLAG_ZERO, (State.H & 0x80) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 7, L" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB7D:
+		{
+			setCPUFlag(FLAG_ZERO, (State.L & 0x80) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "BIT 7, [HL]" B:2 C:12 FLAGS: Z 0 1 -
+		case 0xCB7E:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			setCPUFlag(FLAG_ZERO, (value & 0x80) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 12;
+			break;
+		}
+
+		// "BIT 7, A" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB7F:
+		{
+			setCPUFlag(FLAG_ZERO, (State.A & 0x80) == 0);
+			setCPUFlag(FLAG_SUBTRACT, false);
+			setCPUFlag(FLAG_HALF_CARRY, true);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 0, B" B:2 C:8 FLAGS: - - - -
+		case 0xCB80:
+		{
+			State.B &= 0xFE;
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 0, C" B:2 C:8 FLAGS: - - - -
+		case 0xCB81:
+		{
+			State.C &= 0xFE;
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 0, D" B:2 C:8 FLAGS: - - - -
+		case 0xCB82:
+		{
+			State.D &= 0xFE;
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 0, E" B:2 C:8 FLAGS: - - - -
+		case 0xCB83:
+		{
+			State.E &= 0xFE;
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 0, H" B:2 C:8 FLAGS: - - - -
+		case 0xCB84:
+		{
+			State.H &= 0xFE;
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 0, L" B:2 C:8 FLAGS: - - - -
+		case 0xCB85:
+		{
+			State.L &= 0xFE;
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 0, [HL]" B:2 C:16 FLAGS: - - - -
+		case 0xCB86:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			value &= 0xFE;
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RES 0, A" B:2 C:8 FLAGS: - - - -
+		case 0xCB87:
+		{
+			State.A &= 0xFE;
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 1, B" B:2 C:8 FLAGS: - - - -
+		case 0xCB88:
+		{
+			State.B &= ~(1 << 1);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 1, C" B:2 C:8 FLAGS: - - - -
+		case 0xCB89:
+		{
+			State.C &= ~(1 << 1);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 1, D" B:2 C:8 FLAGS: - - - -
+		case 0xCB8A:
+		{
+			State.D &= ~(1 << 1);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 1, E" B:2 C:8 FLAGS: - - - -
+		case 0xCB8B:
+		{
+			State.E &= ~(1 << 1);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 1, H" B:2 C:8 FLAGS: - - - -
+		case 0xCB8C:
+		{
+			State.H &= ~(1 << 1);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 1, L" B:2 C:8 FLAGS: - - - -
+		case 0xCB8D:
+		{
+			State.L &= ~(1 << 1);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 1, [HL]" B:2 C:16 FLAGS: - - - -
+		case 0xCB8E:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			value &= ~(1 << 1);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RES 1, A" B:2 C:8 FLAGS: - - - -
+		case 0xCB8F:
+		{
+			State.A &= ~(1 << 1);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 2, B" B:2 C:8 FLAGS: - - - -
+		case 0xCB90:
+		{
+			State.B &= ~(1 << 2);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 2, C" B:2 C:8 FLAGS: - - - -
+		case 0xCB91:
+		{
+			State.C &= ~(1 << 2);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 2, D" B:2 C:8 FLAGS: - - - -
+		case 0xCB92:
+		{
+			State.D &= ~(1 << 2);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 2, E" B:2 C:8 FLAGS: - - - -
+		case 0xCB93:
+		{
+			State.E &= ~(1 << 2);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 2, H" B:2 C:8 FLAGS: - - - -
+		case 0xCB94:
+		{
+			State.H &= ~(1 << 2);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 2, L" B:2 C:8 FLAGS: - - - -
+		case 0xCB95:
+		{
+			State.L &= ~(1 << 2);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 2, [HL]" B:2 C:16 FLAGS: - - - -
+		case 0xCB96:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			value &= ~(1 << 2);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RES 2, A" B:2 C:8 FLAGS: - - - -
+		case 0xCB97:
+		{
+			State.A &= ~(1 << 2);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 3, B" B:2 C:8 FLAGS: - - - -
+		case 0xCB98:
+		{
+			State.B &= ~(1 << 3);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 3, C" B:2 C:8 FLAGS: - - - -
+		case 0xCB99:
+		{
+			State.C &= ~(1 << 3);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 3, D" B:2 C:8 FLAGS: - - - -
+		case 0xCB9A:
+		{
+			State.D &= ~(1 << 3);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 3, E" B:2 C:8 FLAGS: - - - -
+		case 0xCB9B:
+		{
+			State.E &= ~(1 << 3);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 3, H" B:2 C:8 FLAGS: - - - -
+		case 0xCB9C:
+		{
+			State.H &= ~(1 << 3);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 3, L" B:2 C:8 FLAGS: - - - -
+		case 0xCB9D:
+		{
+			State.L &= ~(1 << 3);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 3, [HL]" B:2 C:16 FLAGS: - - - -
+		case 0xCB9E:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			value &= ~(1 << 3);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RES 3, A" B:2 C:8 FLAGS: - - - -
+		case 0xCB9F:
+		{
+			State.A &= ~(1 << 3);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 4, B" B:2 C:8 FLAGS: - - - -
+		case 0xCBA0:
+		{
+			State.B &= ~(1 << 4);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 4, C" B:2 C:8 FLAGS: - - - -
+		case 0xCBA1:
+		{
+			State.C &= ~(1 << 4);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 4, D" B:2 C:8 FLAGS: - - - -
+		case 0xCBA2:
+		{
+			State.D &= ~(1 << 4);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 4, E" B:2 C:8 FLAGS: - - - -
+		case 0xCBA3:
+		{
+			State.E &= ~(1 << 4);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 4, H" B:2 C:8 FLAGS: - - - -
+		case 0xCBA4:
+		{
+			State.H &= ~(1 << 4);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 4, L" B:2 C:8 FLAGS: - - - -
+		case 0xCBA5:
+		{
+			State.L &= ~(1 << 4);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 4, [HL]" B:2 C:16 FLAGS: - - - -
+		case 0xCBA6:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			value &= ~(1 << 4);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RES 4, A" B:2 C:8 FLAGS: - - - -
+		case 0xCBA7:
+		{
+			State.A &= ~(1 << 4);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 5, B" B:2 C:8 FLAGS: - - - -
+		case 0xCBA8:
+		{
+			State.B &= ~(1 << 5);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 5, C" B:2 C:8 FLAGS: - - - -
+		case 0xCBA9:
+		{
+			State.C &= ~(1 << 5);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 5, D" B:2 C:8 FLAGS: - - - -
+		case 0xCBAA:
+		{
+			State.D &= ~(1 << 5);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 5, E" B:2 C:8 FLAGS: - - - -
+		case 0xCBAB:
+		{
+			State.E &= ~(1 << 5);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 5, H" B:2 C:8 FLAGS: - - - -
+		case 0xCBAC:
+		{
+			State.H &= ~(1 << 5);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 5, L" B:2 C:8 FLAGS: - - - -
+		case 0xCBAD:
+		{
+			State.L &= ~(1 << 5);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 5, [HL]" B:2 C:16 FLAGS: - - - -
+		case 0xCBAE:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			value &= ~(1 << 5);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RES 5, A" B:2 C:8 FLAGS: - - - -
+		case 0xCBAF:
+		{
+			State.A &= ~(1 << 5);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 6, B" B:2 C:8 FLAGS: - - - -
+		case 0xCBB0:
+		{
+			State.B &= ~(1 << 6);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 6, C" B:2 C:8 FLAGS: - - - -
+		case 0xCBB1:
+		{
+			State.C &= ~(1 << 6);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 6, D" B:2 C:8 FLAGS: - - - -
+		case 0xCBB2:
+		{
+			State.D &= ~(1 << 6);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 6, E" B:2 C:8 FLAGS: - - - -
+		case 0xCBB3:
+		{
+			State.E &= ~(1 << 6);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 6, H" B:2 C:8 FLAGS: - - - -
+		case 0xCBB4:
+		{
+			State.H &= ~(1 << 6);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 6, L" B:2 C:8 FLAGS: - - - -
+		case 0xCBB5:
+		{
+			State.L &= ~(1 << 6);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 6, [HL]" B:2 C:16 FLAGS: - - - -
+		case 0xCBB6:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			value &= ~(1 << 6);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RES 6, A" B:2 C:8 FLAGS: - - - -
+		case 0xCBB7:
+		{
+			State.A &= ~(1 << 6);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 7, B" B:2 C:8 FLAGS: - - - -
+		case 0xCBB8:
+		{
+			State.B &= ~(1 << 7);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 7, C" B:2 C:8 FLAGS: - - - -
+		case 0xCBB9:
+		{
+			State.C &= ~(1 << 7);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 7, D" B:2 C:8 FLAGS: - - - -
+		case 0xCBBA:
+		{
+			State.D &= ~(1 << 7);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 7, E" B:2 C:8 FLAGS: - - - -
+		case 0xCBBB:
+		{
+			State.E &= ~(1 << 7);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 7, H" B:2 C:8 FLAGS: - - - -
+		case 0xCBBC:
+		{
+			State.H &= ~(1 << 7);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 7, L" B:2 C:8 FLAGS: - - - -
+		case 0xCBBD:
+		{
+			State.L &= ~(1 << 7);
+
+			m_cycles = 8;
+			break;
+		}
+
+		// "RES 7, [HL]" B:2 C:16 FLAGS: - - - -
+		case 0xCBBE:
+		{
+			uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+			value &= ~(1 << 7);
+
+			gb.WriteToMemoryMap(State.HL, value);
+
+			m_cycles = 16;
+			break;
+		}
+
+		// "RES 7, A" B:2 C:8 FLAGS: - - - -
+		case 0xCBBF:
+		{
+			State.A &= ~(1 << 7);
 
 			m_cycles = 8;
 			break;

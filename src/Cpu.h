@@ -68,6 +68,8 @@ public:
 
 private:
 	int m_cycles = 0; // how many cycles remain before the cpu can fetch another instruction
+	bool m_interruptMasterFlag = false;
+	bool m_isHalted = false; 
 
 public:
 	void Reset(GameBoy& gb, bool enableBootRom);
@@ -76,6 +78,9 @@ public:
 
 private:
 	void process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState& state);
+	void processInterrupts(GameBoy& gb);
+
+	// disassembly
 	void disasseble16bit(uint8_t *opcode, int pc);
 	void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t *opcode, int totalOpBytes);
 	void unimplementedInstruction(Cpu::m_CpuState &state, uint8_t opcode);

@@ -44,6 +44,7 @@ typedef enum
 	HW_NR52_SOUND_TOGGLE = 0xFF26,
 	HW_WAVRAM_WAVEFORM_STORAGE = 0xFF30, // $FF30-FF3F
 
+
 	/* Video */
 	HW_LCDC_LCD_CONTROL = 0xFF40,
 	HW_STAT_LCD_STATUS = 0xFF41,
@@ -62,10 +63,39 @@ typedef enum
 	HW_WY_WINDOW_Y_POS = 0xFF4A,
 	HW_WX_WINDOW_X_POS = 0xFF4B,
 
+
 	/* Interrupt Toggle */
 	HW_INTERRUPT_ENABLE = 0xFFFF
 	
 } HardwareAddresses;
+
+/********************************************************************************************
+	CPU Specific
+*********************************************************************************************/
+#define DEST_ADDRESS_VBLANK 0x0040 
+#define DEST_ADDRESS_LCD_STAT 0x0048
+#define DEST_ADDRESS_TIMER 0x0050
+#define DEST_ADDRESS_SERIAL 0x0058
+#define DEST_ADDRESS_JOYPAD 0x0060
+
+typedef enum
+{
+	IE_VBLANK = 0x01,
+	IE_LCD = (0x01 << 1),
+	IE_TIMER = (0x01 << 2),
+	IE_SERIAL = (0x01 << 3),
+	IE_JOYPAD = (0x01 << 4),
+} InterruptEnable_Flags;
+
+typedef enum
+{
+	IF_VBLANK = 0x01,
+	IF_LCD = (0x01 << 1),
+	IF_TIMER = (0x01 << 2),
+	IF_SERIAL = (0x01 << 3),
+	IF_JOYPAD = (0x01 << 4),
+} InterruptFlags;
+
 
 /********************************************************************************************
 	PPU Specific
