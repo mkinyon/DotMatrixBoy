@@ -308,7 +308,17 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "RET C" B:1 C:208 FLAGS: - - - -
-			case 0xD8: { unimplementedInstruction(State, *opcode); break; }
+			case 0xD8:
+			{
+				if (getCPUFlag(FLAG_CARRY))
+				{
+					State.PC = popSP(gb);
+					m_cycles = 20;
+				}
+
+				m_cycles = 8;
+				break;
+			}
 
 			// "RETI" B:1 C:16 FLAGS: - - - -
 			case 0xD9: { unimplementedInstruction(State, *opcode); break; }
@@ -1295,9 +1305,18 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "LD HL SP e8" B:2 C:12 FLAGS: 0 0 H C
-			case 0xF8: { unimplementedInstruction(State, *opcode); break; }
+			case 0xF8:
+			{
+				int8_t offset = opcode[1];
+				State.HL = popSP(gb) + offset;
 
-					 // "LD SP HL" B:1 C:8 FLAGS: - - - -
+				State.PC++;
+
+				m_cycles = 12;
+				break;
+			}
+
+			// "LD SP HL" B:1 C:8 FLAGS: - - - -
 			case 0xF9:
 			{
 				pushSP(gb, State.HL);
@@ -1999,25 +2018,124 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "SBC A C" B:1 C:4 FLAGS: Z 1 H C
-			case 0x99: { unimplementedInstruction(State, *opcode); break; }
+			case 0x99:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A - State.C - carry;
+
+				setCPUFlag(FLAG_ZERO, (result == 0xFF));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) - (State.C & 0xF) - (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
 
 			 // "SBC A D" B:1 C:4 FLAGS: Z 1 H C
-			case 0x9A: { unimplementedInstruction(State, *opcode); break; }
+			case 0x9A:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A - State.D - carry;
+
+				setCPUFlag(FLAG_ZERO, (result == 0xFF));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) - (State.D & 0xF) - (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "SBC A E" B:1 C:4 FLAGS: Z 1 H C
-			case 0x9B: { unimplementedInstruction(State, *opcode); break; }
+			case 0x9B:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A - State.E - carry;
+
+				setCPUFlag(FLAG_ZERO, (result == 0xFF));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) - (State.E & 0xF) - (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "SBC A H" B:1 C:4 FLAGS: Z 1 H C
-			case 0x9C: { unimplementedInstruction(State, *opcode); break; }
+			case 0x9C:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A - State.H - carry;
+
+				setCPUFlag(FLAG_ZERO, (result == 0xFF));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) - (State.H & 0xF) - (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "SBC A L" B:1 C:4 FLAGS: Z 1 H C
-			case 0x9D: { unimplementedInstruction(State, *opcode); break; }
+			case 0x9D:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A - State.L - carry;
+
+				setCPUFlag(FLAG_ZERO, (result == 0xFF));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) - (State.L & 0xF) - (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "SBC A [HL]" B:1 C:8 FLAGS: Z 1 H C
-			case 0x9E: { unimplementedInstruction(State, *opcode); break; }
+			case 0x9E:
+			{
+				uint8_t value = gb.ReadFromMemoryMap(State.HL);
+
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A - value - carry;
+
+				setCPUFlag(FLAG_ZERO, (result == 0xFF));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) - (value & 0xF) - (carry ? 1 : 0)) & 0x10) != 0);
+				setCPUFlag(FLAG_CARRY, (result > 0xFF));
+
+				State.A = result;
+
+				m_cycles = 8;
+				break;
+			}
 
 			// "SBC A A" B:1 C:4 FLAGS: Z 1 H -
-			case 0x9F: { unimplementedInstruction(State, *opcode); break; }
+			case 0x9F:
+			{
+				bool carry = getCPUFlag(FLAG_CARRY);
+				uint8_t result = State.A - State.A - carry;
+
+				setCPUFlag(FLAG_ZERO, (result == 0xFF));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) - (State.A & 0xF) - (carry ? 1 : 0)) & 0x10) != 0);
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "AND A B" B:1 C:4 FLAGS: Z 0 1 0
 			case 0xA0:
@@ -2334,22 +2452,82 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "CP A B" B:1 C:4 FLAGS: Z 1 H C
-			case 0xB8: { unimplementedInstruction(State, *opcode); break; }
+			case 0xB8:
+			{
+				uint8_t result = State.A - State.B;
+
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.B & 0x0F));
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "CP A C" B:1 C:4 FLAGS: Z 1 H C
-			case 0xB9: { unimplementedInstruction(State, *opcode); break; }
+			case 0xB9:
+			{
+				uint8_t result = State.A - State.C;
+
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.C & 0x0F));
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "CP A D" B:1 C:4 FLAGS: Z 1 H C
-			case 0xBA: { unimplementedInstruction(State, *opcode); break; }
+			case 0xBA:
+			{
+				uint8_t result = State.A - State.D;
+
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.D & 0x0F));
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "CP A E" B:1 C:4 FLAGS: Z 1 H C
-			case 0xBB: { unimplementedInstruction(State, *opcode); break; }
+			case 0xBB:
+			{
+				uint8_t result = State.A - State.E;
+
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.E & 0x0F));
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "CP A H" B:1 C:4 FLAGS: Z 1 H C
-			case 0xBC: { unimplementedInstruction(State, *opcode); break; }
+			case 0xBC:
+			{
+				uint8_t result = State.A - State.H;
+
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.H & 0x0F));
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "CP A L" B:1 C:4 FLAGS: Z 1 H C
-			case 0xBD: { unimplementedInstruction(State, *opcode); break; }
+			case 0xBD:
+			{
+				uint8_t result = State.A - State.L;
+
+				setCPUFlag(FLAG_ZERO, (result == 0));
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (State.L & 0x0F));
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "CP A [HL]" B:1 C:8 FLAGS: Z 1 H C
 			case 0xBE:
@@ -2357,7 +2535,6 @@ void Cpu::Clock(GameBoy& gb)
 				uint8_t value = gb.ReadFromMemoryMap(State.HL);
 				uint8_t result = State.A - value;
 
-				// Update flags
 				setCPUFlag(FLAG_ZERO, (result == 0));
 				setCPUFlag(FLAG_SUBTRACT, true);
 				setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (value & 0x0F));
@@ -2367,7 +2544,16 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "CP A A" B:1 C:4 FLAGS: 1 1 0 0
-			case 0xBF: { unimplementedInstruction(State, *opcode); break; }
+			case 0xBF:
+			{
+				setCPUFlag(FLAG_ZERO, true);
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "ADD A n8" B:2 C:8 FLAGS: Z 0 H C
 			case 0xC6:
@@ -2553,7 +2739,18 @@ void Cpu::Clock(GameBoy& gb)
 			case 0x3B: { unimplementedInstruction(State, *opcode); break; }
 
 			// "ADD SP e8" B:2 C:16 FLAGS: 0 0 H C
-			case 0xE8: { unimplementedInstruction(State, *opcode); break; }
+			case 0xE8:
+			{
+				int8_t offset = opcode[1];
+				uint16_t result = popSP(gb) + offset;
+
+				pushSP(gb, result);
+
+				State.PC++;
+
+				m_cycles = 16;
+				break;
+			}
 
 			/********************************************************************************************
 				8-bit Shift. Rotate and Bit Instructions
