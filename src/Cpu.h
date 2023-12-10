@@ -70,6 +70,7 @@ private:
 	int m_cycles = 0; // how many cycles remain before the cpu can fetch another instruction
 	bool m_interruptMasterFlag = false;
 	bool m_isHalted = false; 
+	enum Flags;
 
 public:
 	void Reset(GameBoy& gb, bool enableBootRom);
@@ -85,7 +86,8 @@ private:
 	void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t *opcode, int totalOpBytes);
 	void unimplementedInstruction(Cpu::m_CpuState &state, uint8_t opcode);
 
-	enum Flags;
+	// cpu instructions
+	void set_bit_reg(uint8_t& reg, uint8_t bit);
 
 	void pushSP(GameBoy& gb, uint16_t value);
 	uint16_t popSP(GameBoy& gb);

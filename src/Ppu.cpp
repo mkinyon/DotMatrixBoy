@@ -61,7 +61,16 @@ void Ppu::processHBlank(GameBoy& gb)
 {
 	if (m_CycleCount >= HBLANK_CYCLES)
 	{
+		// Check for H-BLANK Interrupt
+		if (gb.ReadFromMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_MODE_0_INT_SELECT))
+		{
+			gb.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
+		}
+
+		// render graphics
 		drawBGToBuffer(gb);
+		// TODO draw window
+		// TODO draw sprites
 
 		uint8_t ly = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
 		if (ly == 143)
@@ -82,6 +91,8 @@ void Ppu::processVBlank(GameBoy& gb)
 		
 		if (ly == 144)
 		{
+			gb.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_VBLANK, true);
+
 			copyBackBufferToLCD();
 			clearBackBuffer();
 		}

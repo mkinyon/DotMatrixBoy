@@ -80,7 +80,7 @@ void Cpu::Clock(GameBoy& gb)
 			// "DI" B:1 C:4 FLAGS: - - - -
 			case 0xF3:
 			{
-				gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, 0);
+				m_interruptMasterFlag = false;
 
 				m_cycles = 4;
 				break;
@@ -89,7 +89,7 @@ void Cpu::Clock(GameBoy& gb)
 			// "EI" B:1 C:4 FLAGS: - - - -
 			case 0xFB:
 			{
-				gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, 1);
+				m_interruptMasterFlag = true;
 
 				m_cycles = 4;
 				break;
@@ -239,7 +239,18 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "RET Z" B:1 C:208 FLAGS: - - - -
-			case 0xC8: { unimplementedInstruction(State, *opcode); break; }
+			case 0xC8:
+			{
+				if (getCPUFlag(FLAG_ZERO))
+				{
+					State.PC = popSP(gb);
+					m_cycles = 20;
+					break;
+				}
+
+				m_cycles = 8;
+				break;
+			}
 
 			// "RET" B:1 C:16 FLAGS: - - - -
 			case 0xC9:
@@ -251,7 +262,22 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "JP Z a16" B:3 C:1612 FLAGS: - - - -
-			case 0xCA: { unimplementedInstruction(State, *opcode); break; }
+			case 0xCA:
+			{
+				if (getCPUFlag(FLAG_ZERO))
+				{
+					uint16_t offset = (opcode[2] << 8) | (opcode[1]);
+					State.PC = offset;
+
+					m_cycles = 16;
+					break;
+				}
+
+				State.PC += 2;
+
+				m_cycles = 12;
+				break;
+			}
 
 			// "CALL Z a16" B:3 C:2412 FLAGS: - - - -
 			case 0xCC:
@@ -263,6 +289,8 @@ void Cpu::Clock(GameBoy& gb)
 					m_cycles = 24;
 					break;
 				}
+
+				State.PC += 2;
 
 				m_cycles = 12;
 				break;
@@ -321,7 +349,14 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "RETI" B:1 C:16 FLAGS: - - - -
-			case 0xD9: { unimplementedInstruction(State, *opcode); break; }
+			case 0xD9:
+			{
+				State.PC = popSP(gb);
+				m_interruptMasterFlag = true;
+
+				m_cycles = 16;
+				break;
+			}
 
 			// "JP C a16" B:3 C:1612 FLAGS: - - - -
 			case 0xDA: { unimplementedInstruction(State, *opcode); break; }
@@ -1308,7 +1343,7 @@ void Cpu::Clock(GameBoy& gb)
 			case 0xF8:
 			{
 				int8_t offset = opcode[1];
-				State.HL = popSP(gb) + offset;
+				State.HL = popSP(gb) + offset + 1;
 
 				State.PC++;
 
@@ -1579,7 +1614,17 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "CCF" B:1 C:4 FLAGS: - 0 0 C
-			case 0x3F: { unimplementedInstruction(State, *opcode); break; }
+			case 0x3F:
+			{
+				// flip the carry flag
+				getCPUFlag(FLAG_CARRY) == true ? setCPUFlag(FLAG_CARRY, false) : setCPUFlag(FLAG_CARRY, true);
+
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "ADD A B" B:1 C:4 FLAGS: Z 0 H C
 			case 0x80:
@@ -2334,7 +2379,19 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "XOR A [HL]" B:1 C:8 FLAGS: Z 0 0 0
-			case 0xAE: { unimplementedInstruction(State, *opcode); break; }
+			case 0xAE:
+			{
+				uint8_t value = gb.ReadFromMemoryMap(State.HL);
+				State.A = State.A ^ value;
+
+				setCPUFlag(FLAG_ZERO, true);
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, false);
+
+				m_cycles = 8;
+				break;
+			}
 
 			// "XOR A A" B:1 C:4 FLAGS: 1 0 0 0
 			case 0xAF:
@@ -2597,7 +2654,19 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "SBC A n8" B:2 C:8 FLAGS: Z 1 H C
-			case 0xDE: { unimplementedInstruction(State, *opcode); break; }
+			case 0xDE:
+			{
+				uint8_t carry = (State.F & 0x10) >> 4;
+				uint16_t result = State.A - opcode[1] - carry;
+
+				setCPUFlag(FLAG_ZERO, (result & 0xFF) == 0);
+				setCPUFlag(FLAG_SUBTRACT, true);
+				setCPUFlag(FLAG_ZERO, (result & 0x100) != 0);
+				setCPUFlag(FLAG_ZERO, ((State.A ^ opcode[1] ^ result) & 0x10) != 0);
+
+				m_cycles = 8;
+				break;
+			}
 
 			// "AND A n8" B:2 C:8 FLAGS: Z 0 1 0
 			case 0xE6:
@@ -2742,7 +2811,7 @@ void Cpu::Clock(GameBoy& gb)
 			case 0xE8:
 			{
 				int8_t offset = opcode[1];
-				uint16_t result = popSP(gb) + offset;
+				uint16_t result = popSP(gb) + offset + 1;
 
 				pushSP(gb, result);
 
@@ -2865,9 +2934,9 @@ void Cpu::processInterrupts(GameBoy& gb)
 		m_isHalted = false;
 	}
 
-	if (destinationAddress != 0)
+	if (destinationAddress != 0 && m_interruptMasterFlag)
 	{
-		gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, false);
+		m_interruptMasterFlag = false;;
 		gb.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, interruptFlag, false);
 		
 		pushSP(gb, State.PC);
@@ -5243,6 +5312,72 @@ void Cpu::process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState&
 			break;
 		}
 
+		// "SET bit, register" B:2 C:8 - - - -
+		case 0xCBC0: set_bit_reg(State.B, 0); m_cycles = 8; break;
+		case 0xCBC1: set_bit_reg(State.C, 0); m_cycles = 8; break;
+		case 0xCBC2: set_bit_reg(State.D, 0); m_cycles = 8; break;
+		case 0xCBC3: set_bit_reg(State.E, 0); m_cycles = 8; break;
+		case 0xCBC4: set_bit_reg(State.H, 0); m_cycles = 8; break;
+		case 0xCBC5: set_bit_reg(State.L, 0); m_cycles = 8; break;
+		case 0xCBC6: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 0); m_cycles = 8; break;
+		case 0xCBC7: set_bit_reg(State.A, 0); m_cycles = 8; break;
+		case 0xCBC8: set_bit_reg(State.B, 1); m_cycles = 8; break;
+		case 0xCBC9: set_bit_reg(State.C, 1); m_cycles = 8; break;
+		case 0xCBCA: set_bit_reg(State.D, 1); m_cycles = 8; break;
+		case 0xCBCB: set_bit_reg(State.E, 1); m_cycles = 8; break;
+		case 0xCBCC: set_bit_reg(State.H, 1); m_cycles = 8; break;
+		case 0xCBCD: set_bit_reg(State.L, 1); m_cycles = 8; break;
+		case 0xCBCE: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 1); m_cycles = 8; break;
+		case 0xCBCF: set_bit_reg(State.A, 1); m_cycles = 8; break;
+		case 0xCBD0: set_bit_reg(State.B, 2); m_cycles = 8; break;
+		case 0xCBD1: set_bit_reg(State.C, 2); m_cycles = 8; break;
+		case 0xCBD2: set_bit_reg(State.D, 2); m_cycles = 8; break;
+		case 0xCBD3: set_bit_reg(State.E, 2); m_cycles = 8; break;
+		case 0xCBD4: set_bit_reg(State.H, 2); m_cycles = 8; break;
+		case 0xCBD5: set_bit_reg(State.L, 2); m_cycles = 8; break;
+		case 0xCBD6: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 2); m_cycles = 8; break;
+		case 0xCBD7: set_bit_reg(State.A, 2); m_cycles = 8; break;
+		case 0xCBD8: set_bit_reg(State.B, 3); m_cycles = 8; break;
+		case 0xCBD9: set_bit_reg(State.C, 3); m_cycles = 8; break;
+		case 0xCBDA: set_bit_reg(State.D, 3); m_cycles = 8; break;
+		case 0xCBDB: set_bit_reg(State.E, 3); m_cycles = 8; break;
+		case 0xCBDC: set_bit_reg(State.H, 3); m_cycles = 8; break;
+		case 0xCBDD: set_bit_reg(State.L, 3); m_cycles = 8; break;
+		case 0xCBDE: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 3); m_cycles = 8; break;
+		case 0xCBDF: set_bit_reg(State.A, 3); m_cycles = 8; break;
+		case 0xCBE0: set_bit_reg(State.B, 4); m_cycles = 8; break;
+		case 0xCBE1: set_bit_reg(State.C, 4); m_cycles = 8; break;
+		case 0xCBE2: set_bit_reg(State.D, 4); m_cycles = 8; break;
+		case 0xCBE3: set_bit_reg(State.E, 4); m_cycles = 8; break;
+		case 0xCBE4: set_bit_reg(State.H, 4); m_cycles = 8; break;
+		case 0xCBE5: set_bit_reg(State.L, 4); m_cycles = 8; break;
+		case 0xCBE6: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 4); m_cycles = 8; break;
+		case 0xCBE7: set_bit_reg(State.A, 4); m_cycles = 8; break;
+		case 0xCBE8: set_bit_reg(State.B, 5); m_cycles = 8; break;
+		case 0xCBE9: set_bit_reg(State.C, 5); m_cycles = 8; break;
+		case 0xCBEA: set_bit_reg(State.D, 5); m_cycles = 8; break;
+		case 0xCBEB: set_bit_reg(State.E, 5); m_cycles = 8; break;
+		case 0xCBEC: set_bit_reg(State.H, 5); m_cycles = 8; break;
+		case 0xCBED: set_bit_reg(State.L, 5); m_cycles = 8; break;
+		case 0xCBEE: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 5); m_cycles = 8; break;
+		case 0xCBEF: set_bit_reg(State.A, 5); m_cycles = 8; break;
+		case 0xCBF0: set_bit_reg(State.B, 6); m_cycles = 8; break;
+		case 0xCBF1: set_bit_reg(State.C, 6); m_cycles = 8; break;
+		case 0xCBF2: set_bit_reg(State.D, 6); m_cycles = 8; break;
+		case 0xCBF3: set_bit_reg(State.E, 6); m_cycles = 8; break;
+		case 0xCBF4: set_bit_reg(State.H, 6); m_cycles = 8; break;
+		case 0xCBF5: set_bit_reg(State.L, 6); m_cycles = 8; break;
+		case 0xCBF6: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 6); m_cycles = 8; break;
+		case 0xCBF7: set_bit_reg(State.A, 6); m_cycles = 8; break;
+		case 0xCBF8: set_bit_reg(State.B, 7); m_cycles = 8; break;
+		case 0xCBF9: set_bit_reg(State.C, 7); m_cycles = 8; break;
+		case 0xCBFA: set_bit_reg(State.D, 7); m_cycles = 8; break;
+		case 0xCBFB: set_bit_reg(State.E, 7); m_cycles = 8; break;
+		case 0xCBFC: set_bit_reg(State.H, 7); m_cycles = 8; break;
+		case 0xCBFD: set_bit_reg(State.L, 7); m_cycles = 8; break;
+		case 0xCBFE: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 7); m_cycles = 8; break;
+		case 0xCBFF: set_bit_reg(State.A, 7); m_cycles = 8; break;
+
 		default:
 			unimplementedInstruction(State, opcode);
 			break;
@@ -6010,4 +6145,9 @@ void Cpu::setCPUFlag(int flag, bool enable)
 		State.F |= flag;
 	else
 		State.F &= ~flag;
+}
+
+void Cpu::set_bit_reg(uint8_t& reg, uint8_t bit)
+{
+	reg |= (1 << bit);
 }
