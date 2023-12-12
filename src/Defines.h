@@ -1,6 +1,6 @@
 #pragma once
 
-constexpr double CYCLES_PER_MS = 4194.304;
+constexpr float CYCLES_PER_MS = 4194.304f;
 
 typedef enum
 {
@@ -77,6 +77,14 @@ typedef enum
 #define DEST_ADDRESS_TIMER 0x0050
 #define DEST_ADDRESS_SERIAL 0x0058
 #define DEST_ADDRESS_JOYPAD 0x0060
+
+typedef enum
+{
+	FLAG_CARRY = 0x10, // C 0001 0000
+	FLAG_HALF_CARRY = 0x20, // H 0010 0000
+	FLAG_SUBTRACT = 0x40, // N 0100 0000
+	FLAG_ZERO = 0x80 // Z 1000 0000
+} Cpu_Flags;
 
 typedef enum
 {

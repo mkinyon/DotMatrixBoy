@@ -2,14 +2,6 @@
 #include "GameBoy.h"
 #include "Defines.h"
 
-enum Cpu::Flags
-{
-	FLAG_CARRY = 0x10, // C 0001 0000
-	FLAG_HALF_CARRY = 0x20, // H 0010 0000
-	FLAG_SUBTRACT = 0x40, // N 0100 0000
-	FLAG_ZERO = 0x80 // Z 1000 0000
-};
-
 Cpu::Cpu() {}
 Cpu::~Cpu() {}
 
@@ -2948,2435 +2940,286 @@ void Cpu::process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState&
 {
 	switch (opcode)
 	{
-		// "RLC B" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB00:
-		{
-			bool oldCarry = getCPUFlag(FLAG_CARRY);
-
-			setCPUFlag(FLAG_CARRY, (State.B & 0x80) != 0);
-
-			State.B = (State.B << 1) | oldCarry;
-
-			setCPUFlag(FLAG_ZERO, (State.B == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RLC C" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB01:
-		{
-			bool oldCarry = getCPUFlag(FLAG_CARRY);
-
-			setCPUFlag(FLAG_CARRY, (State.C & 0x80) != 0);
-
-			State.C = (State.C << 1) | oldCarry;
-
-			setCPUFlag(FLAG_ZERO, (State.C == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RLC D" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB02:
-		{
-			bool oldCarry = getCPUFlag(FLAG_CARRY);
-
-			setCPUFlag(FLAG_CARRY, (State.D & 0x80) != 0);
-
-			State.D = (State.D << 1) | oldCarry;
-
-			setCPUFlag(FLAG_ZERO, (State.D == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RLC E" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB03:
-		{
-			bool oldCarry = getCPUFlag(FLAG_CARRY);
-
-			setCPUFlag(FLAG_CARRY, (State.E & 0x80) != 0);
-
-			State.E = (State.E << 1) | oldCarry;
-
-			setCPUFlag(FLAG_ZERO, (State.E == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RLC H" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB04:
-		{
-			bool oldCarry = getCPUFlag(FLAG_CARRY);
-
-			setCPUFlag(FLAG_CARRY, (State.H & 0x80) != 0);
-
-			State.H = (State.H << 1) | oldCarry;
-
-			setCPUFlag(FLAG_ZERO, (State.H == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RLC L" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB05:
-		{
-			bool oldCarry = getCPUFlag(FLAG_CARRY);
-
-			setCPUFlag(FLAG_CARRY, (State.L & 0x80) != 0);
-
-			State.L = (State.L << 1) | oldCarry;
-
-			setCPUFlag(FLAG_ZERO, (State.L == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RLC [HL]" B:2 C:16 FLAGS: Z 0 0 C
-		case 0xCB06:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-			bool oldCarry = getCPUFlag(FLAG_CARRY);
-
-			setCPUFlag(FLAG_CARRY, (value & 0x80) != 0);
-
-			value = (value << 1) | oldCarry;
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			setCPUFlag(FLAG_ZERO, (value == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RLC A" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB07:
-		{
-			bool oldCarry = getCPUFlag(FLAG_CARRY);
-
-			setCPUFlag(FLAG_CARRY, (State.A & 0x80) != 0);
-
-			State.A = (State.A << 1) | oldCarry;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RRC B" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB08:
-		{
-			setCPUFlag(FLAG_CARRY, (State.B & 0x01) != 0);
-
-			State.B = (State.B >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.B == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RRC C" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB09:
-		{
-			setCPUFlag(FLAG_CARRY, (State.C & 0x01) != 0);
-
-			State.C = (State.C >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.C == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RRC D" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB0A:
-		{
-			setCPUFlag(FLAG_CARRY, (State.D & 0x01) != 0);
-
-			State.D = (State.D >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.D == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RRC E" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB0B:
-		{
-			setCPUFlag(FLAG_CARRY, (State.E & 0x01) != 0);
-
-			State.E = (State.E >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.E == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RRC H" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB0C:
-		{
-			setCPUFlag(FLAG_CARRY, (State.H & 0x01) != 0);
-
-			State.H = (State.H >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.H == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RRC L" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB0D:
-		{
-			setCPUFlag(FLAG_CARRY, (State.L & 0x01) != 0);
-
-			State.L = (State.L >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.L == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RRC [HL]" B:2 C:16 FLAGS: Z 0 0 C
-		case 0xCB0E:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_CARRY, (value & 0x01) != 0);
-
-			value = (value >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (value == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RRC A" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB0F:
-		{
-			setCPUFlag(FLAG_CARRY, (State.A & 0x01) != 0);
-
-			State.A = (State.A >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RL B" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB10:
-		{
-			// Rotate left through carry
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t temp = (State.B << 1) | (carry ? 1 : 0);
-			carry = (State.B & 0x80) != 0;
-			State.B = temp;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (State.B == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, carry);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RL C" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB11:
-		{
-			// Rotate left through carry
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t temp = (State.C << 1) | (carry ? 1 : 0);
-			carry = (State.C & 0x80) != 0;
-			State.C = temp;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (State.C == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, carry);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RL D" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB12:
-		{
-			// Rotate left through carry
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t temp = (State.D << 1) | (carry ? 1 : 0);
-			carry = (State.D & 0x80) != 0;
-			State.D = temp;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (State.D == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, carry);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RL E" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB13:
-		{
-			// Rotate left through carry
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t temp = (State.E << 1) | (carry ? 1 : 0);
-			carry = (State.E & 0x80) != 0;
-			State.E = temp;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (State.E == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, carry);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RL H" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB14:
-		{
-			// Rotate left through carry
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t temp = (State.H << 1) | (carry ? 1 : 0);
-			carry = (State.H & 0x80) != 0;
-			State.H = temp;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (State.H == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, carry);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RL L" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB15:
-		{
-			// Rotate left through carry
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t temp = (State.L << 1) | (carry ? 1 : 0);
-			carry = (State.L & 0x80) != 0;
-			State.L = temp;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (State.L == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, carry);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RL [HL]" B:2 C:16 FLAGS: Z 0 0 C
-		case 0xCB16:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			// Rotate left through carry
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t temp = (value << 1) | (carry ? 1 : 0);
-			carry = (value & 0x80) != 0;
-			value = temp;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (value == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, carry);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RL A" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB17:
-		{
-			// Rotate left through carry
-			bool carry = getCPUFlag(FLAG_CARRY);
-			uint8_t temp = (State.A << 1) | (carry ? 1 : 0);
-			carry = (State.A & 0x80) != 0;
-			State.A = temp;
-
-			// Update flags
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, carry);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RR B" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB18:
-		{
-			bool oldCarry = (State.B & 0x01) != 0;
-			setCPUFlag(FLAG_CARRY, oldCarry);
-
-			State.B = (State.B >> 1) | (oldCarry ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.B == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RR C" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB19:
-		{
-			bool oldCarry = (State.C & 0x01) != 0;
-			setCPUFlag(FLAG_CARRY, oldCarry);
-
-			State.C = (State.C >> 1) | (oldCarry ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.C == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RR D" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB1A:
-		{
-			bool oldCarry = (State.D & 0x01) != 0;
-			setCPUFlag(FLAG_CARRY, oldCarry);
-
-			State.D = (State.D >> 1) | (oldCarry ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.D == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RR E" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB1B:
-		{
-			bool oldCarry = (State.E & 0x01) != 0;
-			setCPUFlag(FLAG_CARRY, oldCarry);
-
-			State.E = (State.E >> 1) | (oldCarry ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.E == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RR H" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB1C:
-		{
-			bool oldCarry = (State.H & 0x01) != 0;
-			setCPUFlag(FLAG_CARRY, oldCarry);
-
-			State.H = (State.H >> 1) | (oldCarry ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.H == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RR L" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB1D:
-		{
-			bool oldCarry = (State.D & 0x01) != 0;
-			setCPUFlag(FLAG_CARRY, oldCarry);
-
-			State.L = (State.L >> 1) | (oldCarry ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.L == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RR [HL]" B:2 C:16 FLAGS: Z 0 0 C
-		case 0xCB1E:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			bool oldCarry = (value & 0x01) != 0;
-			setCPUFlag(FLAG_CARRY, oldCarry);
-
-			value = (value >> 1) | (oldCarry ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (value == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RR A" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB1F:
-		{
-			bool oldCarry = (State.A & 0x01) != 0;
-			setCPUFlag(FLAG_CARRY, oldCarry);
-
-			State.A = (State.A >> 1) | (oldCarry ? 0x80 : 0x00);
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SLA B" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB20:
-		{
-			setCPUFlag(FLAG_CARRY, (State.B & 0x80) != 0);
-
-			State.B = State.B << 1;
-
-			setCPUFlag(FLAG_ZERO, (State.B == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SLA C" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB21:
-		{
-			setCPUFlag(FLAG_CARRY, (State.C & 0x80) != 0);
-
-			State.C = State.C << 1;
-
-			setCPUFlag(FLAG_ZERO, (State.C == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SLA D" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB22:
-		{
-			setCPUFlag(FLAG_CARRY, (State.D & 0x80) != 0);
-
-			State.D = State.D << 1;
-
-			setCPUFlag(FLAG_ZERO, (State.D == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SLA E" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB23:
-		{
-			setCPUFlag(FLAG_CARRY, (State.E & 0x80) != 0);
-
-			State.E = State.E << 1;
-
-			setCPUFlag(FLAG_ZERO, (State.E == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SLA H" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB24:
-		{
-			setCPUFlag(FLAG_CARRY, (State.H & 0x80) != 0);
-
-			State.H = State.H << 1;
-
-			setCPUFlag(FLAG_ZERO, (State.H == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SLA L" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB25:
-		{
-			setCPUFlag(FLAG_CARRY, (State.L & 0x80) != 0);
-
-			State.L = State.L << 1;
-
-			setCPUFlag(FLAG_ZERO, (State.L == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SLA [HL]" B:2 C:16 FLAGS: Z 0 0 C
-		case 0xCB26:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_CARRY, (value & 0x80) != 0);
-
-			value = value << 1;
-
-			setCPUFlag(FLAG_ZERO, (value == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "SLA A" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB27:
-		{
-			setCPUFlag(FLAG_CARRY, (State.A & 0x80) != 0);
-
-			State.A = State.A << 1;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRA B" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB28:
-		{
-			setCPUFlag(FLAG_CARRY, (State.B & 0x80) != 0);
-
-			State.B = (State.B >> 1) | (State.B & 0x80);
-
-			setCPUFlag(FLAG_ZERO, (State.B == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRA C" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB29:
-		{
-			setCPUFlag(FLAG_CARRY, (State.C & 0x80) != 0);
-
-			State.C = (State.C >> 1) | (State.C & 0x80);
-
-			setCPUFlag(FLAG_ZERO, (State.C == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRA D" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB2A:
-		{
-			setCPUFlag(FLAG_CARRY, (State.D & 0x80) != 0);
-
-			State.D = (State.D >> 1) | (State.D & 0x80);
-
-			setCPUFlag(FLAG_ZERO, (State.D == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRA E" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB2B:
-		{
-			setCPUFlag(FLAG_CARRY, (State.E & 0x80) != 0);
-
-			State.E = (State.E >> 1) | (State.E & 0x80);
-
-			setCPUFlag(FLAG_ZERO, (State.E == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRA H" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB2C:
-		{
-			setCPUFlag(FLAG_CARRY, (State.H & 0x80) != 0);
-
-			State.H = (State.H >> 1) | (State.H & 0x80);
-
-			setCPUFlag(FLAG_ZERO, (State.H == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRA L" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB2D:
-		{
-			setCPUFlag(FLAG_CARRY, (State.L & 0x80) != 0);
-
-			State.L = (State.L >> 1) | (State.L & 0x80);
-
-			setCPUFlag(FLAG_ZERO, (State.L == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRA [HL]" B:2 C:16 FLAGS: Z 0 0 C
-		case 0xCB2E:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_CARRY, (value & 0x80) != 0);
-
-			value = (value >> 1) | (value & 0x80);
-
-			setCPUFlag(FLAG_ZERO, (value == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "SRA A" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB2F:
-		{
-			setCPUFlag(FLAG_CARRY, (State.A & 0x80) != 0);
-
-			State.A = (State.A >> 1) | (State.A & 0x80);
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SWAP B" B:2 C:8 FLAGS: Z 0 0 0
-		case 0xCB30:
-		{
-			State.B = ((State.B & 0x0F) << 4) | ((State.B & 0xF0) >> 4);
-
-			setCPUFlag(FLAG_ZERO, (State.B == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SWAP C" B:2 C:8 FLAGS: Z 0 0 0
-		case 0xCB31:
-		{
-			State.C = ((State.C & 0x0F) << 4) | ((State.C & 0xF0) >> 4);
-
-			setCPUFlag(FLAG_ZERO, (State.C == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SWAP D" B:2 C:8 FLAGS: Z 0 0 0
-		case 0xCB32:
-		{
-			State.D = ((State.D & 0x0F) << 4) | ((State.D & 0xF0) >> 4);
-
-			setCPUFlag(FLAG_ZERO, (State.D == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SWAP E" B:2 C:8 FLAGS: Z 0 0 0
-		case 0xCB33:
-		{
-			State.E = ((State.E & 0x0F) << 4) | ((State.E & 0xF0) >> 4);
-
-			setCPUFlag(FLAG_ZERO, (State.E == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SWAP H" B:2 C:8 FLAGS: Z 0 0 0
-		case 0xCB34:
-		{
-			State.H = ((State.H & 0x0F) << 4) | ((State.H & 0xF0) >> 4);
-
-			setCPUFlag(FLAG_ZERO, (State.H == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SWAP L" B:2 C:8 FLAGS: Z 0 0 0
-		case 0xCB35:
-		{
-			State.L = ((State.L & 0x0F) << 4) | ((State.L & 0xF0) >> 4);
-
-			setCPUFlag(FLAG_ZERO, (State.L == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SWAP [HL]" B:2 C:16 FLAGS: Z 0 0 0
-		case 0xCB36:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-			value = ((value & 0x0F) << 4) | ((value & 0xF0) >> 4);
-
-			setCPUFlag(FLAG_ZERO, (value == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "SWAP A" B:2 C:8 FLAGS: Z 0 0 0
-		case 0xCB37:
-		{
-			State.A = ((State.A & 0x0F) << 4) | ((State.A & 0xF0) >> 4);
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-			setCPUFlag(FLAG_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRL B" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB38:
-		{
-			setCPUFlag(FLAG_CARRY, (State.B & 0x01) != 0);
-
-			State.B = State.B >> 1;
-
-			setCPUFlag(FLAG_ZERO, (State.B == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRL C" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB39:
-		{
-			setCPUFlag(FLAG_CARRY, (State.C & 0x01) != 0);
-
-			State.C = State.C >> 1;
-
-			setCPUFlag(FLAG_ZERO, (State.C == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRL D" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB3A:
-		{
-			setCPUFlag(FLAG_CARRY, (State.D & 0x01) != 0);
-
-			State.D = State.D >> 1;
-
-			setCPUFlag(FLAG_ZERO, (State.D == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRL E" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB3B:
-		{
-			setCPUFlag(FLAG_CARRY, (State.E & 0x01) != 0);
-
-			State.E = State.E >> 1;
-
-			setCPUFlag(FLAG_ZERO, (State.E == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRL H" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB3C:
-		{
-			setCPUFlag(FLAG_CARRY, (State.H & 0x01) != 0);
-
-			State.H = State.H >> 1;
-
-			setCPUFlag(FLAG_ZERO, (State.H == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRL L" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB3D:
-		{
-			setCPUFlag(FLAG_CARRY, (State.L & 0x01) != 0);
-
-			State.L = State.L >> 1;
-
-			setCPUFlag(FLAG_ZERO, (State.L == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "SRL [HL]" B:2 C:16 FLAGS: Z 0 0 C
-		case 0xCB3E:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_CARRY, (value & 0x01) != 0);
-
-			value = value >> 1;
-
-			setCPUFlag(FLAG_ZERO, (value == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "SRL A" B:2 C:8 FLAGS: Z 0 0 C
-		case 0xCB3F:
-		{
-			setCPUFlag(FLAG_CARRY, (State.A & 0x01) != 0);
-
-			State.A = State.A >> 1;
-
-			setCPUFlag(FLAG_ZERO, (State.A == 0));
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, false);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 0, B" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB40:
-		{
-			setCPUFlag(FLAG_ZERO, (State.B & 0x01) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 0, C" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB41:
-		{
-			setCPUFlag(FLAG_ZERO, (State.C & 0x01) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 0, D" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB42:
-		{
-			setCPUFlag(FLAG_ZERO, (State.D & 0x01) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 0, E" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB43:
-		{
-			setCPUFlag(FLAG_ZERO, (State.E & 0x01) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 0, H" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB44:
-		{
-			setCPUFlag(FLAG_ZERO, (State.H & 0x01) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 0, L" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB45:
-		{
-			setCPUFlag(FLAG_ZERO, (State.L & 0x01) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 0, [HL]" B:2 C:12 FLAGS: Z 0 1 -
-		case 0xCB46:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_ZERO, (value & 0x01) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "BIT 0, A" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB47:
-		{
-			setCPUFlag(FLAG_ZERO, (State.A & 0x01) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 1, B" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB48:
-		{
-			setCPUFlag(FLAG_ZERO, (State.B & 0x02) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 1, C" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB49:
-		{
-			setCPUFlag(FLAG_ZERO, (State.C & 0x02) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 1, D" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB4A:
-		{
-			setCPUFlag(FLAG_ZERO, (State.D & 0x02) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 1, E" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB4B:
-		{
-			setCPUFlag(FLAG_ZERO, (State.E & 0x02) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 1, H" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB4C:
-		{
-			setCPUFlag(FLAG_ZERO, (State.H & 0x02) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 1, L" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB4D:
-		{
-			setCPUFlag(FLAG_ZERO, (State.L & 0x02) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 1, [HL]" B:2 C:12 FLAGS: Z 0 1 -
-		case 0xCB4E:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_ZERO, (value & 0x02) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "BIT 1, A" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB4F:
-		{
-			setCPUFlag(FLAG_ZERO, (State.A & 0x02) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 2, B" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB50:
-		{
-			setCPUFlag(FLAG_ZERO, (State.B & 0x04) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 2, C" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB51:
-		{
-			setCPUFlag(FLAG_ZERO, (State.C & 0x02) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 2, D" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB52:
-		{
-			setCPUFlag(FLAG_ZERO, (State.D & 0x04) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 2, E" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB53:
-		{
-			setCPUFlag(FLAG_ZERO, (State.E & 0x04) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 2, H" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB54:
-		{
-			setCPUFlag(FLAG_ZERO, (State.H & 0x04) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 2, L" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB55:
-		{
-			setCPUFlag(FLAG_ZERO, (State.L & 0x04) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 2, [HL]" B:2 C:12 FLAGS: Z 0 1 -
-		case 0xCB56:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_ZERO, (value & 0x04) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "BIT 2, A" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB57:
-		{
-			setCPUFlag(FLAG_ZERO, (State.A & 0x04) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 3, B" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB58:
-		{
-			setCPUFlag(FLAG_ZERO, (State.B & 0x08) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 3, C" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB59:
-		{
-			setCPUFlag(FLAG_ZERO, (State.C & 0x08) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 3, D" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB5A:
-		{
-			setCPUFlag(FLAG_ZERO, (State.D & 0x08) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 3, E" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB5B:
-		{
-			setCPUFlag(FLAG_ZERO, (State.E & 0x08) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 3, H" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB5C:
-		{
-			setCPUFlag(FLAG_ZERO, (State.H & 0x08) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 3, L" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB5D:
-		{
-			setCPUFlag(FLAG_ZERO, (State.L & 0x08) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 3, [HL]" B:2 C:12 FLAGS: Z 0 1 -
-		case 0xCB5E:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_ZERO, (value & 0x08) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "BIT 3, A" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB5F:
-		{
-			setCPUFlag(FLAG_ZERO, (State.A & 0x08) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 4, B" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB60:
-		{
-			setCPUFlag(FLAG_ZERO, (State.B & 0x10) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 4, C" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB61:
-		{
-			setCPUFlag(FLAG_ZERO, (State.C & 0x10) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 4, D" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB62:
-		{
-			setCPUFlag(FLAG_ZERO, (State.D & 0x10) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 4, E" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB63:
-		{
-			setCPUFlag(FLAG_ZERO, (State.E & 0x10) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 4, H" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB64:
-		{
-			setCPUFlag(FLAG_ZERO, (State.H & 0x10) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 4, L" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB65:
-		{
-			setCPUFlag(FLAG_ZERO, (State.L & 0x10) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 4, [HL]" B:2 C:12 FLAGS: Z 0 1 -
-		case 0xCB66:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_ZERO, (value & 0x10) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "BIT 4, A" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB67:
-		{
-			setCPUFlag(FLAG_ZERO, (State.A & 0x10) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 5, B" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB68:
-		{
-			setCPUFlag(FLAG_ZERO, (State.B & 0x20) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 5, C" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB69:
-		{
-			setCPUFlag(FLAG_ZERO, (State.C & 0x20) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 5, D" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB6A:
-		{
-			setCPUFlag(FLAG_ZERO, (State.D & 0x20) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 5, E" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB6B:
-		{
-			setCPUFlag(FLAG_ZERO, (State.E & 0x20) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 5, H" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB6C:
-		{
-			setCPUFlag(FLAG_ZERO, (State.H & 0x20) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 5, L" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB6D:
-		{
-			setCPUFlag(FLAG_ZERO, (State.L & 0x20) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 5, [HL]" B:2 C:12 FLAGS: Z 0 1 -
-		case 0xCB6E:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_ZERO, (value & 0x20) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "BIT 5, A" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB6F:
-		{
-			setCPUFlag(FLAG_ZERO, (State.A & 0x20) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 6, B" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB70:
-		{
-			setCPUFlag(FLAG_ZERO, (State.B & 0x40) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 6, C" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB71:
-		{
-			setCPUFlag(FLAG_ZERO, (State.C & 0x40) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 6, D" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB72:
-		{
-			setCPUFlag(FLAG_ZERO, (State.D & 0x40) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 6, E" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB73:
-		{
-			setCPUFlag(FLAG_ZERO, (State.E & 0x40) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 6, H" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB74:
-		{
-			setCPUFlag(FLAG_ZERO, (State.H & 0x40) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 6, L" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB75:
-		{
-			setCPUFlag(FLAG_ZERO, (State.L & 0x40) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 6, [HL]" B:2 C:12 FLAGS: Z 0 1 -
-		case 0xCB76:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_ZERO, (value & 0x40) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "BIT 6, A" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB77:
-		{
-			setCPUFlag(FLAG_ZERO, (State.A & 0x40) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 7, B" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB78:
-		{
-			setCPUFlag(FLAG_ZERO, (State.B & 0x80) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 7, C" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB79:
-		{
-			setCPUFlag(FLAG_ZERO, (State.C & 0x80) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 7, D" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB7A:
-		{
-			setCPUFlag(FLAG_ZERO, (State.D & 0x80) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 7, E" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB7B:
-		{
-			setCPUFlag(FLAG_ZERO, (State.E & 0x80) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 7, H" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB7C:
-		{
-			setCPUFlag(FLAG_ZERO, (State.H & 0x80) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 7, L" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB7D:
-		{
-			setCPUFlag(FLAG_ZERO, (State.L & 0x80) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "BIT 7, [HL]" B:2 C:12 FLAGS: Z 0 1 -
-		case 0xCB7E:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			setCPUFlag(FLAG_ZERO, (value & 0x80) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 12;
-			break;
-		}
-
-		// "BIT 7, A" B:2 C:8 FLAGS: Z 0 1 -
-		case 0xCB7F:
-		{
-			setCPUFlag(FLAG_ZERO, (State.A & 0x80) == 0);
-			setCPUFlag(FLAG_SUBTRACT, false);
-			setCPUFlag(FLAG_HALF_CARRY, true);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 0, B" B:2 C:8 FLAGS: - - - -
-		case 0xCB80:
-		{
-			State.B &= 0xFE;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 0, C" B:2 C:8 FLAGS: - - - -
-		case 0xCB81:
-		{
-			State.C &= 0xFE;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 0, D" B:2 C:8 FLAGS: - - - -
-		case 0xCB82:
-		{
-			State.D &= 0xFE;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 0, E" B:2 C:8 FLAGS: - - - -
-		case 0xCB83:
-		{
-			State.E &= 0xFE;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 0, H" B:2 C:8 FLAGS: - - - -
-		case 0xCB84:
-		{
-			State.H &= 0xFE;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 0, L" B:2 C:8 FLAGS: - - - -
-		case 0xCB85:
-		{
-			State.L &= 0xFE;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 0, [HL]" B:2 C:16 FLAGS: - - - -
-		case 0xCB86:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			value &= 0xFE;
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RES 0, A" B:2 C:8 FLAGS: - - - -
-		case 0xCB87:
-		{
-			State.A &= 0xFE;
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 1, B" B:2 C:8 FLAGS: - - - -
-		case 0xCB88:
-		{
-			State.B &= ~(1 << 1);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 1, C" B:2 C:8 FLAGS: - - - -
-		case 0xCB89:
-		{
-			State.C &= ~(1 << 1);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 1, D" B:2 C:8 FLAGS: - - - -
-		case 0xCB8A:
-		{
-			State.D &= ~(1 << 1);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 1, E" B:2 C:8 FLAGS: - - - -
-		case 0xCB8B:
-		{
-			State.E &= ~(1 << 1);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 1, H" B:2 C:8 FLAGS: - - - -
-		case 0xCB8C:
-		{
-			State.H &= ~(1 << 1);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 1, L" B:2 C:8 FLAGS: - - - -
-		case 0xCB8D:
-		{
-			State.L &= ~(1 << 1);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 1, [HL]" B:2 C:16 FLAGS: - - - -
-		case 0xCB8E:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			value &= ~(1 << 1);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RES 1, A" B:2 C:8 FLAGS: - - - -
-		case 0xCB8F:
-		{
-			State.A &= ~(1 << 1);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 2, B" B:2 C:8 FLAGS: - - - -
-		case 0xCB90:
-		{
-			State.B &= ~(1 << 2);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 2, C" B:2 C:8 FLAGS: - - - -
-		case 0xCB91:
-		{
-			State.C &= ~(1 << 2);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 2, D" B:2 C:8 FLAGS: - - - -
-		case 0xCB92:
-		{
-			State.D &= ~(1 << 2);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 2, E" B:2 C:8 FLAGS: - - - -
-		case 0xCB93:
-		{
-			State.E &= ~(1 << 2);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 2, H" B:2 C:8 FLAGS: - - - -
-		case 0xCB94:
-		{
-			State.H &= ~(1 << 2);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 2, L" B:2 C:8 FLAGS: - - - -
-		case 0xCB95:
-		{
-			State.L &= ~(1 << 2);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 2, [HL]" B:2 C:16 FLAGS: - - - -
-		case 0xCB96:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			value &= ~(1 << 2);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RES 2, A" B:2 C:8 FLAGS: - - - -
-		case 0xCB97:
-		{
-			State.A &= ~(1 << 2);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 3, B" B:2 C:8 FLAGS: - - - -
-		case 0xCB98:
-		{
-			State.B &= ~(1 << 3);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 3, C" B:2 C:8 FLAGS: - - - -
-		case 0xCB99:
-		{
-			State.C &= ~(1 << 3);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 3, D" B:2 C:8 FLAGS: - - - -
-		case 0xCB9A:
-		{
-			State.D &= ~(1 << 3);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 3, E" B:2 C:8 FLAGS: - - - -
-		case 0xCB9B:
-		{
-			State.E &= ~(1 << 3);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 3, H" B:2 C:8 FLAGS: - - - -
-		case 0xCB9C:
-		{
-			State.H &= ~(1 << 3);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 3, L" B:2 C:8 FLAGS: - - - -
-		case 0xCB9D:
-		{
-			State.L &= ~(1 << 3);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 3, [HL]" B:2 C:16 FLAGS: - - - -
-		case 0xCB9E:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			value &= ~(1 << 3);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RES 3, A" B:2 C:8 FLAGS: - - - -
-		case 0xCB9F:
-		{
-			State.A &= ~(1 << 3);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 4, B" B:2 C:8 FLAGS: - - - -
-		case 0xCBA0:
-		{
-			State.B &= ~(1 << 4);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 4, C" B:2 C:8 FLAGS: - - - -
-		case 0xCBA1:
-		{
-			State.C &= ~(1 << 4);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 4, D" B:2 C:8 FLAGS: - - - -
-		case 0xCBA2:
-		{
-			State.D &= ~(1 << 4);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 4, E" B:2 C:8 FLAGS: - - - -
-		case 0xCBA3:
-		{
-			State.E &= ~(1 << 4);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 4, H" B:2 C:8 FLAGS: - - - -
-		case 0xCBA4:
-		{
-			State.H &= ~(1 << 4);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 4, L" B:2 C:8 FLAGS: - - - -
-		case 0xCBA5:
-		{
-			State.L &= ~(1 << 4);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 4, [HL]" B:2 C:16 FLAGS: - - - -
-		case 0xCBA6:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			value &= ~(1 << 4);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RES 4, A" B:2 C:8 FLAGS: - - - -
-		case 0xCBA7:
-		{
-			State.A &= ~(1 << 4);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 5, B" B:2 C:8 FLAGS: - - - -
-		case 0xCBA8:
-		{
-			State.B &= ~(1 << 5);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 5, C" B:2 C:8 FLAGS: - - - -
-		case 0xCBA9:
-		{
-			State.C &= ~(1 << 5);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 5, D" B:2 C:8 FLAGS: - - - -
-		case 0xCBAA:
-		{
-			State.D &= ~(1 << 5);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 5, E" B:2 C:8 FLAGS: - - - -
-		case 0xCBAB:
-		{
-			State.E &= ~(1 << 5);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 5, H" B:2 C:8 FLAGS: - - - -
-		case 0xCBAC:
-		{
-			State.H &= ~(1 << 5);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 5, L" B:2 C:8 FLAGS: - - - -
-		case 0xCBAD:
-		{
-			State.L &= ~(1 << 5);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 5, [HL]" B:2 C:16 FLAGS: - - - -
-		case 0xCBAE:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			value &= ~(1 << 5);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RES 5, A" B:2 C:8 FLAGS: - - - -
-		case 0xCBAF:
-		{
-			State.A &= ~(1 << 5);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 6, B" B:2 C:8 FLAGS: - - - -
-		case 0xCBB0:
-		{
-			State.B &= ~(1 << 6);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 6, C" B:2 C:8 FLAGS: - - - -
-		case 0xCBB1:
-		{
-			State.C &= ~(1 << 6);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 6, D" B:2 C:8 FLAGS: - - - -
-		case 0xCBB2:
-		{
-			State.D &= ~(1 << 6);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 6, E" B:2 C:8 FLAGS: - - - -
-		case 0xCBB3:
-		{
-			State.E &= ~(1 << 6);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 6, H" B:2 C:8 FLAGS: - - - -
-		case 0xCBB4:
-		{
-			State.H &= ~(1 << 6);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 6, L" B:2 C:8 FLAGS: - - - -
-		case 0xCBB5:
-		{
-			State.L &= ~(1 << 6);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 6, [HL]" B:2 C:16 FLAGS: - - - -
-		case 0xCBB6:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			value &= ~(1 << 6);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RES 6, A" B:2 C:8 FLAGS: - - - -
-		case 0xCBB7:
-		{
-			State.A &= ~(1 << 6);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 7, B" B:2 C:8 FLAGS: - - - -
-		case 0xCBB8:
-		{
-			State.B &= ~(1 << 7);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 7, C" B:2 C:8 FLAGS: - - - -
-		case 0xCBB9:
-		{
-			State.C &= ~(1 << 7);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 7, D" B:2 C:8 FLAGS: - - - -
-		case 0xCBBA:
-		{
-			State.D &= ~(1 << 7);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 7, E" B:2 C:8 FLAGS: - - - -
-		case 0xCBBB:
-		{
-			State.E &= ~(1 << 7);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 7, H" B:2 C:8 FLAGS: - - - -
-		case 0xCBBC:
-		{
-			State.H &= ~(1 << 7);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 7, L" B:2 C:8 FLAGS: - - - -
-		case 0xCBBD:
-		{
-			State.L &= ~(1 << 7);
-
-			m_cycles = 8;
-			break;
-		}
-
-		// "RES 7, [HL]" B:2 C:16 FLAGS: - - - -
-		case 0xCBBE:
-		{
-			uint8_t value = gb.ReadFromMemoryMap(State.HL);
-
-			value &= ~(1 << 7);
-
-			gb.WriteToMemoryMap(State.HL, value);
-
-			m_cycles = 16;
-			break;
-		}
-
-		// "RES 7, A" B:2 C:8 FLAGS: - - - -
-		case 0xCBBF:
-		{
-			State.A &= ~(1 << 7);
-
-			m_cycles = 8;
-			break;
-		}
+		// Most instuctions take 8 cycles
+		m_cycles = 8;
+
+		// "RLC reg" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB00: instruction_rlc_reg(State.B); break;
+		case 0xCB01: instruction_rlc_reg(State.C); break;
+		case 0xCB02: instruction_rlc_reg(State.D); break;
+		case 0xCB03: instruction_rlc_reg(State.E); break;
+		case 0xCB04: instruction_rlc_reg(State.H); break;
+		case 0xCB05: instruction_rlc_reg(State.L); break;
+		case 0xCB06: instruction_rlc_hl(gb); m_cycles = 16; break;
+		case 0xCB07: instruction_rlc_reg(State.A); break;
+
+		// "RRC reg" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB08: instruction_rrc_reg(State.B); break;
+		case 0xCB09: instruction_rrc_reg(State.C); break;
+		case 0xCB0A: instruction_rrc_reg(State.D); break;
+		case 0xCB0B: instruction_rrc_reg(State.E); break;
+		case 0xCB0C: instruction_rrc_reg(State.H); break;
+		case 0xCB0D: instruction_rrc_reg(State.L); break;
+		case 0xCB0E: instruction_rrc_hl(gb); m_cycles = 16; break;
+		case 0xCB0F: instruction_rrc_reg(State.A); break;
+
+		// "RL reg" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB10: instruction_rl_reg(State.B); break;
+		case 0xCB11: instruction_rl_reg(State.C); break;
+		case 0xCB12: instruction_rl_reg(State.D); break;
+		case 0xCB13: instruction_rl_reg(State.E); break;
+		case 0xCB14: instruction_rl_reg(State.H); break;
+		case 0xCB15: instruction_rl_reg(State.L); break;
+		case 0xCB16: instruction_rl_hl(gb); m_cycles = 16; break;
+		case 0xCB17: instruction_rl_reg(State.A); break;
+
+		// "RR reg" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB18: instruction_rr_reg(State.B); break;
+		case 0xCB19: instruction_rr_reg(State.C); break;
+		case 0xCB1A: instruction_rr_reg(State.D); break;
+		case 0xCB1B: instruction_rr_reg(State.E); break;
+		case 0xCB1C: instruction_rr_reg(State.H); break;
+		case 0xCB1D: instruction_rr_reg(State.L); break;
+		case 0xCB1E: instruction_rr_hl(gb); m_cycles = 16; break;
+		case 0xCB1F: instruction_rr_reg(State.A); break;
+
+		// "SLA reg" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB20: instruction_sla_reg(State.B); break;
+		case 0xCB21: instruction_sla_reg(State.C); break;
+		case 0xCB22: instruction_sla_reg(State.D); break;
+		case 0xCB23: instruction_sla_reg(State.E); break;
+		case 0xCB24: instruction_sla_reg(State.H); break;
+		case 0xCB25: instruction_sla_reg(State.L); break;
+		case 0xCB26: instruction_sla_hl(gb); m_cycles = 16; break;
+		case 0xCB27: instruction_sla_reg(State.A); break;
+
+		// "SRA reg" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB28: instruction_sra_reg(State.B); break;
+		case 0xCB29: instruction_sra_reg(State.C); break;
+		case 0xCB2A: instruction_sra_reg(State.D); break;
+		case 0xCB2B: instruction_sra_reg(State.E); break;
+		case 0xCB2C: instruction_sra_reg(State.H); break;
+		case 0xCB2D: instruction_sra_reg(State.L); break;
+		case 0xCB2E: instruction_sra_hl(gb); m_cycles = 16; break;
+		case 0xCB2F: instruction_sra_reg(State.A); break;
+
+		// "SWAP reg" B:2 C:8 FLAGS: Z 0 0 0
+		case 0xCB30: instruction_swap_reg(State.B); break;
+		case 0xCB31: instruction_swap_reg(State.C); break;
+		case 0xCB32: instruction_swap_reg(State.D); break;
+		case 0xCB33: instruction_swap_reg(State.E); break;
+		case 0xCB34: instruction_swap_reg(State.H); break;
+		case 0xCB35: instruction_swap_reg(State.L); break;
+		case 0xCB36: instruction_swap_hl(gb); m_cycles = 16; break;
+		case 0xCB37: instruction_swap_reg(State.A); break;
+
+		// "SRL bit" B:2 C:8 FLAGS: Z 0 0 C
+		case 0xCB38: instruction_srl_reg(State.B); break;
+		case 0xCB39: instruction_srl_reg(State.C); break;
+		case 0xCB3A: instruction_srl_reg(State.D); break;
+		case 0xCB3B: instruction_srl_reg(State.E); break;
+		case 0xCB3C: instruction_srl_reg(State.H); break;
+		case 0xCB3D: instruction_srl_reg(State.L); break;
+		case 0xCB3E: instruction_srl_hl(gb); m_cycles = 16; break;
+		case 0xCB3F: instruction_srl_reg(State.A); break;
+
+		// "BIT bit, reg" B:2 C:8 FLAGS: Z 0 1 -
+		case 0xCB40: instruction_bit_bit_reg(State.B, 0); break;
+		case 0xCB41: instruction_bit_bit_reg(State.C, 0); break;
+		case 0xCB42: instruction_bit_bit_reg(State.D, 0); break;
+		case 0xCB43: instruction_bit_bit_reg(State.E, 0); break;
+		case 0xCB44: instruction_bit_bit_reg(State.H, 0); break;
+		case 0xCB45: instruction_bit_bit_reg(State.L, 0); break;
+		case 0xCB46: instruction_bit_bit_hl(gb, 0); m_cycles = 16; break;
+		case 0xCB47: instruction_bit_bit_reg(State.A, 0); break;
+		case 0xCB48: instruction_bit_bit_reg(State.B, 1); break;
+		case 0xCB49: instruction_bit_bit_reg(State.C, 1); break;
+		case 0xCB4A: instruction_bit_bit_reg(State.D, 1); break;
+		case 0xCB4B: instruction_bit_bit_reg(State.E, 1); break;
+		case 0xCB4C: instruction_bit_bit_reg(State.H, 1); break;
+		case 0xCB4D: instruction_bit_bit_reg(State.L, 1); break;
+		case 0xCB4E: instruction_bit_bit_hl(gb, 1); m_cycles = 16; break;
+		case 0xCB4F: instruction_bit_bit_reg(State.A, 1); break;
+		case 0xCB50: instruction_bit_bit_reg(State.B, 2); break;
+		case 0xCB51: instruction_bit_bit_reg(State.C, 2); break;
+		case 0xCB52: instruction_bit_bit_reg(State.D, 2); break;
+		case 0xCB53: instruction_bit_bit_reg(State.E, 2); break;
+		case 0xCB54: instruction_bit_bit_reg(State.H, 2); break;
+		case 0xCB55: instruction_bit_bit_reg(State.L, 2); break;
+		case 0xCB56: instruction_bit_bit_hl(gb, 2); m_cycles = 16; break;
+		case 0xCB57: instruction_bit_bit_reg(State.A, 2); break;
+		case 0xCB58: instruction_bit_bit_reg(State.B, 3); break;
+		case 0xCB59: instruction_bit_bit_reg(State.C, 3); break;
+		case 0xCB5A: instruction_bit_bit_reg(State.D, 3); break;
+		case 0xCB5B: instruction_bit_bit_reg(State.E, 3); break;
+		case 0xCB5C: instruction_bit_bit_reg(State.H, 3); break;
+		case 0xCB5D: instruction_bit_bit_reg(State.L, 3); break;
+		case 0xCB5E: instruction_bit_bit_hl(gb, 3); m_cycles = 16; break;
+		case 0xCB5F: instruction_bit_bit_reg(State.A, 3); break;
+		case 0xCB60: instruction_bit_bit_reg(State.B, 4); break;
+		case 0xCB61: instruction_bit_bit_reg(State.C, 4); break;
+		case 0xCB62: instruction_bit_bit_reg(State.D, 4); break;
+		case 0xCB63: instruction_bit_bit_reg(State.E, 4); break;
+		case 0xCB64: instruction_bit_bit_reg(State.H, 4); break;
+		case 0xCB65: instruction_bit_bit_reg(State.L, 4); break;
+		case 0xCB66: instruction_bit_bit_hl(gb, 4); m_cycles = 16; break;
+		case 0xCB67: instruction_bit_bit_reg(State.A, 4); break;
+		case 0xCB68: instruction_bit_bit_reg(State.B, 5); break;
+		case 0xCB69: instruction_bit_bit_reg(State.C, 5); break;
+		case 0xCB6A: instruction_bit_bit_reg(State.D, 5); break;
+		case 0xCB6B: instruction_bit_bit_reg(State.E, 5); break;
+		case 0xCB6C: instruction_bit_bit_reg(State.H, 5); break;
+		case 0xCB6D: instruction_bit_bit_reg(State.L, 5); break;
+		case 0xCB6E: instruction_bit_bit_hl(gb, 5); m_cycles = 16; break;
+		case 0xCB6F: instruction_bit_bit_reg(State.A, 5); break;
+		case 0xCB70: instruction_bit_bit_reg(State.B, 6); break;
+		case 0xCB71: instruction_bit_bit_reg(State.C, 6); break;
+		case 0xCB72: instruction_bit_bit_reg(State.D, 6); break;
+		case 0xCB73: instruction_bit_bit_reg(State.E, 6); break;
+		case 0xCB74: instruction_bit_bit_reg(State.H, 6); break;
+		case 0xCB75: instruction_bit_bit_reg(State.L, 6); break;
+		case 0xCB76: instruction_bit_bit_hl(gb, 6); m_cycles = 16; break;
+		case 0xCB77: instruction_bit_bit_reg(State.A, 6); break;
+		case 0xCB78: instruction_bit_bit_reg(State.B, 7); break;
+		case 0xCB79: instruction_bit_bit_reg(State.C, 7); break;
+		case 0xCB7A: instruction_bit_bit_reg(State.D, 7); break;
+		case 0xCB7B: instruction_bit_bit_reg(State.E, 7); break;
+		case 0xCB7C: instruction_bit_bit_reg(State.H, 7); break;
+		case 0xCB7D: instruction_bit_bit_reg(State.L, 7); break;
+		case 0xCB7E: instruction_bit_bit_hl(gb, 7); m_cycles = 16; break;
+		case 0xCB7F: instruction_bit_bit_reg(State.A, 7); break;
+
+		// "RES bit, reg" B:2 C:8 FLAGS: - - - -
+		case 0xCB80: instruction_res_bit_reg(State.B, 0); break;
+		case 0xCB81: instruction_res_bit_reg(State.C, 0); break;
+		case 0xCB82: instruction_res_bit_reg(State.D, 0); break;
+		case 0xCB83: instruction_res_bit_reg(State.E, 0); break;
+		case 0xCB84: instruction_res_bit_reg(State.H, 0); break;
+		case 0xCB85: instruction_res_bit_reg(State.L, 0); break;
+		case 0xCB86: instruction_res_bit_hl(gb, 0); m_cycles = 16; break;
+		case 0xCB87: instruction_res_bit_reg(State.A, 0); break;
+		case 0xCB88: instruction_res_bit_reg(State.B, 1); break;
+		case 0xCB89: instruction_res_bit_reg(State.C, 1); break;
+		case 0xCB8A: instruction_res_bit_reg(State.D, 1); break;
+		case 0xCB8B: instruction_res_bit_reg(State.E, 1); break;
+		case 0xCB8C: instruction_res_bit_reg(State.H, 1); break;
+		case 0xCB8D: instruction_res_bit_reg(State.L, 1); break;
+		case 0xCB8E: instruction_res_bit_hl(gb, 1); m_cycles = 16; break;
+		case 0xCB8F: instruction_res_bit_reg(State.A, 1); break;
+		case 0xCB90: instruction_res_bit_reg(State.B, 2); break;
+		case 0xCB91: instruction_res_bit_reg(State.C, 2); break;
+		case 0xCB92: instruction_res_bit_reg(State.D, 2); break;
+		case 0xCB93: instruction_res_bit_reg(State.E, 2); break;
+		case 0xCB94: instruction_res_bit_reg(State.H, 2); break;
+		case 0xCB95: instruction_res_bit_reg(State.L, 2); break;
+		case 0xCB96: instruction_res_bit_hl(gb, 2); m_cycles = 16; break;
+		case 0xCB97: instruction_res_bit_reg(State.A, 2); break;
+		case 0xCB98: instruction_res_bit_reg(State.B, 3); break;
+		case 0xCB99: instruction_res_bit_reg(State.C, 3); break;
+		case 0xCB9A: instruction_res_bit_reg(State.D, 3); break;
+		case 0xCB9B: instruction_res_bit_reg(State.E, 3); break;
+		case 0xCB9C: instruction_res_bit_reg(State.H, 3); break;
+		case 0xCB9D: instruction_res_bit_reg(State.L, 3); break;
+		case 0xCB9E: instruction_res_bit_hl(gb, 3); m_cycles = 16; break;
+		case 0xCB9F: instruction_res_bit_reg(State.A, 3); break;
+		case 0xCBA0: instruction_res_bit_reg(State.B, 4); break;
+		case 0xCBA1: instruction_res_bit_reg(State.C, 4); break;
+		case 0xCBA2: instruction_res_bit_reg(State.D, 4); break;
+		case 0xCBA3: instruction_res_bit_reg(State.E, 4); break;
+		case 0xCBA4: instruction_res_bit_reg(State.H, 4); break;
+		case 0xCBA5: instruction_res_bit_reg(State.L, 4); break;
+		case 0xCBA6: instruction_res_bit_hl(gb, 4); m_cycles = 16; break;
+		case 0xCBA7: instruction_res_bit_reg(State.A, 4); break;
+		case 0xCBA8: instruction_res_bit_reg(State.B, 5); break;
+		case 0xCBA9: instruction_res_bit_reg(State.C, 5); break;
+		case 0xCBAA: instruction_res_bit_reg(State.D, 5); break;
+		case 0xCBAB: instruction_res_bit_reg(State.E, 5); break;
+		case 0xCBAC: instruction_res_bit_reg(State.H, 5); break;
+		case 0xCBAD: instruction_res_bit_reg(State.L, 5); break;
+		case 0xCBAE: instruction_res_bit_hl(gb, 5); m_cycles = 16; break;
+		case 0xCBAF: instruction_res_bit_reg(State.A, 5); break;
+		case 0xCBB0: instruction_res_bit_reg(State.B, 6); break;
+		case 0xCBB1: instruction_res_bit_reg(State.C, 6); break;
+		case 0xCBB2: instruction_res_bit_reg(State.D, 6); break;
+		case 0xCBB3: instruction_res_bit_reg(State.E, 6); break;
+		case 0xCBB4: instruction_res_bit_reg(State.H, 6); break;
+		case 0xCBB5: instruction_res_bit_reg(State.L, 6); break;
+		case 0xCBB6: instruction_res_bit_hl(gb, 6); m_cycles = 16; break;
+		case 0xCBB7: instruction_res_bit_reg(State.A, 6); break;
+		case 0xCBB8: instruction_res_bit_reg(State.B, 7); break;
+		case 0xCBB9: instruction_res_bit_reg(State.C, 7); break;
+		case 0xCBBA: instruction_res_bit_reg(State.D, 7); break;
+		case 0xCBBB: instruction_res_bit_reg(State.E, 7); break;
+		case 0xCBBC: instruction_res_bit_reg(State.H, 7); break;
+		case 0xCBBD: instruction_res_bit_reg(State.L, 7); break;
+		case 0xCBBE: instruction_res_bit_hl(gb, 7); m_cycles = 16; break;
+		case 0xCBBF: instruction_res_bit_reg(State.A, 7); break;	
 
 		// "SET bit, register" B:2 C:8 - - - -
-		case 0xCBC0: set_bit_reg(State.B, 0); m_cycles = 8; break;
-		case 0xCBC1: set_bit_reg(State.C, 0); m_cycles = 8; break;
-		case 0xCBC2: set_bit_reg(State.D, 0); m_cycles = 8; break;
-		case 0xCBC3: set_bit_reg(State.E, 0); m_cycles = 8; break;
-		case 0xCBC4: set_bit_reg(State.H, 0); m_cycles = 8; break;
-		case 0xCBC5: set_bit_reg(State.L, 0); m_cycles = 8; break;
-		case 0xCBC6: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 0); m_cycles = 8; break;
-		case 0xCBC7: set_bit_reg(State.A, 0); m_cycles = 8; break;
-		case 0xCBC8: set_bit_reg(State.B, 1); m_cycles = 8; break;
-		case 0xCBC9: set_bit_reg(State.C, 1); m_cycles = 8; break;
-		case 0xCBCA: set_bit_reg(State.D, 1); m_cycles = 8; break;
-		case 0xCBCB: set_bit_reg(State.E, 1); m_cycles = 8; break;
-		case 0xCBCC: set_bit_reg(State.H, 1); m_cycles = 8; break;
-		case 0xCBCD: set_bit_reg(State.L, 1); m_cycles = 8; break;
-		case 0xCBCE: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 1); m_cycles = 8; break;
-		case 0xCBCF: set_bit_reg(State.A, 1); m_cycles = 8; break;
-		case 0xCBD0: set_bit_reg(State.B, 2); m_cycles = 8; break;
-		case 0xCBD1: set_bit_reg(State.C, 2); m_cycles = 8; break;
-		case 0xCBD2: set_bit_reg(State.D, 2); m_cycles = 8; break;
-		case 0xCBD3: set_bit_reg(State.E, 2); m_cycles = 8; break;
-		case 0xCBD4: set_bit_reg(State.H, 2); m_cycles = 8; break;
-		case 0xCBD5: set_bit_reg(State.L, 2); m_cycles = 8; break;
-		case 0xCBD6: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 2); m_cycles = 8; break;
-		case 0xCBD7: set_bit_reg(State.A, 2); m_cycles = 8; break;
-		case 0xCBD8: set_bit_reg(State.B, 3); m_cycles = 8; break;
-		case 0xCBD9: set_bit_reg(State.C, 3); m_cycles = 8; break;
-		case 0xCBDA: set_bit_reg(State.D, 3); m_cycles = 8; break;
-		case 0xCBDB: set_bit_reg(State.E, 3); m_cycles = 8; break;
-		case 0xCBDC: set_bit_reg(State.H, 3); m_cycles = 8; break;
-		case 0xCBDD: set_bit_reg(State.L, 3); m_cycles = 8; break;
-		case 0xCBDE: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 3); m_cycles = 8; break;
-		case 0xCBDF: set_bit_reg(State.A, 3); m_cycles = 8; break;
-		case 0xCBE0: set_bit_reg(State.B, 4); m_cycles = 8; break;
-		case 0xCBE1: set_bit_reg(State.C, 4); m_cycles = 8; break;
-		case 0xCBE2: set_bit_reg(State.D, 4); m_cycles = 8; break;
-		case 0xCBE3: set_bit_reg(State.E, 4); m_cycles = 8; break;
-		case 0xCBE4: set_bit_reg(State.H, 4); m_cycles = 8; break;
-		case 0xCBE5: set_bit_reg(State.L, 4); m_cycles = 8; break;
-		case 0xCBE6: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 4); m_cycles = 8; break;
-		case 0xCBE7: set_bit_reg(State.A, 4); m_cycles = 8; break;
-		case 0xCBE8: set_bit_reg(State.B, 5); m_cycles = 8; break;
-		case 0xCBE9: set_bit_reg(State.C, 5); m_cycles = 8; break;
-		case 0xCBEA: set_bit_reg(State.D, 5); m_cycles = 8; break;
-		case 0xCBEB: set_bit_reg(State.E, 5); m_cycles = 8; break;
-		case 0xCBEC: set_bit_reg(State.H, 5); m_cycles = 8; break;
-		case 0xCBED: set_bit_reg(State.L, 5); m_cycles = 8; break;
-		case 0xCBEE: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 5); m_cycles = 8; break;
-		case 0xCBEF: set_bit_reg(State.A, 5); m_cycles = 8; break;
-		case 0xCBF0: set_bit_reg(State.B, 6); m_cycles = 8; break;
-		case 0xCBF1: set_bit_reg(State.C, 6); m_cycles = 8; break;
-		case 0xCBF2: set_bit_reg(State.D, 6); m_cycles = 8; break;
-		case 0xCBF3: set_bit_reg(State.E, 6); m_cycles = 8; break;
-		case 0xCBF4: set_bit_reg(State.H, 6); m_cycles = 8; break;
-		case 0xCBF5: set_bit_reg(State.L, 6); m_cycles = 8; break;
-		case 0xCBF6: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 6); m_cycles = 8; break;
-		case 0xCBF7: set_bit_reg(State.A, 6); m_cycles = 8; break;
-		case 0xCBF8: set_bit_reg(State.B, 7); m_cycles = 8; break;
-		case 0xCBF9: set_bit_reg(State.C, 7); m_cycles = 8; break;
-		case 0xCBFA: set_bit_reg(State.D, 7); m_cycles = 8; break;
-		case 0xCBFB: set_bit_reg(State.E, 7); m_cycles = 8; break;
-		case 0xCBFC: set_bit_reg(State.H, 7); m_cycles = 8; break;
-		case 0xCBFD: set_bit_reg(State.L, 7); m_cycles = 8; break;
-		case 0xCBFE: set_bit_reg(gb.ReadFromMemoryMap(State.HL), 7); m_cycles = 8; break;
-		case 0xCBFF: set_bit_reg(State.A, 7); m_cycles = 8; break;
+		case 0xCBC0: instruction_set_bit_reg(State.B, 0); break;
+		case 0xCBC1: instruction_set_bit_reg(State.C, 0); break;
+		case 0xCBC2: instruction_set_bit_reg(State.D, 0); break;
+		case 0xCBC3: instruction_set_bit_reg(State.E, 0); break;
+		case 0xCBC4: instruction_set_bit_reg(State.H, 0); break;
+		case 0xCBC5: instruction_set_bit_reg(State.L, 0); break;
+		case 0xCBC6: instruction_set_bit_hl(gb, 0); m_cycles = 16; break;
+		case 0xCBC7: instruction_set_bit_reg(State.A, 0); break;
+		case 0xCBC8: instruction_set_bit_reg(State.B, 1); break;
+		case 0xCBC9: instruction_set_bit_reg(State.C, 1); break;
+		case 0xCBCA: instruction_set_bit_reg(State.D, 1); break;
+		case 0xCBCB: instruction_set_bit_reg(State.E, 1); break;
+		case 0xCBCC: instruction_set_bit_reg(State.H, 1); break;
+		case 0xCBCD: instruction_set_bit_reg(State.L, 1); break;
+		case 0xCBCE: instruction_set_bit_hl(gb, 1); m_cycles = 16; break;
+		case 0xCBCF: instruction_set_bit_reg(State.A, 1); break;
+		case 0xCBD0: instruction_set_bit_reg(State.B, 2); break;
+		case 0xCBD1: instruction_set_bit_reg(State.C, 2); break;
+		case 0xCBD2: instruction_set_bit_reg(State.D, 2); break;
+		case 0xCBD3: instruction_set_bit_reg(State.E, 2); break;
+		case 0xCBD4: instruction_set_bit_reg(State.H, 2); break;
+		case 0xCBD5: instruction_set_bit_reg(State.L, 2); break;
+		case 0xCBD6: instruction_set_bit_hl(gb, 2); m_cycles = 16; break;
+		case 0xCBD7: instruction_set_bit_reg(State.A, 2); break;
+		case 0xCBD8: instruction_set_bit_reg(State.B, 3); break;
+		case 0xCBD9: instruction_set_bit_reg(State.C, 3); break;
+		case 0xCBDA: instruction_set_bit_reg(State.D, 3); break;
+		case 0xCBDB: instruction_set_bit_reg(State.E, 3); break;
+		case 0xCBDC: instruction_set_bit_reg(State.H, 3); break;
+		case 0xCBDD: instruction_set_bit_reg(State.L, 3); break;
+		case 0xCBDE: instruction_set_bit_hl(gb, 3); m_cycles = 16; break;
+		case 0xCBDF: instruction_set_bit_reg(State.A, 3); break;
+		case 0xCBE0: instruction_set_bit_reg(State.B, 4); break;
+		case 0xCBE1: instruction_set_bit_reg(State.C, 4); break;
+		case 0xCBE2: instruction_set_bit_reg(State.D, 4); break;
+		case 0xCBE3: instruction_set_bit_reg(State.E, 4); break;
+		case 0xCBE4: instruction_set_bit_reg(State.H, 4); break;
+		case 0xCBE5: instruction_set_bit_reg(State.L, 4); break;
+		case 0xCBE6: instruction_set_bit_hl(gb, 4); m_cycles = 16; break;
+		case 0xCBE7: instruction_set_bit_reg(State.A, 4); break;
+		case 0xCBE8: instruction_set_bit_reg(State.B, 5); break;
+		case 0xCBE9: instruction_set_bit_reg(State.C, 5); break;
+		case 0xCBEA: instruction_set_bit_reg(State.D, 5); break;
+		case 0xCBEB: instruction_set_bit_reg(State.E, 5); break;
+		case 0xCBEC: instruction_set_bit_reg(State.H, 5); break;
+		case 0xCBED: instruction_set_bit_reg(State.L, 5); break;
+		case 0xCBEE: instruction_set_bit_hl(gb, 5); m_cycles = 16; break;
+		case 0xCBEF: instruction_set_bit_reg(State.A, 5); break;
+		case 0xCBF0: instruction_set_bit_reg(State.B, 6); break;
+		case 0xCBF1: instruction_set_bit_reg(State.C, 6); break;
+		case 0xCBF2: instruction_set_bit_reg(State.D, 6); break;
+		case 0xCBF3: instruction_set_bit_reg(State.E, 6); break;
+		case 0xCBF4: instruction_set_bit_reg(State.H, 6); break;
+		case 0xCBF5: instruction_set_bit_reg(State.L, 6); break;
+		case 0xCBF6: instruction_set_bit_hl(gb, 6); m_cycles = 16; break;
+		case 0xCBF7: instruction_set_bit_reg(State.A, 6); break;
+		case 0xCBF8: instruction_set_bit_reg(State.B, 7); break;
+		case 0xCBF9: instruction_set_bit_reg(State.C, 7); break;
+		case 0xCBFA: instruction_set_bit_reg(State.D, 7); break;
+		case 0xCBFB: instruction_set_bit_reg(State.E, 7); break;
+		case 0xCBFC: instruction_set_bit_reg(State.H, 7); break;
+		case 0xCBFD: instruction_set_bit_reg(State.L, 7); break;
+		case 0xCBFE: instruction_set_bit_hl(gb, 7); m_cycles = 16; break;
+		case 0xCBFF: instruction_set_bit_reg(State.A, 7); break;
 
 		default:
 			unimplementedInstruction(State, opcode);
@@ -6147,7 +3990,191 @@ void Cpu::setCPUFlag(int flag, bool enable)
 		State.F &= ~flag;
 }
 
-void Cpu::set_bit_reg(uint8_t& reg, uint8_t bit)
+void Cpu::instruction_rlc_reg(uint8_t& reg)
+{
+	bool oldCarry = getCPUFlag(FLAG_CARRY);
+
+	setCPUFlag(FLAG_CARRY, (reg & 0x80) != 0);
+
+	reg = (reg << 1) | oldCarry;
+
+	setCPUFlag(FLAG_ZERO, (reg == 0));
+	setCPUFlag(FLAG_SUBTRACT, false);
+	setCPUFlag(FLAG_HALF_CARRY, false);
+}
+
+void Cpu::instruction_rlc_hl(GameBoy& gb)
+{
+	uint8_t value = gb.ReadFromMemoryMap(State.HL);
+	instruction_rlc_reg(value);
+	gb.WriteToMemoryMap(State.HL, value);
+}
+
+void Cpu::instruction_rrc_reg(uint8_t& reg)
+{
+	setCPUFlag(FLAG_CARRY, (reg & 0x01) != 0);
+
+	reg = (reg >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
+
+	setCPUFlag(FLAG_ZERO, (reg == 0));
+	setCPUFlag(FLAG_SUBTRACT, false);
+	setCPUFlag(FLAG_HALF_CARRY, false);
+}
+
+void Cpu::instruction_rrc_hl(GameBoy& gb)
+{
+	uint8_t value = gb.ReadFromMemoryMap(State.HL);
+	instruction_rrc_reg(value);
+	gb.WriteToMemoryMap(State.HL, value);
+}
+
+void Cpu::instruction_rl_reg(uint8_t& reg)
+{
+	// Rotate left through carry
+	bool carry = getCPUFlag(FLAG_CARRY);
+	uint8_t temp = (reg << 1) | (carry ? 1 : 0);
+	carry = (reg & 0x80) != 0;
+	reg = temp;
+
+	// Update flags
+	setCPUFlag(FLAG_ZERO, (reg == 0));
+	setCPUFlag(FLAG_SUBTRACT, false);
+	setCPUFlag(FLAG_HALF_CARRY, false);
+	setCPUFlag(FLAG_CARRY, carry);
+}
+
+void Cpu::instruction_rl_hl(GameBoy& gb)
+{
+	uint8_t value = gb.ReadFromMemoryMap(State.HL);
+	instruction_rl_reg(value);
+	gb.WriteToMemoryMap(State.HL, value);
+}
+
+void Cpu::instruction_rr_reg(uint8_t& reg)
+{
+	bool oldCarry = (reg & 0x01) != 0;
+	setCPUFlag(FLAG_CARRY, oldCarry);
+
+	reg = (reg >> 1) | (oldCarry ? 0x80 : 0x00);
+
+	setCPUFlag(FLAG_ZERO, (reg == 0));
+	setCPUFlag(FLAG_SUBTRACT, false);
+	setCPUFlag(FLAG_HALF_CARRY, false);
+}
+
+void Cpu::instruction_rr_hl(GameBoy& gb)
+{
+	uint8_t value = gb.ReadFromMemoryMap(State.HL);
+	instruction_rr_reg(value);
+	gb.WriteToMemoryMap(State.HL, value);
+}
+
+void Cpu::instruction_sla_reg(uint8_t& reg)
+{
+	setCPUFlag(FLAG_CARRY, (reg & 0x80) != 0);
+
+	reg = reg << 1;
+
+	setCPUFlag(FLAG_ZERO, (reg == 0));
+	setCPUFlag(FLAG_SUBTRACT, false);
+	setCPUFlag(FLAG_HALF_CARRY, false);
+}
+
+void Cpu::instruction_sla_hl(GameBoy& gb)
+{
+	uint8_t value = gb.ReadFromMemoryMap(State.HL);
+	instruction_sla_reg(value);
+	gb.WriteToMemoryMap(State.HL, value);
+}
+
+void Cpu::instruction_sra_reg(uint8_t& reg)
+{
+	setCPUFlag(FLAG_CARRY, (reg & 0x80) != 0);
+
+	reg = (reg >> 1) | (reg & 0x80);
+
+	setCPUFlag(FLAG_ZERO, (reg == 0));
+	setCPUFlag(FLAG_SUBTRACT, false);
+	setCPUFlag(FLAG_HALF_CARRY, false);
+}
+
+void Cpu::instruction_sra_hl(GameBoy& gb)
+{
+	uint8_t value = gb.ReadFromMemoryMap(State.HL);
+	instruction_sra_reg(value);
+	gb.WriteToMemoryMap(State.HL, value);
+}
+
+void Cpu::instruction_swap_reg(uint8_t& reg)
+{
+	reg = ((reg & 0x0F) << 4) | ((reg & 0xF0) >> 4);
+
+	setCPUFlag(FLAG_ZERO, (reg == 0));
+	setCPUFlag(FLAG_SUBTRACT, false);
+	setCPUFlag(FLAG_HALF_CARRY, false);
+	setCPUFlag(FLAG_CARRY, false);
+}
+
+void Cpu::instruction_swap_hl(GameBoy& gb)
+{
+	uint8_t value = gb.ReadFromMemoryMap(State.HL);
+	instruction_swap_reg(value);
+	gb.WriteToMemoryMap(State.HL, value);
+}
+
+
+void Cpu::instruction_srl_reg(uint8_t& reg)
+{
+	setCPUFlag(FLAG_CARRY, (reg & 0x01) != 0);
+
+	reg = reg >> 1;
+
+	setCPUFlag(FLAG_ZERO, (reg == 0));
+	setCPUFlag(FLAG_SUBTRACT, false);
+	setCPUFlag(FLAG_HALF_CARRY, false);
+}
+
+void Cpu::instruction_srl_hl(GameBoy& gb)
+{
+	uint8_t value = gb.ReadFromMemoryMap(State.HL);
+	instruction_srl_reg(value);
+	gb.WriteToMemoryMap(State.HL, value);
+}
+
+void Cpu::instruction_bit_bit_reg(uint8_t& reg, uint8_t bit)
+{
+	setCPUFlag(FLAG_ZERO, (reg & (1 << bit)) == 0);
+	setCPUFlag(FLAG_SUBTRACT, false);
+	setCPUFlag(FLAG_HALF_CARRY, true);
+}
+
+void Cpu::instruction_bit_bit_hl(GameBoy& gb, uint8_t bit)
+{
+	uint8_t value = gb.ReadFromMemoryMap(State.HL);
+	instruction_bit_bit_reg(value, bit);
+	gb.WriteToMemoryMap(State.HL, value);
+}
+
+void Cpu::instruction_res_bit_reg(uint8_t& reg, uint8_t bit)
+{
+	reg &= ~(1 << bit);
+}
+
+void Cpu::instruction_res_bit_hl(GameBoy& gb, uint8_t bit)
+{
+	uint8_t value = gb.ReadFromMemoryMap(State.HL);
+	instruction_res_bit_reg(value, bit);
+	gb.WriteToMemoryMap(State.HL, value);
+}
+
+void Cpu::instruction_set_bit_reg(uint8_t& reg, uint8_t bit)
 {
 	reg |= (1 << bit);
+}
+
+void Cpu::instruction_set_bit_hl(GameBoy& gb, uint8_t bit)
+{
+	uint8_t value = gb.ReadFromMemoryMap(State.HL);
+	instruction_set_bit_reg(value, bit);
+	gb.WriteToMemoryMap(State.HL, value);
 }
