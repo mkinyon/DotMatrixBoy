@@ -86,7 +86,46 @@ private:
 	void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t *opcode, int totalOpBytes);
 	void unimplementedInstruction(Cpu::m_CpuState &state, uint8_t opcode);
 
-	// 16 bit (0xCB) instructions
+	// 8-bit Arithmetic/Logical Instructions
+	void instruction_inc_reg(uint8_t& reg);
+	void instruction_inc_hl(GameBoy& gb);
+
+	void instruction_dec_reg(uint8_t& reg);
+	void instruction_dec_hl(GameBoy& gb);
+
+	void instruction_add_reg(uint8_t& reg);
+	void instruction_add_hl(GameBoy& gb);
+
+	void instruction_adc_reg(uint8_t& reg);
+	void instruction_adc_hl(GameBoy& gb);
+
+	void instruction_sub_reg(uint8_t& reg);
+	void instruction_sub_hl(GameBoy& gb);
+
+	void instruction_sbc_reg(uint8_t& reg, bool setCarry = false);
+	void instruction_sbc_hl(GameBoy& gb);
+
+	void instruction_and_reg(uint8_t& reg);
+	void instruction_and_hl(GameBoy& gb);
+
+	void instruction_xor_reg(uint8_t& reg, bool setZero = false);
+	void instruction_xor_hl(GameBoy& gb);
+
+	void instruction_or_reg(uint8_t& reg);
+	void instruction_or_hl(GameBoy& gb);
+
+	void instruction_cp_reg(uint8_t& reg);
+	void instruction_cp_hl(GameBoy& gb);
+
+
+	// 16-bit Arithmetic/Logical Instructions
+	void instruction_inc_reg16(uint16_t& reg);
+	void instruction_dec_reg16(uint16_t& reg);
+	void instruction_add_reg16(uint16_t& reg);
+	void instruction_add_sp_e8(GameBoy& gb, uint8_t& e8);
+
+
+	// 16 bit prefix (0xCB) instructions
 	void instruction_rlc_reg(uint8_t& reg);
 	void instruction_rlc_hl(GameBoy& gb);
 
