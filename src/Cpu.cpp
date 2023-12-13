@@ -404,84 +404,40 @@ void Cpu::Clock(GameBoy& gb)
 				8-bit Load Instructions
 			*********************************************************************************************/
 
-			// "LD [BC] A" B:1 C:8 FLAGS: - - - -
-			case 0x02:
+			// "LD [addr] reg" B:1 C:8 FLAGS: - - - -
+			case 0x02: instruction_ld_addr_reg(gb, State.BC, State.A); m_cycles = 8; break;
+			case 0x12: instruction_ld_addr_reg(gb, State.DE, State.A); m_cycles = 8; break;
+			
+			// "LD reg [addr]" B:1 C:8 FLAGS: - - - -
+			case 0x1A: instruction_ld_reg_addr(gb, State.A, State.DE); m_cycles = 8; break;
+			case 0x46: instruction_ld_reg_addr(gb, State.B, State.HL); m_cycles = 4; break;
+			case 0x4E: instruction_ld_reg_addr(gb, State.C, State.HL); m_cycles = 4; break;
+			case 0x56: instruction_ld_reg_addr(gb, State.D, State.HL); m_cycles = 4; break;
+			case 0x5E: instruction_ld_reg_addr(gb, State.E, State.HL); m_cycles = 4; break;
+			case 0x66: instruction_ld_reg_addr(gb, State.H, State.HL); m_cycles = 4; break;
+			case 0x6E: instruction_ld_reg_addr(gb, State.L, State.HL); m_cycles = 4; break;
+			case 0x7E: instruction_ld_reg_addr(gb, State.A, State.HL); m_cycles = 4; break;
+
+			// "LD reg n8" B:2 C:8 FLAGS: - - - -
+			case 0x06: instruction_ld_reg_value(State.B, opcode[1]); State.PC++; m_cycles = 8; break;
+			case 0x0E: instruction_ld_reg_value(State.C, opcode[1]); State.PC++; m_cycles = 8; break;
+			case 0x16: instruction_ld_reg_value(State.D, opcode[1]); State.PC++; m_cycles = 8; break;
+			case 0x1E: instruction_ld_reg_value(State.E, opcode[1]); State.PC++; m_cycles = 8; break;
+			case 0x26: instruction_ld_reg_value(State.H, opcode[1]); State.PC++; m_cycles = 8; break;
+			case 0x2E: instruction_ld_reg_value(State.L, opcode[1]); State.PC++; m_cycles = 8; break;
+
+				
+			// "LD A [HL-]" B:1 C:8 FLAGS: - - - -
+			case 0x3A:
 			{
-				uint16_t offset = State.BC;
-				gb.WriteToMemoryMap(offset, State.A);
+				State.A = gb.ReadFromMemoryMap(State.HL);
+				State.HL--;
 
 				m_cycles = 8;
 				break;
 			}
 
-			// "LD B n8" B:2 C:8 FLAGS: - - - -
-			case 0x06:
-			{
-				State.B = opcode[1];
-				State.PC++;
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD A [BC]" B:1 C:8 FLAGS: - - - -
-			case 0x0A:
-			{
-				State.A = gb.ReadFromMemoryMap(State.BC);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD C n8" B:2 C:8 FLAGS: - - - -
-			case 0x0E:
-			{
-				State.C = opcode[1];
-				State.PC++;
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD [DE] A" B:1 C:8 FLAGS: - - - -
-			case 0x12:
-			{
-				gb.WriteToMemoryMap(State.DE, State.A);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD D n8" B:2 C:8 FLAGS: - - - -
-			case 0x16:
-			{
-				State.D = opcode[1];
-				State.PC++;
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD A [DE]" B:1 C:8 FLAGS: - - - -
-			case 0x1A:
-			{
-				State.A = gb.ReadFromMemoryMap(State.DE);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD E n8" B:2 C:8 FLAGS: - - - -
-			case 0x1E:
-			{
-				State.E = opcode[1];
-				State.PC++;
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD [HL] A" B:1 C:8 FLAGS: - - - -
+			// "LD [HL+] A" B:1 C:8 FLAGS: - - - -
 			case 0x22:
 			{
 				gb.WriteToMemoryMap(State.HL, State.A);
@@ -491,17 +447,7 @@ void Cpu::Clock(GameBoy& gb)
 				break;
 			}
 
-			// "LD H n8" B:2 C:8 FLAGS: - - - -
-			case 0x26:
-			{
-				State.H = opcode[1];
-				State.PC++;
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD A [HL]" B:1 C:8 FLAGS: - - - -
+			// "LD A [HL+]" B:1 C:8 FLAGS: - - - -
 			case 0x2A:
 			{
 				State.A = gb.ReadFromMemoryMap(State.HL);
@@ -511,17 +457,7 @@ void Cpu::Clock(GameBoy& gb)
 				break;
 			}
 
-			// "LD L n8" B:2 C:8 FLAGS: - - - -
-			case 0x2E:
-			{
-				State.L = opcode[1];
-				State.PC++;
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD [HL] A" B:1 C:8 FLAGS: - - - -
+			// "LD [HL-] A" B:1 C:8 FLAGS: - - - -
 			case 0x32:
 			{
 				gb.WriteToMemoryMap(State.HL, State.A);
@@ -541,16 +477,6 @@ void Cpu::Clock(GameBoy& gb)
 				break;
 			}
 
-			// "LD A [HL]" B:1 C:8 FLAGS: - - - -
-			case 0x3A:
-			{
-				State.A = gb.ReadFromMemoryMap(State.HL);
-				State.HL--;
-
-				m_cycles = 8;
-				break;
-			}
-
 			// "LD A n8" B:2 C:8 FLAGS: - - - -
 			case 0x3E:
 			{
@@ -561,435 +487,62 @@ void Cpu::Clock(GameBoy& gb)
 				break;
 			}
 
-			// "LD B B" B:1 C:4 FLAGS: - - - -
-			case 0x40:
-			{
-				State.B = State.B;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD B C" B:1 C:4 FLAGS: - - - -
-			case 0x41:
-			{
-				State.B = State.C;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD B D" B:1 C:4 FLAGS: - - - -
-			case 0x42:
-			{
-				State.B = State.D;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD B E" B:1 C:4 FLAGS: - - - -
-			case 0x43: {
-				State.B = State.E;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD B H" B:1 C:4 FLAGS: - - - -
-			case 0x44: {
-				State.B = State.H;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD B L" B:1 C:4 FLAGS: - - - -
-			case 0x45:
-			{
-				State.B = State.L;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD B [HL]" B:1 C:8 FLAGS: - - - -
-			case 0x46:
-			{
-				State.B = gb.ReadFromMemoryMap(State.HL);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD B A" B:1 C:4 FLAGS: - - - -
-			case 0x47:
-			{
-				State.B = State.A;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD C B" B:1 C:4 FLAGS: - - - -
-			case 0x48:
-			{
-				State.C = State.B;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD C C" B:1 C:4 FLAGS: - - - -
-			case 0x49:
-			{
-				State.C = State.C;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD C D" B:1 C:4 FLAGS: - - - -
-			case 0x4A:
-			{
-				State.C = State.D;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD C E" B:1 C:4 FLAGS: - - - -
-			case 0x4B:
-			{
-				State.C = State.E;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD C H" B:1 C:4 FLAGS: - - - -
-			case 0x4C:
-			{
-				State.C = State.H;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD C L" B:1 C:4 FLAGS: - - - -
-			case 0x4D:
-			{
-				State.C = State.L;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD C [HL]" B:1 C:8 FLAGS: - - - -
-			case 0x4E:
-			{
-				State.C = gb.ReadFromMemoryMap(State.HL);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD C A" B:1 C:4 FLAGS: - - - -
-			case 0x4F:
-			{
-				State.C = State.A;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD D B" B:1 C:4 FLAGS: - - - -
-			case 0x50:
-			{
-				State.D = State.B;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD D C" B:1 C:4 FLAGS: - - - -
-			case 0x51:
-			{
-				State.D = State.C;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD D D" B:1 C:4 FLAGS: - - - -
-			case 0x52:
-			{
-				State.D = State.D;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD D E" B:1 C:4 FLAGS: - - - -
-			case 0x53:
-			{
-				State.D = State.E;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD D H" B:1 C:4 FLAGS: - - - -
-			case 0x54:
-			{
-				State.D = State.H;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD D L" B:1 C:4 FLAGS: - - - -
-			case 0x55:
-			{
-				State.D = State.L;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD D [HL]" B:1 C:8 FLAGS: - - - -
-			case 0x56:
-			{
-				State.D = gb.ReadFromMemoryMap(State.HL);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD D A" B:1 C:4 FLAGS: - - - -
-			case 0x57:
-			{
-				State.D = State.A;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD E B" B:1 C:4 FLAGS: - - - -
-			case 0x58:
-			{
-				State.E = State.B;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD E C" B:1 C:4 FLAGS: - - - -
-			case 0x59:
-			{
-				State.E = State.C;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD E D" B:1 C:4 FLAGS: - - - -
-			case 0x5A:
-			{
-				State.E = State.D;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD E E" B:1 C:4 FLAGS: - - - -
-			case 0x5B:
-			{
-				State.E = State.E;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD E H" B:1 C:4 FLAGS: - - - -
-			case 0x5C:
-			{
-				State.E = State.H;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD E L" B:1 C:4 FLAGS: - - - -
-			case 0x5D:
-			{
-				State.E = State.L;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD E [HL]" B:1 C:8 FLAGS: - - - -
-			case 0x5E:
-			{
-				State.E = gb.ReadFromMemoryMap(State.HL);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD E A" B:1 C:4 FLAGS: - - - -
-			case 0x5F:
-			{
-				State.E = State.A;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD H B" B:1 C:4 FLAGS: - - - -
-			case 0x60:
-			{
-				State.H = State.B;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD H C" B:1 C:4 FLAGS: - - - -
-			case 0x61:
-			{
-				State.H = State.C;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD H D" B:1 C:4 FLAGS: - - - -
-			case 0x62:
-			{
-				State.H = State.D;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD H E" B:1 C:4 FLAGS: - - - -
-			case 0x63:
-			{
-				State.H = State.E;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD H H" B:1 C:4 FLAGS: - - - -
-			case 0x64:
-			{
-				State.H = State.H;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD H L" B:1 C:4 FLAGS: - - - -
-			case 0x65:
-			{
-				State.H = State.L;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD H [HL]" B:1 C:8 FLAGS: - - - -
-			case 0x66:
-			{
-				State.H = gb.ReadFromMemoryMap(State.HL);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD H A" B:1 C:4 FLAGS: - - - -
-			case 0x67:
-			{
-				State.H = State.A;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD L B" B:1 C:4 FLAGS: - - - -
-			case 0x68:
-			{
-				State.L = State.B;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD L C" B:1 C:4 FLAGS: - - - -
-			case 0x69:
-			{
-				State.L = State.C;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD L D" B:1 C:4 FLAGS: - - - -
-			case 0x6A:
-			{
-				State.L = State.D;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD L E" B:1 C:4 FLAGS: - - - -
-			case 0x6B:
-			{
-				State.L = State.E;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD L H" B:1 C:4 FLAGS: - - - -
-			case 0x6C:
-			{
-				State.L = State.H;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD L L" B:1 C:4 FLAGS: - - - -
-			case 0x6D:
-			{
-				State.L = State.L;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD L [HL]" B:1 C:8 FLAGS: - - - -
-			case 0x6E:
-			{
-				State.L = gb.ReadFromMemoryMap(State.HL);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD L A" B:1 C:4 FLAGS: - - - -
-			case 0x6F:
-			{
-				State.L = State.A;
-
-				m_cycles = 4;
-				break;
-			}
+			// "LD reg reg" B:1 C:4 FLAGS: - - - -
+			case 0x40: instruction_ld_reg_value(State.B, State.B); m_cycles = 4; break;
+			case 0x41: instruction_ld_reg_value(State.B, State.C); m_cycles = 4; break;
+			case 0x42: instruction_ld_reg_value(State.B, State.D); m_cycles = 4; break;
+			case 0x43: instruction_ld_reg_value(State.B, State.E); m_cycles = 4; break;
+			case 0x44: instruction_ld_reg_value(State.B, State.H); m_cycles = 4; break;
+			case 0x45: instruction_ld_reg_value(State.B, State.L); m_cycles = 4; break;
+			case 0x47: instruction_ld_reg_value(State.B, State.A); m_cycles = 4; break;
+	
+			case 0x48: instruction_ld_reg_value(State.C, State.B); m_cycles = 4; break;
+			case 0x49: instruction_ld_reg_value(State.C, State.C); m_cycles = 4; break;
+			case 0x4A: instruction_ld_reg_value(State.C, State.D); m_cycles = 4; break;
+			case 0x4B: instruction_ld_reg_value(State.C, State.E); m_cycles = 4; break;
+			case 0x4C: instruction_ld_reg_value(State.C, State.H); m_cycles = 4; break;
+			case 0x4D: instruction_ld_reg_value(State.C, State.L); m_cycles = 4; break;
+			case 0x4F: instruction_ld_reg_value(State.C, State.A); m_cycles = 4; break;
+
+			case 0x50: instruction_ld_reg_value(State.D, State.B); m_cycles = 4; break;
+			case 0x51: instruction_ld_reg_value(State.D, State.C); m_cycles = 4; break;
+			case 0x52: instruction_ld_reg_value(State.D, State.D); m_cycles = 4; break;
+			case 0x53: instruction_ld_reg_value(State.D, State.E); m_cycles = 4; break;
+			case 0x54: instruction_ld_reg_value(State.D, State.H); m_cycles = 4; break;
+			case 0x55: instruction_ld_reg_value(State.D, State.L); m_cycles = 4; break;
+			case 0x57: instruction_ld_reg_value(State.D, State.A); m_cycles = 4; break;
+
+			case 0x58: instruction_ld_reg_value(State.E, State.B); m_cycles = 4; break;
+			case 0x59: instruction_ld_reg_value(State.E, State.C); m_cycles = 4; break;
+			case 0x5A: instruction_ld_reg_value(State.E, State.D); m_cycles = 4; break;
+			case 0x5B: instruction_ld_reg_value(State.E, State.E); m_cycles = 4; break;
+			case 0x5C: instruction_ld_reg_value(State.E, State.H); m_cycles = 4; break;
+			case 0x5D: instruction_ld_reg_value(State.E, State.L); m_cycles = 4; break;
+			case 0x5F: instruction_ld_reg_value(State.E, State.A); m_cycles = 4; break;
+
+			case 0x60: instruction_ld_reg_value(State.H, State.B); m_cycles = 4; break;
+			case 0x61: instruction_ld_reg_value(State.H, State.C); m_cycles = 4; break;
+			case 0x62: instruction_ld_reg_value(State.H, State.D); m_cycles = 4; break;
+			case 0x63: instruction_ld_reg_value(State.H, State.E); m_cycles = 4; break;
+			case 0x64: instruction_ld_reg_value(State.H, State.H); m_cycles = 4; break;
+			case 0x65: instruction_ld_reg_value(State.H, State.L); m_cycles = 4; break;
+			case 0x67: instruction_ld_reg_value(State.H, State.A); m_cycles = 4; break;
+
+			case 0x68: instruction_ld_reg_value(State.L, State.B); m_cycles = 4; break;
+			case 0x69: instruction_ld_reg_value(State.L, State.C); m_cycles = 4; break;
+			case 0x6A: instruction_ld_reg_value(State.L, State.D); m_cycles = 4; break;
+			case 0x6B: instruction_ld_reg_value(State.L, State.E); m_cycles = 4; break;
+			case 0x6C: instruction_ld_reg_value(State.L, State.H); m_cycles = 4; break;
+			case 0x6D: instruction_ld_reg_value(State.L, State.L); m_cycles = 4; break;
+			case 0x6F: instruction_ld_reg_value(State.L, State.A); m_cycles = 4; break;
+
+			case 0x78: instruction_ld_reg_value(State.A, State.B); m_cycles = 4; break;
+			case 0x79: instruction_ld_reg_value(State.A, State.C); m_cycles = 4; break;
+			case 0x7A: instruction_ld_reg_value(State.A, State.D); m_cycles = 4; break;
+			case 0x7B: instruction_ld_reg_value(State.A, State.E); m_cycles = 4; break;
+			case 0x7C: instruction_ld_reg_value(State.A, State.H); m_cycles = 4; break;
+			case 0x7D: instruction_ld_reg_value(State.A, State.L); m_cycles = 4; break;
+			case 0x7F: instruction_ld_reg_value(State.A, State.A); m_cycles = 4; break;
 
 			// "LD [HL] B" B:1 C:8 FLAGS: - - - -
 			case 0x70:
@@ -1054,77 +607,7 @@ void Cpu::Clock(GameBoy& gb)
 				break;
 			}
 
-			// "LD A B" B:1 C:4 FLAGS: - - - -
-			case 0x78:
-			{
-				State.A = State.B;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD A C" B:1 C:4 FLAGS: - - - -
-			case 0x79:
-			{
-				State.A = State.C;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD A D" B:1 C:4 FLAGS: - - - -
-			case 0x7A:
-			{
-				State.A = State.D;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD A E" B:1 C:4 FLAGS: - - - -
-			case 0x7B:
-			{
-				State.A = State.E;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD A H" B:1 C:4 FLAGS: - - - -
-			case 0x7C:
-			{
-				State.A = State.H;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD A L" B:1 C:4 FLAGS: - - - -
-			case 0x7D:
-			{
-				State.A = State.L;
-
-				m_cycles = 4;
-				break;
-			}
-
-			// "LD A [HL]" B:1 C:8 FLAGS: - - - -
-			case 0x7E:
-			{
-				State.A = gb.ReadFromMemoryMap(State.HL);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD A A" B:1 C:4 FLAGS: - - - -
-			case 0x7F:
-			{
-				State.A = State.A;
-
-				m_cycles = 4;
-				break;
-			}
+			
 
 			// "LDH [a8] A" B:2 C:12 FLAGS: - - - -
 			case 0xE0:
@@ -2721,6 +2204,21 @@ void Cpu::setCPUFlag(int flag, bool enable)
 		State.F |= flag;
 	else
 		State.F &= ~flag;
+}
+
+void Cpu::instruction_ld_reg_value(uint8_t& reg, uint8_t& value)
+{
+	reg = value;
+}
+
+void Cpu::instruction_ld_addr_reg(GameBoy& gb, uint16_t& address, uint8_t& reg)
+{
+	gb.WriteToMemoryMap(address, reg);
+}
+
+void Cpu::instruction_ld_reg_addr(GameBoy& gb, uint8_t& reg, uint16_t& address)
+{
+	reg = gb.ReadFromMemoryMap(address);
 }
 
 void Cpu::instruction_inc_reg(uint8_t& reg)

@@ -86,6 +86,11 @@ private:
 	void outputDisassembledInstruction(const char* instructionName, int pc, uint8_t *opcode, int totalOpBytes);
 	void unimplementedInstruction(Cpu::m_CpuState &state, uint8_t opcode);
 
+	// 8-bit Load Instructions
+	void instruction_ld_reg_value(uint8_t& reg, uint8_t& value);
+	void instruction_ld_addr_reg(GameBoy& gb, uint16_t& address, uint8_t& reg);
+	void instruction_ld_reg_addr(GameBoy& gb, uint8_t& reg, uint16_t& address);
+
 	// 8-bit Arithmetic/Logical Instructions
 	void instruction_inc_reg(uint8_t& reg);
 	void instruction_inc_hl(GameBoy& gb);
