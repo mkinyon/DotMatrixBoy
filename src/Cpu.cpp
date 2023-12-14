@@ -410,13 +410,13 @@ void Cpu::Clock(GameBoy& gb)
 			
 			// "LD reg [addr]" B:1 C:8 FLAGS: - - - -
 			case 0x1A: instruction_ld_reg_addr(gb, State.A, State.DE); m_cycles = 8; break;
-			case 0x46: instruction_ld_reg_addr(gb, State.B, State.HL); m_cycles = 4; break;
-			case 0x4E: instruction_ld_reg_addr(gb, State.C, State.HL); m_cycles = 4; break;
-			case 0x56: instruction_ld_reg_addr(gb, State.D, State.HL); m_cycles = 4; break;
-			case 0x5E: instruction_ld_reg_addr(gb, State.E, State.HL); m_cycles = 4; break;
-			case 0x66: instruction_ld_reg_addr(gb, State.H, State.HL); m_cycles = 4; break;
-			case 0x6E: instruction_ld_reg_addr(gb, State.L, State.HL); m_cycles = 4; break;
-			case 0x7E: instruction_ld_reg_addr(gb, State.A, State.HL); m_cycles = 4; break;
+			case 0x46: instruction_ld_reg_addr(gb, State.B, State.HL); m_cycles = 8; break;
+			case 0x4E: instruction_ld_reg_addr(gb, State.C, State.HL); m_cycles = 8; break;
+			case 0x56: instruction_ld_reg_addr(gb, State.D, State.HL); m_cycles = 8; break;
+			case 0x5E: instruction_ld_reg_addr(gb, State.E, State.HL); m_cycles = 8; break;
+			case 0x66: instruction_ld_reg_addr(gb, State.H, State.HL); m_cycles = 8; break;
+			case 0x6E: instruction_ld_reg_addr(gb, State.L, State.HL); m_cycles = 8; break;
+			case 0x7E: instruction_ld_reg_addr(gb, State.A, State.HL); m_cycles = 8; break;
 
 			// "LD reg n8" B:2 C:8 FLAGS: - - - -
 			case 0x06: instruction_ld_reg_value(State.B, opcode[1]); State.PC++; m_cycles = 8; break;
@@ -544,68 +544,14 @@ void Cpu::Clock(GameBoy& gb)
 			case 0x7D: instruction_ld_reg_value(State.A, State.L); m_cycles = 4; break;
 			case 0x7F: instruction_ld_reg_value(State.A, State.A); m_cycles = 4; break;
 
-			// "LD [HL] B" B:1 C:8 FLAGS: - - - -
-			case 0x70:
-			{
-				gb.WriteToMemoryMap(State.HL, State.L);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD [HL] C" B:1 C:8 FLAGS: - - - -
-			case 0x71:
-			{
-				gb.WriteToMemoryMap(State.HL, State.C);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD [HL] D" B:1 C:8 FLAGS: - - - -
-			case 0x72:
-			{
-				gb.WriteToMemoryMap(State.HL, State.D);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD [HL] E" B:1 C:8 FLAGS: - - - -
-			case 0x73:
-			{
-				State.HL = State.E;
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD [HL] H" B:1 C:8 FLAGS: - - - -
-			case 0x74:
-			{
-				gb.WriteToMemoryMap(State.HL, State.H);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD [HL] L" B:1 C:8 FLAGS: - - - -
-			case 0x75:
-			{
-				gb.WriteToMemoryMap(State.HL, State.L);
-
-				m_cycles = 8;
-				break;
-			}
-
-			// "LD [HL] A" B:1 C:8 FLAGS: - - - -
-			case 0x77:
-			{
-				gb.WriteToMemoryMap(State.HL, State.A);
-
-				m_cycles = 8;
-				break;
-			}
+			// "LD [HL] reg" B:1 C:8 FLAGS: - - - -
+			case 0x70: instruction_ld_addr_reg(gb, State.HL, State.B); m_cycles = 8; break;
+			case 0x71: instruction_ld_addr_reg(gb, State.HL, State.C); m_cycles = 8; break;
+			case 0x72: instruction_ld_addr_reg(gb, State.HL, State.D); m_cycles = 8; break;
+			case 0x73: instruction_ld_addr_reg(gb, State.HL, State.E); m_cycles = 8; break;
+			case 0x74: instruction_ld_addr_reg(gb, State.HL, State.H); m_cycles = 8; break;
+			case 0x75: instruction_ld_addr_reg(gb, State.HL, State.L); m_cycles = 8; break;
+			case 0x77: instruction_ld_addr_reg(gb, State.HL, State.A); m_cycles = 8; break;
 
 			
 
@@ -616,7 +562,7 @@ void Cpu::Clock(GameBoy& gb)
 				gb.WriteToMemoryMap(0xFF00 + offset, State.A);
 				State.PC++;
 
-				m_cycles = 8;
+				m_cycles = 12;
 				break;
 			}
 
@@ -661,7 +607,7 @@ void Cpu::Clock(GameBoy& gb)
 			// "LD A [a16]" B:3 C:16 FLAGS: - - - -
 			case 0xFA:
 			{
-				State.A = gb.ReadFromMemoryMap(0xFF00 + (opcode[2] << 8) | (opcode[1]));
+				State.A = gb.ReadFromMemoryMap((opcode[2] << 8) | (opcode[1]));
 				State.PC += 2;
 
 				m_cycles = 16;
@@ -686,7 +632,9 @@ void Cpu::Clock(GameBoy& gb)
 			// "LD [a16] SP" B:3 C:20 FLAGS: - - - -
 			case 0x08:
 			{
-				gb.WriteToMemoryMap((opcode[2] << 8) | (opcode[1]), State.SP);
+				uint16_t addr = (opcode[2] << 8) | (opcode[1]);
+				gb.WriteToMemoryMap(addr, State.SP & 0x00FF);
+				gb.WriteToMemoryMap(addr + 1, (State.SP & 0xFF00) >> 8);
 				State.PC += 2;
 
 				m_cycles = 20;
@@ -799,9 +747,16 @@ void Cpu::Clock(GameBoy& gb)
 			// "LD HL SP e8" B:2 C:12 FLAGS: 0 0 H C
 			case 0xF8:
 			{
-				int8_t offset = opcode[1];
-				State.HL = popSP(gb) + offset + 1;
+				int8_t signedValue = static_cast<int8_t>(opcode[1]);
+				int32_t fullResult = State.SP + signedValue;
+				uint16_t result = static_cast<uint16_t>(fullResult);
 
+				setCPUFlag(FLAG_ZERO, false);
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, ((State.SP ^ signedValue ^ (fullResult & 0xFFFF)) & 0x10) == 0x10);
+				setCPUFlag(FLAG_CARRY, ((State.SP ^ signedValue ^ (fullResult & 0xFFFF)) & 0x100) == 0x100);
+
+				State.HL = result;
 				State.PC++;
 
 				m_cycles = 12;
@@ -811,7 +766,7 @@ void Cpu::Clock(GameBoy& gb)
 			// "LD SP HL" B:1 C:8 FLAGS: - - - -
 			case 0xF9:
 			{
-				pushSP(gb, State.HL);
+				State.SP = State.HL;
 
 				m_cycles = 8;
 				break;
@@ -2393,11 +2348,10 @@ void Cpu::instruction_or_hl(GameBoy& gb)
 
 void Cpu::instruction_cp_reg(uint8_t& reg)
 {
-	uint8_t result = State.A - reg;
-
-	setCPUFlag(FLAG_ZERO, (result == 0));
+	setCPUFlag(FLAG_ZERO, (State.A == reg));
 	setCPUFlag(FLAG_SUBTRACT, true);
-	setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (reg & 0x0F));
+	setCPUFlag(FLAG_HALF_CARRY, (State.A & 0xF) - (reg & 0xF) < 0);
+	setCPUFlag(FLAG_CARRY, State.A < reg);
 }
 
 void Cpu::instruction_cp_hl(GameBoy& gb)
