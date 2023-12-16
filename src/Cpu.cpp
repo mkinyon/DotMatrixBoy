@@ -22,7 +22,7 @@ void Cpu::Clock(GameBoy& gb)
 	uint8_t* opcode = &gb.ReadFromMemoryMap(State.PC);
 	
 	// write disassembly to console
-	//Disassemble(opcode, State.PC);
+	Disassemble(opcode, State.PC);
 
 	// increment program counter
 	State.PC++;
@@ -36,32 +36,16 @@ void Cpu::Clock(GameBoy& gb)
 			*********************************************************************************************/
 
 			// "NOP" B:1 C:4 FLAGS: - - - -
-			case 0x00: break;
+			case 0x00: m_cycles = 4; break;
 
 			// "STOP n8" B:2 C:4 FLAGS: - - - -
-			case 0x10:
-			{
-				// TODO
-
-				State.PC++;
-
-				m_cycles = 4;
-				break;
-			}
+			case 0x10: State.PC++; m_cycles = 4; break;
 
 			// "HALT" B:1 C:4 FLAGS: - - - -
 			case 0x76: m_isHalted = true; m_cycles = 4;	break;
 
 			// "PREFIX" B:1 C:4 FLAGS: - - - -
-			case 0xCB:
-			{
-				uint16_t opcode16 = (opcode[0] << 8) | (opcode[1]);
-				process16bitInstruction(gb, opcode16, State);
-
-				State.PC++;
-				m_cycles = 4;
-				break;
-			}
+			case 0xCB: process16bitInstruction(gb, (opcode[0] << 8) | (opcode[1]), State); State.PC++; break;
 
 			// "DI" B:1 C:4 FLAGS: - - - -
 			case 0xF3: m_interruptMasterFlag = false; m_cycles = 4; break;
@@ -291,7 +275,18 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "RET NC" B:1 C:208 FLAGS: - - - -
-			case 0xD0: { unimplementedInstruction(State, *opcode); break; }
+			case 0xD0:
+			{
+				if (!getCPUFlag(FLAG_CARRY))
+				{
+					State.PC = popSP(gb);
+					m_cycles = 20;
+					break;
+				}
+
+				m_cycles = 8;
+				break;
+			}
 
 			// "JP NC a16" B:3 C:1612 FLAGS: - - - -
 			case 0xD2: { unimplementedInstruction(State, *opcode); break; }
@@ -316,6 +311,7 @@ void Cpu::Clock(GameBoy& gb)
 				{
 					State.PC = popSP(gb);
 					m_cycles = 20;
+					break;
 				}
 
 				m_cycles = 8;
@@ -619,15 +615,11 @@ void Cpu::Clock(GameBoy& gb)
 				16-bit Load Instructions
 			*********************************************************************************************/
 
-			// "LD BC n16" B:3 C:12 FLAGS: - - - -
-			case 0x01:
-			{
-				State.BC = (opcode[2] << 8) | (opcode[1]);
-				State.PC += 2;
-
-				m_cycles = 12;
-				break;
-			}
+			// "LD reg value" B:3 C:12 FLAGS: - - - -
+			case 0x01: instruction_ld16_reg_value(State.BC, (opcode[2] << 8) | (opcode[1])); State.PC += 2; m_cycles = 12; break;
+			case 0x11: instruction_ld16_reg_value(State.DE, (opcode[2] << 8) | (opcode[1])); State.PC += 2; m_cycles = 12; break;
+			case 0x21: instruction_ld16_reg_value(State.HL, (opcode[2] << 8) | (opcode[1])); State.PC += 2; m_cycles = 12; break;
+			case 0x31: instruction_ld16_reg_value(State.SP, (opcode[2] << 8) | (opcode[1])); State.PC += 2; m_cycles = 12; break;
 
 			// "LD [a16] SP" B:3 C:20 FLAGS: - - - -
 			case 0x08:
@@ -638,37 +630,6 @@ void Cpu::Clock(GameBoy& gb)
 				State.PC += 2;
 
 				m_cycles = 20;
-				break;
-			}
-
-			// "LD DE n16" B:3 C:12 FLAGS: - - - -
-			case 0x11:
-			{
-				State.DE = (opcode[2] << 8) | (opcode[1]);
-				State.PC += 2;
-
-				m_cycles = 12;
-				break;
-			}
-
-			// "LD HL n16" B:3 C:12 FLAGS: - - - -
-			case 0x21:
-			{
-				State.HL = (opcode[2] << 8) | (opcode[1]);
-				State.PC += 2;
-
-				m_cycles = 12;
-				break;
-			}
-
-			// "LD SP n16" B:3 C:12 FLAGS: - - - -
-			case 0x31:
-			{
-				// set the stack pointer to the 2 byte address
-				State.SP = (gb, (opcode[2] << 8) | (opcode[1]));
-				State.PC += 2;
-
-				m_cycles = 12;
 				break;
 			}
 
@@ -848,7 +809,7 @@ void Cpu::Clock(GameBoy& gb)
 			case 0x9C: instruction_sbc_reg(State.H); m_cycles = 4; break;
 			case 0x9D: instruction_sbc_reg(State.L); m_cycles = 4; break;
 			case 0x9E: instruction_sbc_hl(gb); m_cycles = 8; break;
-			case 0x9F: instruction_sbc_reg(State.A, true); m_cycles = 4; break;
+			case 0x9F: instruction_sbc_reg(State.A); m_cycles = 4; break;
 			case 0xDE: instruction_sbc_reg(opcode[1]); State.PC++; m_cycles = 8; break;
 
 			// "AND A reg" B:1 C:4 FLAGS: Z 0 1 0
@@ -988,21 +949,58 @@ void Cpu::Clock(GameBoy& gb)
 			}
 
 			// "RRA" B:1 C:4 FLAGS: 0 0 0 C
-			case 0x1F: { unimplementedInstruction(State, *opcode); break; }
+			case 0x1F:
+			{
+				uint8_t carry = getCPUFlag(FLAG_CARRY) ? 0x80 : 0;
+				uint8_t result = carry | (State.A >> 1);
+
+				setCPUFlag(FLAG_ZERO, false);
+				setCPUFlag(FLAG_SUBTRACT, false);
+				setCPUFlag(FLAG_HALF_CARRY, false);
+				setCPUFlag(FLAG_CARRY, (State.A & 0x1) != 0);
+
+				State.A = result;
+
+				m_cycles = 4;
+				break;
+			}
 
 			// "DAA" B:1 C:4 FLAGS: Z - 0 C
 			case 0x27:
 			{
-				if ((State.A & 0x0F) > 9 || getCPUFlag(FLAG_HALF_CARRY)) {
-					State.A += 6;
+				int8_t result = State.A;
+				if (getCPUFlag(FLAG_SUBTRACT))
+				{
+					if (getCPUFlag(FLAG_HALF_CARRY))
+					{
+						result -= 6;
+					}
+
+					if (getCPUFlag(FLAG_CARRY))
+					{
+						result -= 0x60;
+					}
 				}
-				if ((State.A & 0xF0) > 0x90 || getCPUFlag(FLAG_CARRY)) {
-					State.A += 0x60;
+				else
+				{
+					if (getCPUFlag(FLAG_HALF_CARRY) || (State.A & 0x0F) > 9)
+					{
+						result += 6;
+					}
+
+					if (getCPUFlag(FLAG_CARRY) || result > 0x9F)
+					{
+						result += 0x60;
+					}
 				}
 
-				setCPUFlag(FLAG_ZERO, (State.A == 0));
+				State.A = static_cast<uint8_t>(result);
+				
+				if (result > 0xFF) 
+					setCPUFlag(FLAG_CARRY, true);
+				
+				setCPUFlag(FLAG_ZERO, State.A == 0);
 				setCPUFlag(FLAG_HALF_CARRY, false);
-				setCPUFlag(FLAG_CARRY, (State.A & 0x100) != 0);
 
 				m_cycles = 4;
 				break;
@@ -2143,7 +2141,7 @@ void Cpu::pushSP(GameBoy& gb, uint16_t value)
 
 uint16_t Cpu::popSP(GameBoy& gb)
 {
-	uint8_t firstByte = gb.ReadFromMemoryMap(State.SP++);
+ 	uint8_t firstByte = gb.ReadFromMemoryMap(State.SP++);
 	uint8_t secondByte = gb.ReadFromMemoryMap(State.SP++);
 	return (secondByte << 8) | (firstByte);
 }
@@ -2176,13 +2174,18 @@ void Cpu::instruction_ld_reg_addr(GameBoy& gb, uint8_t& reg, uint16_t& address)
 	reg = gb.ReadFromMemoryMap(address);
 }
 
+void Cpu::instruction_ld16_reg_value(uint16_t& reg, uint16_t value)
+{
+	reg = value;
+}
+
 void Cpu::instruction_inc_reg(uint8_t& reg)
 {
 	reg++;
 
 	setCPUFlag(FLAG_ZERO, (reg == 0));
 	setCPUFlag(FLAG_SUBTRACT, false);
-	setCPUFlag(FLAG_HALF_CARRY, (reg & 0x0F) == 0x0F);
+	setCPUFlag(FLAG_HALF_CARRY, (reg & 0x0F) == 0x00);
 }
 
 void Cpu::instruction_inc_hl(GameBoy& gb)
@@ -2210,13 +2213,14 @@ void Cpu::instruction_dec_hl(GameBoy& gb)
 
 void Cpu::instruction_add_reg(uint8_t& reg)
 {
-	uint8_t result = State.A + reg;
+	uint16_t fullResult = State.A + reg;
+	uint8_t result = static_cast<uint8_t>(fullResult);
 
 	// Update flags
-	setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+	setCPUFlag(FLAG_ZERO, result == 0);
 	setCPUFlag(FLAG_SUBTRACT, false);
 	setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (reg & 0x0F) > 0x0F));
-	setCPUFlag(FLAG_CARRY, (result > 0xFF));
+	setCPUFlag(FLAG_CARRY, (fullResult > 0xFFFF));
 
 	State.A = result;
 }
@@ -2231,13 +2235,14 @@ void Cpu::instruction_add_hl(GameBoy& gb)
 void Cpu::instruction_adc_reg(uint8_t& reg)
 {
 	bool carry = getCPUFlag(FLAG_CARRY);
-	uint8_t result = State.A + reg + (carry ? 1 : 0);
+	uint16_t fullResult = State.A + reg + (carry ? 1 : 0);
+	uint8_t result = static_cast<uint8_t>(fullResult);
 
 	// Update flags
-	setCPUFlag(FLAG_ZERO, ((result & 0xFF) == 0));
+	setCPUFlag(FLAG_ZERO, result == 0);
 	setCPUFlag(FLAG_SUBTRACT, false);
-	setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) + (reg & 0xF) + (carry ? 1 : 0)) & 0x10) != 0);
-	setCPUFlag(FLAG_CARRY, (result > 0xFF));
+	setCPUFlag(FLAG_HALF_CARRY, (State.A & 0xF) + (reg & 0xF) + (carry ? 1 : 0) > 0xF);
+	setCPUFlag(FLAG_CARRY, (fullResult > 0xFF));
 
 	State.A = result;
 }
@@ -2254,10 +2259,10 @@ void Cpu::instruction_sub_reg(uint8_t& reg)
 	uint8_t result = State.A - reg;
 
 	// Update flags
-	setCPUFlag(FLAG_ZERO, (result == 0));
+	setCPUFlag(FLAG_ZERO, result == 0);
 	setCPUFlag(FLAG_SUBTRACT, true);
-	setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) < (reg & 0x0F));
-	setCPUFlag(FLAG_CARRY, (result > 0xFF));
+	setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) - (reg & 0x0F) < 0);
+	setCPUFlag(FLAG_CARRY, State.A < reg);
 
 	State.A = result;
 }
@@ -2269,17 +2274,16 @@ void Cpu::instruction_sub_hl(GameBoy& gb)
 	gb.WriteToMemoryMap(State.HL, value);
 }
 
-void Cpu::instruction_sbc_reg(uint8_t& reg, bool setCarry)
+void Cpu::instruction_sbc_reg(uint8_t& reg)
 {
 	bool carry = getCPUFlag(FLAG_CARRY);
-	uint8_t result = State.A - reg - carry;
+	int32_t fullResult = State.A - reg - (carry ? 1 : 0);
+    uint8_t result = static_cast<uint8_t>(fullResult);
 
-	setCPUFlag(FLAG_ZERO, (result == 0xFF));
+	setCPUFlag(FLAG_ZERO, result == 0);
 	setCPUFlag(FLAG_SUBTRACT, true);
-	setCPUFlag(FLAG_HALF_CARRY, (((State.A & 0xF) - (reg & 0xF) - (carry ? 1 : 0)) & 0x10) != 0);
-
-	if (setCarry)
-		setCPUFlag(FLAG_CARRY, (result > 0xFF));
+	setCPUFlag(FLAG_HALF_CARRY, (State.A & 0xF) - (reg & 0xF) - carry < 0);
+	setCPUFlag(FLAG_CARRY, fullResult < 0);
 
 	State.A = result;
 }
@@ -2295,7 +2299,7 @@ void Cpu::instruction_and_reg(uint8_t& reg)
 {
 	State.A = State.A & reg;
 
-	setCPUFlag(FLAG_ZERO, (State.A == 0));
+	setCPUFlag(FLAG_ZERO, State.A == 0);
 	setCPUFlag(FLAG_SUBTRACT, false);
 	setCPUFlag(FLAG_HALF_CARRY, true);
 	setCPUFlag(FLAG_CARRY, false);
@@ -2308,15 +2312,11 @@ void Cpu::instruction_and_hl(GameBoy& gb)
 	gb.WriteToMemoryMap(State.HL, value);
 }
 
-void Cpu::instruction_xor_reg(uint8_t& reg, bool setZero)
+void Cpu::instruction_xor_reg(uint8_t& reg)
 {
 	State.A = State.A ^ reg;
 
-	if (setZero)
-		setCPUFlag(FLAG_ZERO, true);
-	else
-		setCPUFlag(FLAG_ZERO, (State.A == 0));
-
+	setCPUFlag(FLAG_ZERO, State.A == 0);
 	setCPUFlag(FLAG_SUBTRACT, false);
 	setCPUFlag(FLAG_HALF_CARRY, false);
 	setCPUFlag(FLAG_CARRY, false);
@@ -2333,7 +2333,7 @@ void Cpu::instruction_or_reg(uint8_t& reg)
 {
 	State.A = State.A | reg;
 
-	setCPUFlag(FLAG_ZERO, (State.A == 0));
+	setCPUFlag(FLAG_ZERO, State.A == 0);
 	setCPUFlag(FLAG_SUBTRACT, false);
 	setCPUFlag(FLAG_HALF_CARRY, false);
 	setCPUFlag(FLAG_CARRY, false);
@@ -2348,7 +2348,7 @@ void Cpu::instruction_or_hl(GameBoy& gb)
 
 void Cpu::instruction_cp_reg(uint8_t& reg)
 {
-	setCPUFlag(FLAG_ZERO, (State.A == reg));
+	setCPUFlag(FLAG_ZERO, State.A == reg);
 	setCPUFlag(FLAG_SUBTRACT, true);
 	setCPUFlag(FLAG_HALF_CARRY, (State.A & 0xF) - (reg & 0xF) < 0);
 	setCPUFlag(FLAG_CARRY, State.A < reg);
@@ -2373,11 +2373,12 @@ void Cpu::instruction_dec_reg16(uint16_t& reg)
 
 void Cpu::instruction_add_reg16(uint16_t& reg)
 {
-	uint16_t result = State.HL + reg;
+	uint32_t fullResult = State.HL + reg;
+	uint16_t result = static_cast<uint16_t>(fullResult);
 
-	
-	setCPUFlag(FLAG_HALF_CARRY, ((State.HL & 0xFFF) + (reg & 0xFFF)) & 0x1000);
-	setCPUFlag(FLAG_CARRY, result > 0xFFFF);
+	setCPUFlag(FLAG_SUBTRACT, false);
+	setCPUFlag(FLAG_HALF_CARRY, (State.HL ^ reg ^ (fullResult & 0xFFFF)) & 0x1000);
+	setCPUFlag(FLAG_CARRY, fullResult > 0xFFFF);
 
 	State.HL = result;
 }
@@ -2389,8 +2390,9 @@ void Cpu::instruction_add_sp_e8(GameBoy& gb, uint8_t& e8)
 
 	setCPUFlag(FLAG_ZERO, false);
 	setCPUFlag(FLAG_SUBTRACT, false);
-	setCPUFlag(FLAG_HALF_CARRY, ((State.SP & 0x0F) + (offset & 0x0F)) & 0x10);
-	setCPUFlag(FLAG_CARRY, ((State.SP & 0xFF) + (offset)) & 0x100);
+	// TODO!
+	//setCPUFlag(FLAG_HALF_CARRY, ((cpu->sp.read() ^ offset ^ (result & 0xFFFF)) & 0x10) == 0x10);
+	//setCPUFlag(FLAG_CARRY, ((cpu->sp.read() ^ offset ^ (result & 0xFFFF)) & 0x100) == 0x100);
 
 	pushSP(gb, result);
 }

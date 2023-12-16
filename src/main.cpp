@@ -20,8 +20,8 @@ public:
 	bool isPaused = true;
 	bool enableBootRom = false;
 	//const char* romName = "../hello-world.gb";
-	//const char* romName = "../cpu_instrs.gb";
-	const char* romName = "../tetris.gb";
+	const char* romName = "../cpu_instrs.gb";
+	//const char* romName = "../tetris.gb";
 
 	std::string FormatInt(uint32_t n, uint8_t d)
 	{
@@ -217,7 +217,7 @@ public:
 
 		DrawCpuStats(10, 10);
 		DrawPPUStats(10, 110);
-		DrawRam(200, 10, 0x8000, 20, 16);
+		DrawRam(200, 10, 0xCEEE, 20, 16);
 		DrawCharacterRam(220, 240);		
 		DrawLCDScreen(360, 240);
 

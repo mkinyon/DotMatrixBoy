@@ -91,6 +91,10 @@ private:
 	void instruction_ld_addr_reg(GameBoy& gb, uint16_t& address, uint8_t& reg);
 	void instruction_ld_reg_addr(GameBoy& gb, uint8_t& reg, uint16_t& address);
 
+	// 16-bit Load Instructions
+	void instruction_ld16_reg_value(uint16_t& reg, uint16_t value);
+
+
 	// 8-bit Arithmetic/Logical Instructions
 	void instruction_inc_reg(uint8_t& reg);
 	void instruction_inc_hl(GameBoy& gb);
@@ -107,13 +111,13 @@ private:
 	void instruction_sub_reg(uint8_t& reg);
 	void instruction_sub_hl(GameBoy& gb);
 
-	void instruction_sbc_reg(uint8_t& reg, bool setCarry = false);
+	void instruction_sbc_reg(uint8_t& reg);
 	void instruction_sbc_hl(GameBoy& gb);
 
 	void instruction_and_reg(uint8_t& reg);
 	void instruction_and_hl(GameBoy& gb);
 
-	void instruction_xor_reg(uint8_t& reg, bool setZero = false);
+	void instruction_xor_reg(uint8_t& reg);
 	void instruction_xor_hl(GameBoy& gb);
 
 	void instruction_or_reg(uint8_t& reg);
