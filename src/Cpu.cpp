@@ -14,6 +14,8 @@ void Cpu::Clock(GameBoy& gb)
 	// the cycles and return;
 	if (m_cycles > 0)
 	{
+		m_InstructionCompleted = false;
+
 		m_cycles--;
 		return;
 	}
@@ -1048,6 +1050,7 @@ void Cpu::Clock(GameBoy& gb)
 	}
 
 	processInterrupts(gb);
+	m_InstructionCompleted = true;
 }
 
 void Cpu::processInterrupts(GameBoy& gb)
@@ -1722,8 +1725,10 @@ std::map<uint16_t, std::string> Cpu::DisassebleAll(GameBoy& gb)
 	while (pc < 0x7FFF)
 	{
 		uint8_t* opcode = &gb.ReadFromMemoryMap(pc);
-		pc += Disassemble(opcode, pc);
+		int nextPC = Disassemble(opcode, pc);
 		mapLines[pc] = GetCurrentInstruction();
+		pc += nextPC;
+
 	}
 
 	return mapLines;
@@ -2008,10 +2013,10 @@ void Cpu::outputDisassembledInstruction(const char* instructionName, int pc, uin
 	output += FormatHex(pc, 4) + " ";
 
 	// print flags
-	output += "Z" + FormatHex(getCPUFlag(FLAG_ZERO), 1) + " ";
-	output += "N" + FormatHex(getCPUFlag(FLAG_SUBTRACT), 1) + " ";
-	output += "H" + FormatHex(getCPUFlag(FLAG_HALF_CARRY), 1) + " ";
-	output += "C" + FormatHex(getCPUFlag(FLAG_CARRY), 1) + " ";
+	//output += "Z" + FormatHex(getCPUFlag(FLAG_ZERO), 1) + " ";
+	//output += "N" + FormatHex(getCPUFlag(FLAG_SUBTRACT), 1) + " ";
+	//output += "H" + FormatHex(getCPUFlag(FLAG_HALF_CARRY), 1) + " ";
+	//output += "C" + FormatHex(getCPUFlag(FLAG_CARRY), 1) + " ";
 
 	// print address values
 	if (totalOpBytes == 3)

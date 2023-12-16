@@ -173,7 +173,7 @@ private:
 		int nLineY = (nLines >> 1) * 10 + y;
 		if (it_a != disasmMap.end())
 		{
-			DrawString(x, nLineY, (*it_a).second, olc::CYAN);
+			DrawString(x, nLineY, (*it_a).second, olc::RED);
 			while (nLineY < (nLines * 10) + y)
 			{
 				nLineY += 10;
@@ -215,12 +215,21 @@ private:
 	{
 		Clear(olc::BLACK);
 
-		if (GetKey(olc::Key::SPACE).bPressed)
+		if (GetKey(olc::Key::S).bPressed)
 		{
-			for (int i = 0; i < 10000; i++)
+			do { gb.Clock(); } while (!gb.cpu.m_InstructionCompleted);
+		}
+
+		if (GetKey(olc::Key::SPACE).bHeld && GetKey(olc::Key::SHIFT).bHeld)
+		{
+			for (int i = 0; i < 1000; i++)
 			{
-				gb.Clock();
+				do { gb.Clock(); } while (!gb.cpu.m_InstructionCompleted);
 			}
+		}
+		else if (GetKey(olc::Key::SPACE).bHeld)
+		{
+			do { gb.Clock(); } while (!gb.cpu.m_InstructionCompleted);
 		}
 
 		if (GetKey(olc::Key::P).bPressed)
@@ -242,9 +251,9 @@ private:
 		DrawCpuStats(10, 10);
 		DrawPPUStats(10, 110);
 		DrawRam(200, 10, 0xCEEE, 20, 16);
-		DrawCharacterRam(350, 240);		
-		DrawLCDScreen(490, 240);
-		DrawDisassembly(10, 240, 10);
+		DrawCharacterRam(370, 240);		
+		DrawLCDScreen(500, 240);
+		DrawDisassembly(10, 240, 20);
 
 		return true;
 	}

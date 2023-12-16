@@ -66,6 +66,7 @@ public:
 		uint16_t PC = 0x100; // the gameboy program counter starts at $100
 	} State;
 	int m_TotalCycles = 0;
+	bool m_InstructionCompleted = false;
 
 private:
 	int m_cycles = 0; // how many cycles remain before the cpu can fetch another instruction
