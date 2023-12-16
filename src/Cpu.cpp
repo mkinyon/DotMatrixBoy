@@ -175,7 +175,7 @@ void Cpu::Clock(GameBoy& gb)
 			{
 				if (!getCPUFlag(FLAG_ZERO))
 				{
-					pushSP(gb, State.PC);
+					pushSP(gb, State.PC += 2);
 					m_cycles = 24;
 					break;
 				}
@@ -242,7 +242,7 @@ void Cpu::Clock(GameBoy& gb)
 			{
 				if (getCPUFlag(FLAG_ZERO))
 				{
-					pushSP(gb, State.PC);
+					pushSP(gb, State.PC += 2);
 					State.PC = (opcode[2] << 8) | (opcode[1]);
 					m_cycles = 24;
 					break;
@@ -257,7 +257,7 @@ void Cpu::Clock(GameBoy& gb)
 			// "CALL a16" B:3 C:24 FLAGS: - - - -
 			case 0xCD:
 			{
-				pushSP(gb, State.PC);
+				pushSP(gb, State.PC += 2);
 				State.PC = (opcode[2] << 8) | (opcode[1]);
 
 				m_cycles = 24;
@@ -1714,6 +1714,21 @@ int Cpu::Disassemble(uint8_t* opcode, int pc)
 	return opBytes;
 }
 
+std::map<uint16_t, std::string> Cpu::DisassebleAll(GameBoy& gb)
+{
+	std::map<uint16_t, std::string> mapLines;
+	uint16_t pc = 0;
+	
+	while (pc < 0x7FFF)
+	{
+		uint8_t* opcode = &gb.ReadFromMemoryMap(pc);
+		pc += Disassemble(opcode, pc);
+		mapLines[pc] = GetCurrentInstruction();
+	}
+
+	return mapLines;
+}
+
 void Cpu::disasseble16bit(uint8_t* opcode, int pc)
 {
 	// Note: All 16 bit opcodes are 2 bytes.
@@ -1987,68 +2002,63 @@ void Cpu::outputDisassembledInstruction(const char* instructionName, int pc, uin
 		0001 c3 d4 18 JMP    $18d4
 	*/
 
+	std::string output;
+
 	// print program counter address
-	printf("%04x", pc);
-	printf(" ");
+	output += FormatHex(pc, 4) + " ";
 
 	// print flags
-	printf("Z%01x", getCPUFlag(FLAG_ZERO));
-	printf(" ");
-	printf("N%01x", getCPUFlag(FLAG_SUBTRACT)); ("%04x", pc);
-	printf(" ");
-	printf("H%01x", getCPUFlag(FLAG_HALF_CARRY)); ("%04x", pc);
-	printf(" ");
-	printf("C%01x", getCPUFlag(FLAG_CARRY)); ("%04x", pc);
-	printf(" ");
+	output += "Z" + FormatHex(getCPUFlag(FLAG_ZERO), 1) + " ";
+	output += "N" + FormatHex(getCPUFlag(FLAG_SUBTRACT), 1) + " ";
+	output += "H" + FormatHex(getCPUFlag(FLAG_HALF_CARRY), 1) + " ";
+	output += "C" + FormatHex(getCPUFlag(FLAG_CARRY), 1) + " ";
 
 	// print address values
 	if (totalOpBytes == 3)
 	{
-		printf("%02x ", opcode[0]);
-		printf("%02x ", opcode[1]);
-		printf("%02x ", opcode[2]);
+		output += FormatHex(opcode[0], 2) + " ";
+		output += FormatHex(opcode[1], 2) + " ";
+		output += FormatHex(opcode[2], 2) + " ";
 	}
 	else if (totalOpBytes == 2)
 	{
-		printf("%02x ", opcode[0]);
-		printf("%02x ", opcode[1]);
-		printf("   ");
+		output += FormatHex(opcode[0], 2) + " ";
+		output += FormatHex(opcode[1], 2) + " ";
+		output += "   ";
 	}
 	else
 	{
-		printf("%02x ", opcode[0]);
-		printf("   ");
-		printf("   ");
+		output += FormatHex(opcode[0], 2) + " ";
+		output += "   ";
+		output += "   ";
 	}
 
 	// print instruction name
-	printf(" ");
-	printf(instructionName);
-	printf(" ");
+	std::string i(instructionName);
+	output += " " + i + " ";
 
 	// print address
 	if (totalOpBytes == 3)
 	{
-		printf("$");
-		printf("%02x", opcode[2]);
-		printf("%02x", opcode[1]);
+		output += "$";
+		output += FormatHex(opcode[2], 2);
+		output += FormatHex(opcode[1], 2);
 	}
 	else if (totalOpBytes == 2)
 	{
-		printf("$0x");
-		printf("%02x", opcode[1]);
+		output += "$0x";
+		output += FormatHex(opcode[1],2);
 	}
 
 	// new line
-	printf("\n");
+	output += "\n";
 
-	//printf("C%02x ", getFlag(FLAG_CARRY));
-	//printf("H%02x ", getFlag(FLAG_HALF_CARRY));
-	//printf("N%02x ", getFlag(FLAG_SUBTRACT));
-	//printf("Z%02x ", getFlag(FLAG_ZERO));
+	currentInstructionName = output;
+}
 
-	//printf("\n");
-	//printf("\n");
+std::string Cpu::GetCurrentInstruction()
+{
+	return currentInstructionName;
 }
 
 void Cpu::Reset(GameBoy& gb, bool enableBootRom)

@@ -3,8 +3,8 @@
 #include "Cpu.h"
 #include "Cartridge.h"
 #include "Defines.h"
+#include "Utils.h"
 
-#include <fstream>
 #include <vector>
 
 #define OLC_PGE_APPLICATION
@@ -15,29 +15,19 @@ class DotMatrixBoy : public olc::PixelGameEngine
 public:
 	DotMatrixBoy() { sAppName = "DotMatrixBoy"; }
 
+private:
 	GameBoy gb;
 	std::shared_ptr<Cartridge> cart;
 	bool isPaused = true;
 	bool enableBootRom = false;
 	//const char* romName = "../hello-world.gb";
-	const char* romName = "../cpu_instrs.gb";
+	const char* romName = "../02-interrupts.gb";
 	//const char* romName = "../tetris.gb";
 
-	std::string FormatInt(uint32_t n, uint8_t d)
-	{
-		std::stringstream s;
-		s << n;
-		return s.str();
-	}
+	std::map<uint16_t, std::string> disasmMap;
 
-	std::string FormatHex(uint32_t n, uint8_t d)
-	{
-		std::string s(d, '0');
-		for (int i = d - 1; i >= 0; i--, n >>= 4)
-			s[i] = "0123456789ABCDEF"[n & 0xF];
-		return s;
-	};
 
+private:
 	void DrawCpuStats(int x, int y)
 	{
 		DrawString(x, y, "CPU STATUS:", olc::WHITE);
@@ -177,12 +167,46 @@ public:
 		DrawString(x, y + 110, "Total Frames: " + FormatInt(gb.ppu.m_TotalFrames, 1));
 	}
 
+	void DrawDisassembly(int x, int y, int nLines)
+	{
+		auto it_a = disasmMap.find(gb.cpu.State.PC);
+		int nLineY = (nLines >> 1) * 10 + y;
+		if (it_a != disasmMap.end())
+		{
+			DrawString(x, nLineY, (*it_a).second, olc::CYAN);
+			while (nLineY < (nLines * 10) + y)
+			{
+				nLineY += 10;
+				if (++it_a != disasmMap.end())
+				{
+					DrawString(x, nLineY, (*it_a).second);
+				}
+			}
+		}
+
+		it_a = disasmMap.find(gb.cpu.State.PC);
+		nLineY = (nLines >> 1) * 10 + y;
+		if (it_a != disasmMap.end())
+		{
+			while (nLineY > y)
+			{
+				nLineY -= 10;
+				if (--it_a != disasmMap.end())
+				{
+					DrawString(x, nLineY, (*it_a).second);
+				}
+			}
+		}
+	}
+
 	bool OnUserCreate()
 	{
 		cart = std::make_shared<Cartridge>(romName, enableBootRom);
 
 		gb.InsertCartridge(*cart);
 		gb.Run(enableBootRom);
+
+		disasmMap = gb.cpu.DisassebleAll(gb);
 
 		return true;
 	}
@@ -218,8 +242,9 @@ public:
 		DrawCpuStats(10, 10);
 		DrawPPUStats(10, 110);
 		DrawRam(200, 10, 0xCEEE, 20, 16);
-		DrawCharacterRam(220, 240);		
-		DrawLCDScreen(360, 240);
+		DrawCharacterRam(350, 240);		
+		DrawLCDScreen(490, 240);
+		DrawDisassembly(10, 240, 10);
 
 		return true;
 	}

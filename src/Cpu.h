@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <iostream>
 #include <vector>
+#include <map>
 
 class GameBoy;
 
@@ -68,6 +69,7 @@ public:
 
 private:
 	int m_cycles = 0; // how many cycles remain before the cpu can fetch another instruction
+	std::string currentInstructionName;
 	bool m_interruptMasterFlag = false;
 	bool m_isHalted = false; 
 	enum Cpu_Flags;
@@ -76,6 +78,8 @@ public:
 	void Reset(GameBoy& gb, bool enableBootRom);
 	void Clock(GameBoy& gb);
 	int Disassemble(uint8_t *opcode, int pc);
+	std::map<uint16_t, std::string> DisassebleAll(GameBoy& gb);
+	std::string GetCurrentInstruction();
 
 private:
 	void process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState& state);

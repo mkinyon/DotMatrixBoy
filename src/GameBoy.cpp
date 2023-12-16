@@ -7,13 +7,6 @@ GameBoy::~GameBoy() {}
 void GameBoy::Run(bool enableBootRom)
 {
 	cpu.Reset(*this, enableBootRom);
-	
-	//// disassemble all instructions (for testing)
-	// int pc = 0x100; // game boy execution start point
-	//while (pc < cart.romData->size())
-	//{
-	//	pc += cpu.Disassemble(&ReadFromMemoryMap(pc), pc);
-	//}
 }
 
 void GameBoy::Clock()
