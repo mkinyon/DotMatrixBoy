@@ -39,6 +39,6 @@ private:
 										// $FEA0-$FEFF   Unusable memory region
 	uint8_t hardwareIO[127] = {};		// $FF00-$FF7F   Hardware IO
 	uint8_t zeroPage[127] = {};			// $FF80-$FFFE   Zero Page
-	uint8_t interruptEnable = 0;			// $FFFF         Interrupt Enable Register
+	uint8_t interruptEnable = 0;		// $FFFF         Interrupt Enable Register
 };
 

@@ -18,7 +18,10 @@ public:
 	GameBoy gb;
 	std::shared_ptr<Cartridge> cart;
 	bool isPaused = true;
-	bool enableBootRom = true;
+	bool enableBootRom = false;
+	//const char* romName = "../hello-world.gb";
+	//const char* romName = "../cpu_instrs.gb";
+	const char* romName = "../tetris.gb";
 
 	std::string FormatInt(uint32_t n, uint8_t d)
 	{
@@ -176,7 +179,7 @@ public:
 
 	bool OnUserCreate()
 	{
-		cart = std::make_shared<Cartridge>("../hello-world.gb", enableBootRom);
+		cart = std::make_shared<Cartridge>(romName, enableBootRom);
 
 		gb.InsertCartridge(*cart);
 		gb.Run(enableBootRom);
@@ -190,7 +193,7 @@ public:
 
 		if (GetKey(olc::Key::SPACE).bPressed)
 		{
-			for (int i = 0; i < 4; i++)
+			for (int i = 0; i < 10000; i++)
 			{
 				gb.Clock();
 			}
@@ -222,9 +225,10 @@ public:
 	}
 };
 
+DotMatrixBoy emu;
+
 int main()
 {
-	DotMatrixBoy emu;
 	emu.Construct(680, 480, 2, 2);
 	emu.Start();
 	return 0;

@@ -71,7 +71,7 @@ uint8_t& GameBoy::ReadFromMemoryMap(uint16_t address)
 	// $E000-$FDFF   Echo RAM (this is just a copy of regular ram so we point there)
 	else if (address >= 0xE000 && address <= 0xFDFF)
 	{
-		uint16_t offset = address - 0xC000;
+		uint16_t offset = address - 0xE000;
 		return ram[offset];
 	}
 	// $FE00-$FE9F   OAM - Object Attribute Memory

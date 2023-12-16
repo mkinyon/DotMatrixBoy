@@ -176,6 +176,8 @@ void Ppu::writeToBuffer(int x, int y, uint8_t bgPalette, int colorIndex)
 {
 	uint8_t color = bgPalette >> (colorIndex * 2) & 0x03;
 
+	_ASSERT(x >= 160, "bad ppu!");
+
 	m_backBuffer[y * LCD_WIDTH + x] = color;
 }
 
