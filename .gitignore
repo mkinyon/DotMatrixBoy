@@ -397,8 +397,60 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
-# misc 
+#######################################################################
+# Premake specific
+#######################################################################
+
+.DS_Store
+
+*.bak
+*.orig
+*~
+
+build
+bin
+obj
+release
+ipch
+src/scripts.c
+**.lnt
+**.vlstatus
+
+Makefile
+*.make
+*.xcodeproj
+*.xcworkspace
+*.swp
+*.sdf
+*.sln
+*.suo
+*.ncb
+*.vcproj*
+*.vcxproj*
+*.VC.opendb
+*.VC.db
+*.opensdf
+*.workspace
+*.project
+*.tags
+*.sublime-*
+.cproject
+.settings
+.buildpath
+*.vs
+
+*.bbprojectsettings
+Scratchpad.txt
+Unix Worksheet.worksheet
+project.bbprojectdata
+Premake4.tmproj
+
+#######################################################################
+# DotMatrixBoy specific
+#######################################################################
+
+Roms/
+Tools/
 *.gb
-tools/
 *.sav
 dmg_boot.bin
