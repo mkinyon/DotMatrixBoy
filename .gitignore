@@ -449,6 +449,7 @@ Premake4.tmproj
 # DotMatrixBoy specific
 #######################################################################
 
+Binaries/
 Roms/
 Tools/
 *.gb

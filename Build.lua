@@ -1,7 +1,7 @@
 -- premake5.lua
 workspace "DotMatrixBoy"
    architecture "x64"
-   configurations { "Debug", "Release" }
+   configurations { "Debug", "Release", "Dist" }
    startproject "App"
 
    -- Workspace-wide build options for MSVC
