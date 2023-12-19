@@ -12,12 +12,24 @@ project "App"
       "Source",
 
 	  -- Include Core
-	  "../Core/Source"
+	  "../Core/Source",
+
+      "../ThirdParty/imgui",
+      "../ThirdParty/imgui/backends",
+      "../ThirdParty/OneLoneCoder",
+      "../ThirdParty/SDL2/include"
    }
 
    links
    {
-      "Core"
+      "Core",
+      "SDL2",
+      "SDL2main"
+   }
+
+   libdirs 
+   { 
+      "../ThirdParty/SDL2/lib/x64"
    }
 
    targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")

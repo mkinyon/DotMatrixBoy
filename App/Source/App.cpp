@@ -7,8 +7,14 @@
 
 #include <vector>
 
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
+#define SDL_MAIN_HANDLED
+#include "SDL.h"
+
 #define OLC_PGE_APPLICATION
-#include "..\..\ThirdParty\OneLoneCoder\olcPixelGameEngine.h"
+#include "olcPixelGameEngine.h"
 
 class DotMatrixBoy : public olc::PixelGameEngine
 {
