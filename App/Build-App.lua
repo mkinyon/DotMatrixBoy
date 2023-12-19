@@ -17,20 +17,28 @@ project "App"
       "../ThirdParty/imgui",
       "../ThirdParty/imgui/backends",
       "../ThirdParty/OneLoneCoder",
-      "../ThirdParty/SDL2/include"
+      "../ThirdParty/glfw/include",
+      "%{IncludeDir.VulkanSDK}"
    }
 
    links
    {
       "Core",
-      "SDL2",
-      "SDL2main"
+      "GLFW",
+      "%{Library.Vulkan}"
    }
 
-   libdirs 
-   { 
-      "../ThirdParty/SDL2/lib/x64"
-   }
+VULKAN_SDK = os.getenv("VULKAN_SDK")
+
+IncludeDir = {}
+IncludeDir["VulkanSDK"] = "%{VULKAN_SDK}/Include"
+IncludeDir["glm"] = "../vendor/glm"
+
+LibraryDir = {}
+LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
+
+Library = {}
+Library["Vulkan"] = "%{LibraryDir.VulkanSDK}/vulkan-1.lib"
 
    targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
    objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
