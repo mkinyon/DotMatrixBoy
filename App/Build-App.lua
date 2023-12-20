@@ -5,7 +5,30 @@ project "App"
    targetdir "Binaries/%{cfg.buildcfg}"
    staticruntime "off"
 
-   files { "Source/**.h", "Source/**.cpp" }
+   files { 
+    "Source/**.h", 
+    "Source/**.cpp", 
+    
+    -- imgui
+    "../ThirdParty/imgui/imconfig.h",
+    "../ThirdParty/imgui/imgui.h",
+    "../ThirdParty/imgui/imgui.cpp",
+    "../ThirdParty/imgui/imgui_draw.cpp",
+    "../ThirdParty/imgui/imgui_internal.h",
+    "../ThirdParty/imgui/imgui_tables.cpp",
+    "../ThirdParty/imgui/imgui_widgets.cpp",
+    "../ThirdParty/imgui/imstb_rectpack.h",
+    "../ThirdParty/imgui/imstb_textedit.h",
+    "../ThirdParty/imgui/imstb_truetype.h",
+    "../ThirdParty/imgui/imgui_demo.cpp",
+
+    -- backends
+    "../ThirdParty/imgui/backends/imgui_impl_sdl2.cpp",
+    "../ThirdParty/imgui/backends/imgui_impl_sdl2.h",
+    "../ThirdParty/imgui/backends/imgui_impl_sdlrenderer2.cpp",
+    "../ThirdParty/imgui/backends/imgui_impl_sdlrenderer2.h",
+}
+   
 
    includedirs
    {
@@ -17,28 +40,19 @@ project "App"
       "../ThirdParty/imgui",
       "../ThirdParty/imgui/backends",
       "../ThirdParty/OneLoneCoder",
-      "../ThirdParty/glfw/include",
-      "%{IncludeDir.VulkanSDK}"
+      "../ThirdParty/SDL2/include"
+   }
+
+   libdirs {
+      "../ThirdParty/SDL2/lib/x64/"
    }
 
    links
    {
       "Core",
-      "GLFW",
-      "%{Library.Vulkan}"
+      "SDL2",
+      "SDL2main"
    }
-
-VULKAN_SDK = os.getenv("VULKAN_SDK")
-
-IncludeDir = {}
-IncludeDir["VulkanSDK"] = "%{VULKAN_SDK}/Include"
-IncludeDir["glm"] = "../vendor/glm"
-
-LibraryDir = {}
-LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
-
-Library = {}
-Library["Vulkan"] = "%{LibraryDir.VulkanSDK}/vulkan-1.lib"
 
    targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
    objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")

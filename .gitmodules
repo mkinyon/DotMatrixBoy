@@ -2,6 +2,3 @@
 	path = ThirdParty/imgui
 	url = ../../ocornut/imgui.git
 	branch = docking
-[submodule "ThirdParty/glfw"]
-	path = ThirdParty/glfw
-	url = ../../glfw/glfw.git
