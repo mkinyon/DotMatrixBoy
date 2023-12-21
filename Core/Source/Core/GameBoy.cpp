@@ -11,13 +11,18 @@ namespace Core
 		cpu.Reset(*this, enableBootRom);
 	}
 
-	void GameBoy::Clock()
+	void GameBoy::Clock(float elapsedTimeMS)
 	{
-		cpu.Clock(*this);
+		float cyclesToRun = elapsedTimeMS * Core::CYCLES_PER_MS;
 
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < cyclesToRun; i++)
 		{
-			ppu.Clock(*this);
+			cpu.Clock(*this);
+
+			for (int i = 0; i < 4; i++)
+			{
+				ppu.Clock(*this);
+			}
 		}
 	}
 

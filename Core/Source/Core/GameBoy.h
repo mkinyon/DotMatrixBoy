@@ -17,7 +17,7 @@ namespace Core
 
 	public:
 		void Run(bool enableBootRom);
-		void Clock();
+		void Clock(float elapsedTimeMS);
 		void InsertCartridge(Cartridge& cart);
 		uint8_t& ReadFromMemoryMap(uint16_t address);
 		void WriteToMemoryMap(uint16_t address, uint8_t value);

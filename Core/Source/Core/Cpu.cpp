@@ -26,7 +26,7 @@ namespace Core
 		uint8_t* opcode = &gb.ReadFromMemoryMap(State.PC);
 
 		// write disassembly to console
-		Disassemble(opcode, State.PC);
+		//Disassemble(opcode, State.PC);
 
 		// increment program counter
 		State.PC++;
