@@ -18,6 +18,7 @@ namespace App
 		void RenderContent();
 
 	private:
+		SDL_Texture* texture;
 		uint8_t* pixels {};
 		uint8_t texturePixels[160 * 144 * 4] {};
 	};

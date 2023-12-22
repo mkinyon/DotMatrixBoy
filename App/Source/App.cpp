@@ -18,17 +18,14 @@
 #include "UI/LCD.h"
 #include "UI/Debugger.h"
 #include "UI/MemoryMap.h"
-
-#if !SDL_VERSION_ATLEAST(2,0,17)
-#error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
-#endif
+#include "UI/VRAMViewer.h"
 
 App::Window window(1280, 720, "DotMatrixBoy");
 
 Core::GameBoy gb;
 std::shared_ptr<Core::Cartridge> cart;
 bool isPaused = true;
-bool enableBootRom = true;
+bool enableBootRom = false;
 const char* romName = "../Roms/hello-world.gb";
 //const char* romName = "../Roms/02-interrupts.gb";
 //const char* romName = "../Roms/tetris.gb";
@@ -43,9 +40,10 @@ int main(int, char**)
     gb.Run(enableBootRom);
     
     // Widgets
-    App::LCD lcdWindow(gb.ppu.m_lcdPixels, window.GetRenderer());
-    App::Debugger debugger(gb);
-    App::MemoryMap memoryMap(gb);
+    App::LCD* lcdWindow = new App::LCD(gb.ppu.m_lcdPixels, window.GetRenderer());
+    App::Debugger* debugger = new App::Debugger(gb);
+    App::MemoryMap* memoryMap = new App::MemoryMap(gb);
+    App::VRAMViewer* vramViewer = new App::VRAMViewer(gb, window.GetRenderer());
 
     bool show_demo_window = true;
     bool show_another_window = false;
@@ -66,9 +64,10 @@ int main(int, char**)
             ImGui::ShowDemoWindow(&show_demo_window);
 
         // render widgets
-        lcdWindow.Render();
-        debugger.Render();
-        memoryMap.Render();
+        lcdWindow->Render();
+        debugger->Render();
+        memoryMap->Render();
+        vramViewer->Render();
 
         window.EndRender();
     }
@@ -77,75 +76,6 @@ int main(int, char**)
 }
 
 
-
-
-
-//	void DrawRam(int x, int y, uint16_t nAddr, int nRows, int nColumns)
-//	{
-//		DrawString(x, y, "RAM:", olc::WHITE);
-//		int nRamX = x, nRamY = y + 10;
-//		for (int row = 0; row < nRows; row++)
-//		{
-//			std::string sOffset = "$" + Core::FormatHex(nAddr, 4) + ":";
-//			for (int col = 0; col < nColumns; col++)
-//			{
-//				sOffset += " " + Core::FormatHex(gb.ReadFromMemoryMap(nAddr), 2);
-//				nAddr += 1;
-//			}
-//			DrawString(nRamX, nRamY, sOffset);
-//			nRamY += 10;
-//		}
-//	}
-//
-//	void DrawCharacterRam(int x, int y)
-//	{
-//		DrawString(x, y, "CHARACTER RAM:", olc::WHITE);
-//
-//		y += 10;
-//
-//		int count = 0;
-//		for (uint16_t byte = 0x8000; byte <= 0x97FF; byte += 2)
-//		{
-//			uint8_t firstByte = gb.ReadFromMemoryMap(byte);
-//			uint8_t secondByte = gb.ReadFromMemoryMap(byte + 1);
-//			for (int iBit = 0; iBit < 8; iBit++)
-//			{
-//				uint8_t firstBit = (firstByte >> iBit) & 0x01;
-//				uint8_t secondBit = (secondByte >> iBit) & 0x01;
-//				int colorIndex = (secondBit << 1) | firstBit;
-//
-//				int draw_x = x - iBit; // Adjusted x coordinate for drawing
-//				int draw_y = y + count; // Adjusted y coordinate for drawing
-//
-//				// get the background palette
-//				uint8_t bgPalette = gb.ReadFromMemoryMap(Core::HW_BGP_BG_PALETTE_DATA);
-//				uint8_t color = bgPalette >> (colorIndex * 2) & 0x03;
-//
-//				if (color == 0)
-//					Draw(draw_x, draw_y, olc::Pixel(155, 188, 15));
-//
-//				if (color == 1)
-//					Draw(draw_x, draw_y, olc::Pixel(139, 172, 15));
-//
-//				if (color == 2)
-//					Draw(draw_x, draw_y, olc::Pixel(48, 98, 48));
-//
-//				if (color == 3)
-//					Draw(draw_x, draw_y, olc::Pixel(15, 56, 15));
-//			}
-//			count++;
-//
-//			if ((count % 128) == 0)
-//			{
-//				x -= 120;
-//			}
-//			else if ((count % 8) == 0)
-//			{
-//				x += 8; // Move x coordinate right by 8
-//				y -= 8;
-//			}
-//		}
-//	}
 //
 //	void DrawPPUStats(int x, int y)
 //	{

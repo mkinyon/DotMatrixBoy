@@ -4,8 +4,6 @@
 
 namespace App
 {
-	SDL_Texture* texture;
-
 	LCD::LCD(uint8_t* lcdPixels, SDL_Renderer* renderer) : ImguiWidgetBase("LCD")
 	{
 		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 160, 144);

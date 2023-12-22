@@ -1730,7 +1730,6 @@ namespace Core
 			int nextPC = Disassemble(opcode, pc);
 			mapLines[pc] = GetCurrentInstruction();
 			pc += nextPC;
-
 		}
 
 		return mapLines;
