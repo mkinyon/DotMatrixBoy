@@ -25,7 +25,7 @@ App::Window window(1280, 720, "DotMatrixBoy");
 Core::GameBoy gb;
 std::shared_ptr<Core::Cartridge> cart;
 bool isPaused = true;
-bool enableBootRom = false;
+bool enableBootRom = true;
 const char* romName = "../Roms/hello-world.gb";
 //const char* romName = "../Roms/02-interrupts.gb";
 //const char* romName = "../Roms/tetris.gb";
@@ -74,30 +74,3 @@ int main(int, char**)
 
     return 0;
 }
-
-
-//
-//	void DrawPPUStats(int x, int y)
-//	{
-//		DrawString(x, y, "PPU STATUS:", olc::WHITE);
-//
-//		if (gb.ppu.GetMode(gb) == Core::MODE_0_HBLANK) DrawString(x, y + 10, "Mode: MODE_0_HBLANK");
-//		if (gb.ppu.GetMode(gb) == Core::MODE_1_VBLANK) DrawString(x, y + 10, "Mode: MODE_1_VBLANK");
-//		if (gb.ppu.GetMode(gb) == Core::MODE_2_OAMSCAN) DrawString(x, y + 10, "Mode: MODE_2_OAMSCAN");
-//		if (gb.ppu.GetMode(gb) == Core::MODE_3_DRAWING) DrawString(x, y + 10, "Mode: MODE_3_DRAWING");
-//
-//		DrawString(x, y + 20, "LCDC: " + Core::FormatInt(gb.ReadFromMemoryMap(Core::HW_LCDC_LCD_CONTROL), 1));
-//		DrawString(x, y + 30, "STAT: " + Core::FormatInt(gb.ReadFromMemoryMap(Core::HW_STAT_LCD_STATUS), 1));
-//
-//		DrawString(x, y + 40, "SCX: " + Core::FormatInt(gb.ReadFromMemoryMap(Core::HW_SCX_VIEWPORT_X_POS), 1));
-//		DrawString(x, y + 50, "SCY: " + Core::FormatInt(gb.ReadFromMemoryMap(Core::HW_SCY_VIEWPORT_Y_POS), 1));
-//
-//		DrawString(x, y + 60, "LY (Scanline): " + Core::FormatInt(gb.ReadFromMemoryMap(Core::HW_LY_LCD_Y_COORD), 1));
-//		DrawString(x, y + 70, "LYC: " + Core::FormatInt(gb.ReadFromMemoryMap(Core::HW_LYC_LY_COMPARE), 1));
-//
-//		DrawString(x, y + 80, "WX: " + Core::FormatInt(gb.ReadFromMemoryMap(Core::HW_WX_WINDOW_X_POS), 1));
-//		DrawString(x, y + 90, "WY: " + Core::FormatInt(gb.ReadFromMemoryMap(Core::HW_WY_WINDOW_Y_POS), 1));
-//
-//		DrawString(x, y + 100, "Dots This Frame: " + Core::FormatInt(gb.ppu.m_TotalDotsThisFrame, 1));
-//		DrawString(x, y + 110, "Total Frames: " + Core::FormatInt(gb.ppu.m_TotalFrames, 1));
-//	}
