@@ -16,6 +16,7 @@
 
 #include "Window.h"
 #include "UI/LCD.h"
+#include "UI/Debugger.h"
 
 #if !SDL_VERSION_ATLEAST(2,0,17)
 #error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
@@ -41,6 +42,7 @@ int main(int, char**)
     gb.Run(enableBootRom);
     
     App::LCD lcdWindow(gb.ppu.m_lcdPixels, window.GetRenderer());
+    App::Debugger debugger(gb);
 
     bool show_demo_window = true;
     bool show_another_window = false;
@@ -51,7 +53,7 @@ int main(int, char**)
     {
         window.Update(done);
 
-        gb.Clock(std::min((int)window.GetElapsedTime(), 16 ));
+        gb.Clock((float)std::min((int)window.GetElapsedTime(), 16 ));
         //gb.Clock(16);
 
         window.BeginRender();
@@ -83,6 +85,7 @@ int main(int, char**)
         }
 
         lcdWindow.Render();
+        debugger.Render();
 
         window.EndRender();
     }

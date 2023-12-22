@@ -4,7 +4,6 @@
 
 #include "SDL.h"
 #include "imgui.h"
-
 #include "ImguiWindowBase.h"
 
 namespace App
@@ -15,7 +14,7 @@ namespace App
 		LCD(uint8_t* lcdPixels, SDL_Renderer* renderer);
 		~LCD();
 
-	public:
+	private:
 		void RenderContent();
 
 	private:
