@@ -3,12 +3,12 @@
 
 namespace Core
 {
-	GameBoy::GameBoy() : cpu(), ppu() {}
+	GameBoy::GameBoy() : cpu(*this), ppu(*this) {}
 	GameBoy::~GameBoy() {}
 
 	void GameBoy::Run(bool enableBootRom)
 	{
-		cpu.Reset(*this, enableBootRom);
+		cpu.Reset(enableBootRom);
 	}
 
 	void GameBoy::Clock(float elapsedTimeMS)
@@ -17,11 +17,11 @@ namespace Core
 
 		for (int i = 0; i < cyclesToRun; i++)
 		{
-			cpu.Clock(*this);
+			cpu.Clock();
 
 			for (int i = 0; i < 4; i++)
 			{
-				ppu.Clock(*this);
+				ppu.Clock();
 			}
 		}
 	}

@@ -4,10 +4,10 @@
 
 namespace Core
 {
-	Cpu::Cpu() {}
+	Cpu::Cpu(GameBoy& gb) : gb(gb) {}
 	Cpu::~Cpu() {}
 
-	void Cpu::Clock(GameBoy& gb)
+	void Cpu::Clock()
 	{
 		Cpu::m_TotalCycles++;
 
@@ -49,7 +49,7 @@ namespace Core
 				case 0x76: m_isHalted = true; m_cycles = 4;	break;
 
 					// "PREFIX" B:1 C:4 FLAGS: - - - -
-				case 0xCB: process16bitInstruction(gb, (opcode[0] << 8) | (opcode[1]), State); State.PC++; break;
+				case 0xCB: process16bitInstruction((opcode[0] << 8) | (opcode[1]), State); State.PC++; break;
 
 					// "DI" B:1 C:4 FLAGS: - - - -
 				case 0xF3: m_interruptMasterFlag = false; m_cycles = 4; break;
@@ -152,7 +152,7 @@ namespace Core
 				{
 					if (!getCPUFlag(FLAG_ZERO))
 					{
-						State.PC = popSP(gb);
+						State.PC = popSP();
 						m_cycles = 20;
 						break;
 					}
@@ -179,7 +179,7 @@ namespace Core
 				{
 					if (!getCPUFlag(FLAG_ZERO))
 					{
-						pushSP(gb, State.PC += 2);
+						pushSP(State.PC += 2);
 						m_cycles = 24;
 						break;
 					}
@@ -193,7 +193,7 @@ namespace Core
 				// "RST $00" B:1 C:16 FLAGS: - - - -
 				case 0xC7:
 				{
-					pushSP(gb, State.PC);
+					pushSP(State.PC);
 					State.PC = 0x00;
 
 					m_cycles = 16;
@@ -205,7 +205,7 @@ namespace Core
 				{
 					if (getCPUFlag(FLAG_ZERO))
 					{
-						State.PC = popSP(gb);
+						State.PC = popSP();
 						m_cycles = 20;
 						break;
 					}
@@ -217,7 +217,7 @@ namespace Core
 				// "RET" B:1 C:16 FLAGS: - - - -
 				case 0xC9:
 				{
-					State.PC = popSP(gb);
+					State.PC = popSP();
 
 					m_cycles = 16;
 					break;
@@ -246,7 +246,7 @@ namespace Core
 				{
 					if (getCPUFlag(FLAG_ZERO))
 					{
-						pushSP(gb, State.PC += 2);
+						pushSP(State.PC += 2);
 						State.PC = (opcode[2] << 8) | (opcode[1]);
 						m_cycles = 24;
 						break;
@@ -261,7 +261,7 @@ namespace Core
 				// "CALL a16" B:3 C:24 FLAGS: - - - -
 				case 0xCD:
 				{
-					pushSP(gb, State.PC += 2);
+					pushSP(State.PC += 2);
 					State.PC = (opcode[2] << 8) | (opcode[1]);
 
 					m_cycles = 24;
@@ -271,7 +271,7 @@ namespace Core
 				// "RST $08" B:1 C:16 FLAGS: - - - -
 				case 0xCF:
 				{
-					pushSP(gb, State.PC);
+					pushSP(State.PC);
 					State.PC = 0x08;
 
 					m_cycles = 16;
@@ -283,7 +283,7 @@ namespace Core
 				{
 					if (!getCPUFlag(FLAG_CARRY))
 					{
-						State.PC = popSP(gb);
+						State.PC = popSP();
 						m_cycles = 20;
 						break;
 					}
@@ -301,7 +301,7 @@ namespace Core
 						 // "RST $10" B:1 C:16 FLAGS: - - - -
 				case 0xD7:
 				{
-					pushSP(gb, State.PC);
+					pushSP(State.PC);
 					State.PC = 0x10;
 
 					m_cycles = 16;
@@ -313,7 +313,7 @@ namespace Core
 				{
 					if (getCPUFlag(FLAG_CARRY))
 					{
-						State.PC = popSP(gb);
+						State.PC = popSP();
 						m_cycles = 20;
 						break;
 					}
@@ -325,7 +325,7 @@ namespace Core
 				// "RETI" B:1 C:16 FLAGS: - - - -
 				case 0xD9:
 				{
-					State.PC = popSP(gb);
+					State.PC = popSP();
 					m_interruptMasterFlag = true;
 
 					m_cycles = 16;
@@ -341,7 +341,7 @@ namespace Core
 						 // "RST $18" B:1 C:16 FLAGS: - - - -
 				case 0xDF:
 				{
-					pushSP(gb, State.PC);
+					pushSP(State.PC);
 					State.PC = 0x18;
 
 					m_cycles = 16;
@@ -351,7 +351,7 @@ namespace Core
 				// "RST $20" B:1 C:16 FLAGS: - - - -
 				case 0xE7:
 				{
-					pushSP(gb, State.PC);
+					pushSP(State.PC);
 					State.PC = 0x20;
 
 					m_cycles = 16;
@@ -370,7 +370,7 @@ namespace Core
 				// "RST $28" B:1 C:16 FLAGS: - - - -
 				case 0xEF:
 				{
-					pushSP(gb, State.PC);
+					pushSP(State.PC);
 					State.PC = 0x28;
 
 					m_cycles = 16;
@@ -381,7 +381,7 @@ namespace Core
 				// "RST $30" B:1 C:16 FLAGS: - - - -
 				case 0xF7:
 				{
-					pushSP(gb, State.PC);
+					pushSP(State.PC);
 					State.PC = 0x30;
 
 					m_cycles = 16;
@@ -392,7 +392,7 @@ namespace Core
 				// "RST $38" B:1 C:16 FLAGS: - - - -
 				case 0xFF:
 				{
-					pushSP(gb, State.PC);
+					pushSP(State.PC);
 					State.PC = 0x38;
 
 					m_cycles = 16;
@@ -405,18 +405,18 @@ namespace Core
 				*********************************************************************************************/
 
 				// "LD [addr] reg" B:1 C:8 FLAGS: - - - -
-				case 0x02: instruction_ld_addr_reg(gb, State.BC, State.A); m_cycles = 8; break;
-				case 0x12: instruction_ld_addr_reg(gb, State.DE, State.A); m_cycles = 8; break;
+				case 0x02: instruction_ld_addr_reg(State.BC, State.A); m_cycles = 8; break;
+				case 0x12: instruction_ld_addr_reg(State.DE, State.A); m_cycles = 8; break;
 
 					// "LD reg [addr]" B:1 C:8 FLAGS: - - - -
-				case 0x1A: instruction_ld_reg_addr(gb, State.A, State.DE); m_cycles = 8; break;
-				case 0x46: instruction_ld_reg_addr(gb, State.B, State.HL); m_cycles = 8; break;
-				case 0x4E: instruction_ld_reg_addr(gb, State.C, State.HL); m_cycles = 8; break;
-				case 0x56: instruction_ld_reg_addr(gb, State.D, State.HL); m_cycles = 8; break;
-				case 0x5E: instruction_ld_reg_addr(gb, State.E, State.HL); m_cycles = 8; break;
-				case 0x66: instruction_ld_reg_addr(gb, State.H, State.HL); m_cycles = 8; break;
-				case 0x6E: instruction_ld_reg_addr(gb, State.L, State.HL); m_cycles = 8; break;
-				case 0x7E: instruction_ld_reg_addr(gb, State.A, State.HL); m_cycles = 8; break;
+				case 0x1A: instruction_ld_reg_addr(State.A, State.DE); m_cycles = 8; break;
+				case 0x46: instruction_ld_reg_addr(State.B, State.HL); m_cycles = 8; break;
+				case 0x4E: instruction_ld_reg_addr(State.C, State.HL); m_cycles = 8; break;
+				case 0x56: instruction_ld_reg_addr(State.D, State.HL); m_cycles = 8; break;
+				case 0x5E: instruction_ld_reg_addr(State.E, State.HL); m_cycles = 8; break;
+				case 0x66: instruction_ld_reg_addr(State.H, State.HL); m_cycles = 8; break;
+				case 0x6E: instruction_ld_reg_addr(State.L, State.HL); m_cycles = 8; break;
+				case 0x7E: instruction_ld_reg_addr(State.A, State.HL); m_cycles = 8; break;
 
 					// "LD reg n8" B:2 C:8 FLAGS: - - - -
 				case 0x06: instruction_ld_reg_value(State.B, opcode[1]); State.PC++; m_cycles = 8; break;
@@ -545,13 +545,13 @@ namespace Core
 				case 0x7F: instruction_ld_reg_value(State.A, State.A); m_cycles = 4; break;
 
 					// "LD [HL] reg" B:1 C:8 FLAGS: - - - -
-				case 0x70: instruction_ld_addr_reg(gb, State.HL, State.B); m_cycles = 8; break;
-				case 0x71: instruction_ld_addr_reg(gb, State.HL, State.C); m_cycles = 8; break;
-				case 0x72: instruction_ld_addr_reg(gb, State.HL, State.D); m_cycles = 8; break;
-				case 0x73: instruction_ld_addr_reg(gb, State.HL, State.E); m_cycles = 8; break;
-				case 0x74: instruction_ld_addr_reg(gb, State.HL, State.H); m_cycles = 8; break;
-				case 0x75: instruction_ld_addr_reg(gb, State.HL, State.L); m_cycles = 8; break;
-				case 0x77: instruction_ld_addr_reg(gb, State.HL, State.A); m_cycles = 8; break;
+				case 0x70: instruction_ld_addr_reg(State.HL, State.B); m_cycles = 8; break;
+				case 0x71: instruction_ld_addr_reg(State.HL, State.C); m_cycles = 8; break;
+				case 0x72: instruction_ld_addr_reg(State.HL, State.D); m_cycles = 8; break;
+				case 0x73: instruction_ld_addr_reg(State.HL, State.E); m_cycles = 8; break;
+				case 0x74: instruction_ld_addr_reg(State.HL, State.H); m_cycles = 8; break;
+				case 0x75: instruction_ld_addr_reg(State.HL, State.L); m_cycles = 8; break;
+				case 0x77: instruction_ld_addr_reg(State.HL, State.A); m_cycles = 8; break;
 
 
 
@@ -640,7 +640,7 @@ namespace Core
 				// "POP BC" B:1 C:12 FLAGS: - - - -
 				case 0xC1:
 				{
-					State.BC = popSP(gb);
+					State.BC = popSP();
 
 					m_cycles = 12;
 					break;
@@ -649,7 +649,7 @@ namespace Core
 				// "PUSH BC" B:1 C:16 FLAGS: - - - -
 				case 0xC5:
 				{
-					pushSP(gb, State.BC);
+					pushSP(State.BC);
 
 					m_cycles = 16;
 					break;
@@ -658,7 +658,7 @@ namespace Core
 				// "POP DE" B:1 C:12 FLAGS: - - - -
 				case 0xD1:
 				{
-					State.DE = popSP(gb);
+					State.DE = popSP();
 
 					m_cycles = 12;
 					break;
@@ -667,7 +667,7 @@ namespace Core
 				// "PUSH DE" B:1 C:16 FLAGS: - - - -
 				case 0xD5:
 				{
-					pushSP(gb, State.DE);
+					pushSP(State.DE);
 
 					m_cycles = 16;
 					break;
@@ -676,7 +676,7 @@ namespace Core
 				// "POP HL" B:1 C:12 FLAGS: - - - -
 				case 0xE1:
 				{
-					State.HL = popSP(gb);
+					State.HL = popSP();
 
 					m_cycles = 12;
 					break;
@@ -685,7 +685,7 @@ namespace Core
 				// "PUSH HL" B:1 C:16 FLAGS: - - - -
 				case 0xE5:
 				{
-					pushSP(gb, State.HL);
+					pushSP(State.HL);
 
 					m_cycles = 16;
 					break;
@@ -694,7 +694,7 @@ namespace Core
 				// "POP AF" B:1 C:12 FLAGS: Z N H C
 				case 0xF1:
 				{
-					State.AF = popSP(gb);
+					State.AF = popSP();
 
 					m_cycles = 12;
 					break;
@@ -703,7 +703,7 @@ namespace Core
 				// "PUSH AF" B:1 C:16 FLAGS: - - - -
 				case 0xF5:
 				{
-					pushSP(gb, State.AF);
+					pushSP(State.AF);
 
 					m_cycles = 16;
 					break;
@@ -749,7 +749,7 @@ namespace Core
 				case 0x1C: instruction_inc_reg(State.E); m_cycles = 4; break;
 				case 0x24: instruction_inc_reg(State.H); m_cycles = 4; break;
 				case 0x2C: instruction_inc_reg(State.L); m_cycles = 4; break;
-				case 0x34: instruction_inc_hl(gb); m_cycles = 12; break;
+				case 0x34: instruction_inc_hl(); m_cycles = 12; break;
 				case 0x3C: instruction_inc_reg(State.A); m_cycles = 4; break;
 
 					// "DEC reg" B:1 C:4 FLAGS: Z 1 H -
@@ -759,7 +759,7 @@ namespace Core
 				case 0x1D: instruction_dec_reg(State.E); m_cycles = 4; break;
 				case 0x25: instruction_dec_reg(State.H); m_cycles = 4; break;
 				case 0x2D: instruction_dec_reg(State.L); m_cycles = 4; break;
-				case 0x35: instruction_dec_hl(gb); m_cycles = 12; break;
+				case 0x35: instruction_dec_hl(); m_cycles = 12; break;
 				case 0x3D: instruction_dec_reg(State.A); m_cycles = 4; break;
 
 					// "ADD A reg" B:1 C:4 FLAGS: Z 0 H C
@@ -769,7 +769,7 @@ namespace Core
 				case 0x83: instruction_add_reg(State.E); m_cycles = 4; break;
 				case 0x84: instruction_add_reg(State.H); m_cycles = 4; break;
 				case 0x85: instruction_add_reg(State.L); m_cycles = 4; break;
-				case 0x86: instruction_add_hl(gb); m_cycles = 8; break;
+				case 0x86: instruction_add_hl(); m_cycles = 8; break;
 				case 0x87: instruction_add_reg(State.A); m_cycles = 4; break;
 				case 0xC6: instruction_add_reg(opcode[1]); State.PC++; m_cycles = 8; break;
 
@@ -780,7 +780,7 @@ namespace Core
 				case 0x8B: instruction_adc_reg(State.E); m_cycles = 4; break;
 				case 0x8C: instruction_adc_reg(State.H); m_cycles = 4; break;
 				case 0x8D: instruction_adc_reg(State.L); m_cycles = 4; break;
-				case 0x8E: instruction_adc_hl(gb); m_cycles = 8; break;
+				case 0x8E: instruction_adc_hl(); m_cycles = 8; break;
 				case 0x8F: instruction_adc_reg(State.A); m_cycles = 4; break;
 				case 0xCE: instruction_adc_reg(opcode[1]); State.PC++; m_cycles = 8; break;
 
@@ -791,7 +791,7 @@ namespace Core
 				case 0x93: instruction_sub_reg(State.E); m_cycles = 4; break;
 				case 0x94: instruction_sub_reg(State.H); m_cycles = 4; break;
 				case 0x95: instruction_sub_reg(State.L); m_cycles = 4; break;
-				case 0x96: instruction_sub_hl(gb); m_cycles = 8; break;
+				case 0x96: instruction_sub_hl(); m_cycles = 8; break;
 				case 0x97:
 				{
 					// SUB A A is a special case where the flags need to be 1 1 0 0
@@ -812,7 +812,7 @@ namespace Core
 				case 0x9B: instruction_sbc_reg(State.E); m_cycles = 4; break;
 				case 0x9C: instruction_sbc_reg(State.H); m_cycles = 4; break;
 				case 0x9D: instruction_sbc_reg(State.L); m_cycles = 4; break;
-				case 0x9E: instruction_sbc_hl(gb); m_cycles = 8; break;
+				case 0x9E: instruction_sbc_hl(); m_cycles = 8; break;
 				case 0x9F: instruction_sbc_reg(State.A); m_cycles = 4; break;
 				case 0xDE: instruction_sbc_reg(opcode[1]); State.PC++; m_cycles = 8; break;
 
@@ -823,7 +823,7 @@ namespace Core
 				case 0xA3: instruction_and_reg(State.E); m_cycles = 4; break;
 				case 0xA4: instruction_and_reg(State.H); m_cycles = 4; break;
 				case 0xA5: instruction_and_reg(State.L); m_cycles = 4; break;
-				case 0xA6: instruction_and_hl(gb); m_cycles = 8; break;
+				case 0xA6: instruction_and_hl(); m_cycles = 8; break;
 				case 0xA7: instruction_and_reg(State.A); m_cycles = 4; break;
 				case 0xE6: instruction_and_reg(opcode[1]); State.PC++; m_cycles = 8; break;
 
@@ -834,7 +834,7 @@ namespace Core
 				case 0xAB: instruction_xor_reg(State.E); m_cycles = 4; break;
 				case 0xAC: instruction_xor_reg(State.H); m_cycles = 4; break;
 				case 0xAD: instruction_xor_reg(State.L); m_cycles = 4; break;
-				case 0xAE: instruction_xor_hl(gb); m_cycles = 8; break;
+				case 0xAE: instruction_xor_hl(); m_cycles = 8; break;
 				case 0xAF: instruction_xor_reg(State.A); m_cycles = 4; break;
 				case 0xEE: instruction_xor_reg(opcode[1]); State.PC++; m_cycles = 8; break;
 
@@ -845,7 +845,7 @@ namespace Core
 				case 0xB3: instruction_or_reg(State.E); m_cycles = 4; break;
 				case 0xB4: instruction_or_reg(State.H); m_cycles = 4; break;
 				case 0xB5: instruction_or_reg(State.L); m_cycles = 4; break;
-				case 0xB6: instruction_or_hl(gb); m_cycles = 8; break;
+				case 0xB6: instruction_or_hl(); m_cycles = 8; break;
 				case 0xB7: instruction_or_reg(State.A); m_cycles = 4; break;
 				case 0xF6: instruction_or_reg(opcode[1]); State.PC++; m_cycles = 8; break;
 
@@ -856,7 +856,7 @@ namespace Core
 				case 0xBB: instruction_cp_reg(State.E); m_cycles = 4; break;
 				case 0xBC: instruction_cp_reg(State.H); m_cycles = 4; break;
 				case 0xBD: instruction_cp_reg(State.L); m_cycles = 4; break;
-				case 0xBE: instruction_cp_hl(gb); m_cycles = 8; break;
+				case 0xBE: instruction_cp_hl(); m_cycles = 8; break;
 				case 0xBF:
 				{
 					// CP A A is a special case where the flags need to be 1 1 0 0
@@ -894,7 +894,7 @@ namespace Core
 				case 0x39: instruction_add_reg16(State.SP); m_cycles = 8; break;
 
 					// "ADD SP e8" B:2 C:16 FLAGS: 0 0 H C
-				case 0xE8: instruction_add_sp_e8(gb, opcode[1]); m_cycles = 8; break;
+				case 0xE8: instruction_add_sp_e8(opcode[1]); m_cycles = 8; break;
 
 					/********************************************************************************************
 						8-bit Shift. Rotate and Bit Instructions
@@ -1051,11 +1051,11 @@ namespace Core
 			}
 		}
 
-		processInterrupts(gb);
+		processInterrupts();
 		m_InstructionCompleted = true;
 	}
 
-	void Cpu::processInterrupts(GameBoy& gb)
+	void Cpu::processInterrupts()
 	{
 		uint16_t destinationAddress = 0;
 		uint8_t interruptFlag = 0;
@@ -1105,12 +1105,12 @@ namespace Core
 			m_interruptMasterFlag = false;;
 			gb.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, interruptFlag, false);
 
-			pushSP(gb, State.PC);
+			pushSP(State.PC);
 			State.PC = destinationAddress;
 		}
 	}
 
-	void Cpu::process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState& state)
+	void Cpu::process16bitInstruction(uint16_t opcode, Cpu::m_CpuState& state)
 	{
 		switch (opcode)
 		{
@@ -1124,7 +1124,7 @@ namespace Core
 			case 0xCB03: instruction_rlc_reg(State.E); break;
 			case 0xCB04: instruction_rlc_reg(State.H); break;
 			case 0xCB05: instruction_rlc_reg(State.L); break;
-			case 0xCB06: instruction_rlc_hl(gb); m_cycles = 16; break;
+			case 0xCB06: instruction_rlc_hl(); m_cycles = 16; break;
 			case 0xCB07: instruction_rlc_reg(State.A); break;
 
 				// "RRC reg" B:2 C:8 FLAGS: Z 0 0 C
@@ -1134,7 +1134,7 @@ namespace Core
 			case 0xCB0B: instruction_rrc_reg(State.E); break;
 			case 0xCB0C: instruction_rrc_reg(State.H); break;
 			case 0xCB0D: instruction_rrc_reg(State.L); break;
-			case 0xCB0E: instruction_rrc_hl(gb); m_cycles = 16; break;
+			case 0xCB0E: instruction_rrc_hl(); m_cycles = 16; break;
 			case 0xCB0F: instruction_rrc_reg(State.A); break;
 
 				// "RL reg" B:2 C:8 FLAGS: Z 0 0 C
@@ -1144,7 +1144,7 @@ namespace Core
 			case 0xCB13: instruction_rl_reg(State.E); break;
 			case 0xCB14: instruction_rl_reg(State.H); break;
 			case 0xCB15: instruction_rl_reg(State.L); break;
-			case 0xCB16: instruction_rl_hl(gb); m_cycles = 16; break;
+			case 0xCB16: instruction_rl_hl(); m_cycles = 16; break;
 			case 0xCB17: instruction_rl_reg(State.A); break;
 
 				// "RR reg" B:2 C:8 FLAGS: Z 0 0 C
@@ -1154,7 +1154,7 @@ namespace Core
 			case 0xCB1B: instruction_rr_reg(State.E); break;
 			case 0xCB1C: instruction_rr_reg(State.H); break;
 			case 0xCB1D: instruction_rr_reg(State.L); break;
-			case 0xCB1E: instruction_rr_hl(gb); m_cycles = 16; break;
+			case 0xCB1E: instruction_rr_hl(); m_cycles = 16; break;
 			case 0xCB1F: instruction_rr_reg(State.A); break;
 
 				// "SLA reg" B:2 C:8 FLAGS: Z 0 0 C
@@ -1164,7 +1164,7 @@ namespace Core
 			case 0xCB23: instruction_sla_reg(State.E); break;
 			case 0xCB24: instruction_sla_reg(State.H); break;
 			case 0xCB25: instruction_sla_reg(State.L); break;
-			case 0xCB26: instruction_sla_hl(gb); m_cycles = 16; break;
+			case 0xCB26: instruction_sla_hl(); m_cycles = 16; break;
 			case 0xCB27: instruction_sla_reg(State.A); break;
 
 				// "SRA reg" B:2 C:8 FLAGS: Z 0 0 C
@@ -1174,7 +1174,7 @@ namespace Core
 			case 0xCB2B: instruction_sra_reg(State.E); break;
 			case 0xCB2C: instruction_sra_reg(State.H); break;
 			case 0xCB2D: instruction_sra_reg(State.L); break;
-			case 0xCB2E: instruction_sra_hl(gb); m_cycles = 16; break;
+			case 0xCB2E: instruction_sra_hl(); m_cycles = 16; break;
 			case 0xCB2F: instruction_sra_reg(State.A); break;
 
 				// "SWAP reg" B:2 C:8 FLAGS: Z 0 0 0
@@ -1184,7 +1184,7 @@ namespace Core
 			case 0xCB33: instruction_swap_reg(State.E); break;
 			case 0xCB34: instruction_swap_reg(State.H); break;
 			case 0xCB35: instruction_swap_reg(State.L); break;
-			case 0xCB36: instruction_swap_hl(gb); m_cycles = 16; break;
+			case 0xCB36: instruction_swap_hl(); m_cycles = 16; break;
 			case 0xCB37: instruction_swap_reg(State.A); break;
 
 				// "SRL bit" B:2 C:8 FLAGS: Z 0 0 C
@@ -1194,7 +1194,7 @@ namespace Core
 			case 0xCB3B: instruction_srl_reg(State.E); break;
 			case 0xCB3C: instruction_srl_reg(State.H); break;
 			case 0xCB3D: instruction_srl_reg(State.L); break;
-			case 0xCB3E: instruction_srl_hl(gb); m_cycles = 16; break;
+			case 0xCB3E: instruction_srl_hl(); m_cycles = 16; break;
 			case 0xCB3F: instruction_srl_reg(State.A); break;
 
 				// "BIT bit, reg" B:2 C:8 FLAGS: Z 0 1 -
@@ -1204,7 +1204,7 @@ namespace Core
 			case 0xCB43: instruction_bit_bit_reg(State.E, 0); break;
 			case 0xCB44: instruction_bit_bit_reg(State.H, 0); break;
 			case 0xCB45: instruction_bit_bit_reg(State.L, 0); break;
-			case 0xCB46: instruction_bit_bit_hl(gb, 0); m_cycles = 16; break;
+			case 0xCB46: instruction_bit_bit_hl(0); m_cycles = 16; break;
 			case 0xCB47: instruction_bit_bit_reg(State.A, 0); break;
 			case 0xCB48: instruction_bit_bit_reg(State.B, 1); break;
 			case 0xCB49: instruction_bit_bit_reg(State.C, 1); break;
@@ -1212,7 +1212,7 @@ namespace Core
 			case 0xCB4B: instruction_bit_bit_reg(State.E, 1); break;
 			case 0xCB4C: instruction_bit_bit_reg(State.H, 1); break;
 			case 0xCB4D: instruction_bit_bit_reg(State.L, 1); break;
-			case 0xCB4E: instruction_bit_bit_hl(gb, 1); m_cycles = 16; break;
+			case 0xCB4E: instruction_bit_bit_hl(1); m_cycles = 16; break;
 			case 0xCB4F: instruction_bit_bit_reg(State.A, 1); break;
 			case 0xCB50: instruction_bit_bit_reg(State.B, 2); break;
 			case 0xCB51: instruction_bit_bit_reg(State.C, 2); break;
@@ -1220,7 +1220,7 @@ namespace Core
 			case 0xCB53: instruction_bit_bit_reg(State.E, 2); break;
 			case 0xCB54: instruction_bit_bit_reg(State.H, 2); break;
 			case 0xCB55: instruction_bit_bit_reg(State.L, 2); break;
-			case 0xCB56: instruction_bit_bit_hl(gb, 2); m_cycles = 16; break;
+			case 0xCB56: instruction_bit_bit_hl(2); m_cycles = 16; break;
 			case 0xCB57: instruction_bit_bit_reg(State.A, 2); break;
 			case 0xCB58: instruction_bit_bit_reg(State.B, 3); break;
 			case 0xCB59: instruction_bit_bit_reg(State.C, 3); break;
@@ -1228,7 +1228,7 @@ namespace Core
 			case 0xCB5B: instruction_bit_bit_reg(State.E, 3); break;
 			case 0xCB5C: instruction_bit_bit_reg(State.H, 3); break;
 			case 0xCB5D: instruction_bit_bit_reg(State.L, 3); break;
-			case 0xCB5E: instruction_bit_bit_hl(gb, 3); m_cycles = 16; break;
+			case 0xCB5E: instruction_bit_bit_hl(3); m_cycles = 16; break;
 			case 0xCB5F: instruction_bit_bit_reg(State.A, 3); break;
 			case 0xCB60: instruction_bit_bit_reg(State.B, 4); break;
 			case 0xCB61: instruction_bit_bit_reg(State.C, 4); break;
@@ -1236,7 +1236,7 @@ namespace Core
 			case 0xCB63: instruction_bit_bit_reg(State.E, 4); break;
 			case 0xCB64: instruction_bit_bit_reg(State.H, 4); break;
 			case 0xCB65: instruction_bit_bit_reg(State.L, 4); break;
-			case 0xCB66: instruction_bit_bit_hl(gb, 4); m_cycles = 16; break;
+			case 0xCB66: instruction_bit_bit_hl(4); m_cycles = 16; break;
 			case 0xCB67: instruction_bit_bit_reg(State.A, 4); break;
 			case 0xCB68: instruction_bit_bit_reg(State.B, 5); break;
 			case 0xCB69: instruction_bit_bit_reg(State.C, 5); break;
@@ -1244,7 +1244,7 @@ namespace Core
 			case 0xCB6B: instruction_bit_bit_reg(State.E, 5); break;
 			case 0xCB6C: instruction_bit_bit_reg(State.H, 5); break;
 			case 0xCB6D: instruction_bit_bit_reg(State.L, 5); break;
-			case 0xCB6E: instruction_bit_bit_hl(gb, 5); m_cycles = 16; break;
+			case 0xCB6E: instruction_bit_bit_hl(5); m_cycles = 16; break;
 			case 0xCB6F: instruction_bit_bit_reg(State.A, 5); break;
 			case 0xCB70: instruction_bit_bit_reg(State.B, 6); break;
 			case 0xCB71: instruction_bit_bit_reg(State.C, 6); break;
@@ -1252,7 +1252,7 @@ namespace Core
 			case 0xCB73: instruction_bit_bit_reg(State.E, 6); break;
 			case 0xCB74: instruction_bit_bit_reg(State.H, 6); break;
 			case 0xCB75: instruction_bit_bit_reg(State.L, 6); break;
-			case 0xCB76: instruction_bit_bit_hl(gb, 6); m_cycles = 16; break;
+			case 0xCB76: instruction_bit_bit_hl(6); m_cycles = 16; break;
 			case 0xCB77: instruction_bit_bit_reg(State.A, 6); break;
 			case 0xCB78: instruction_bit_bit_reg(State.B, 7); break;
 			case 0xCB79: instruction_bit_bit_reg(State.C, 7); break;
@@ -1260,7 +1260,7 @@ namespace Core
 			case 0xCB7B: instruction_bit_bit_reg(State.E, 7); break;
 			case 0xCB7C: instruction_bit_bit_reg(State.H, 7); break;
 			case 0xCB7D: instruction_bit_bit_reg(State.L, 7); break;
-			case 0xCB7E: instruction_bit_bit_hl(gb, 7); m_cycles = 16; break;
+			case 0xCB7E: instruction_bit_bit_hl(7); m_cycles = 16; break;
 			case 0xCB7F: instruction_bit_bit_reg(State.A, 7); break;
 
 				// "RES bit, reg" B:2 C:8 FLAGS: - - - -
@@ -1270,7 +1270,7 @@ namespace Core
 			case 0xCB83: instruction_res_bit_reg(State.E, 0); break;
 			case 0xCB84: instruction_res_bit_reg(State.H, 0); break;
 			case 0xCB85: instruction_res_bit_reg(State.L, 0); break;
-			case 0xCB86: instruction_res_bit_hl(gb, 0); m_cycles = 16; break;
+			case 0xCB86: instruction_res_bit_hl(0); m_cycles = 16; break;
 			case 0xCB87: instruction_res_bit_reg(State.A, 0); break;
 			case 0xCB88: instruction_res_bit_reg(State.B, 1); break;
 			case 0xCB89: instruction_res_bit_reg(State.C, 1); break;
@@ -1278,7 +1278,7 @@ namespace Core
 			case 0xCB8B: instruction_res_bit_reg(State.E, 1); break;
 			case 0xCB8C: instruction_res_bit_reg(State.H, 1); break;
 			case 0xCB8D: instruction_res_bit_reg(State.L, 1); break;
-			case 0xCB8E: instruction_res_bit_hl(gb, 1); m_cycles = 16; break;
+			case 0xCB8E: instruction_res_bit_hl(1); m_cycles = 16; break;
 			case 0xCB8F: instruction_res_bit_reg(State.A, 1); break;
 			case 0xCB90: instruction_res_bit_reg(State.B, 2); break;
 			case 0xCB91: instruction_res_bit_reg(State.C, 2); break;
@@ -1286,7 +1286,7 @@ namespace Core
 			case 0xCB93: instruction_res_bit_reg(State.E, 2); break;
 			case 0xCB94: instruction_res_bit_reg(State.H, 2); break;
 			case 0xCB95: instruction_res_bit_reg(State.L, 2); break;
-			case 0xCB96: instruction_res_bit_hl(gb, 2); m_cycles = 16; break;
+			case 0xCB96: instruction_res_bit_hl(2); m_cycles = 16; break;
 			case 0xCB97: instruction_res_bit_reg(State.A, 2); break;
 			case 0xCB98: instruction_res_bit_reg(State.B, 3); break;
 			case 0xCB99: instruction_res_bit_reg(State.C, 3); break;
@@ -1294,7 +1294,7 @@ namespace Core
 			case 0xCB9B: instruction_res_bit_reg(State.E, 3); break;
 			case 0xCB9C: instruction_res_bit_reg(State.H, 3); break;
 			case 0xCB9D: instruction_res_bit_reg(State.L, 3); break;
-			case 0xCB9E: instruction_res_bit_hl(gb, 3); m_cycles = 16; break;
+			case 0xCB9E: instruction_res_bit_hl(3); m_cycles = 16; break;
 			case 0xCB9F: instruction_res_bit_reg(State.A, 3); break;
 			case 0xCBA0: instruction_res_bit_reg(State.B, 4); break;
 			case 0xCBA1: instruction_res_bit_reg(State.C, 4); break;
@@ -1302,7 +1302,7 @@ namespace Core
 			case 0xCBA3: instruction_res_bit_reg(State.E, 4); break;
 			case 0xCBA4: instruction_res_bit_reg(State.H, 4); break;
 			case 0xCBA5: instruction_res_bit_reg(State.L, 4); break;
-			case 0xCBA6: instruction_res_bit_hl(gb, 4); m_cycles = 16; break;
+			case 0xCBA6: instruction_res_bit_hl(4); m_cycles = 16; break;
 			case 0xCBA7: instruction_res_bit_reg(State.A, 4); break;
 			case 0xCBA8: instruction_res_bit_reg(State.B, 5); break;
 			case 0xCBA9: instruction_res_bit_reg(State.C, 5); break;
@@ -1310,7 +1310,7 @@ namespace Core
 			case 0xCBAB: instruction_res_bit_reg(State.E, 5); break;
 			case 0xCBAC: instruction_res_bit_reg(State.H, 5); break;
 			case 0xCBAD: instruction_res_bit_reg(State.L, 5); break;
-			case 0xCBAE: instruction_res_bit_hl(gb, 5); m_cycles = 16; break;
+			case 0xCBAE: instruction_res_bit_hl(5); m_cycles = 16; break;
 			case 0xCBAF: instruction_res_bit_reg(State.A, 5); break;
 			case 0xCBB0: instruction_res_bit_reg(State.B, 6); break;
 			case 0xCBB1: instruction_res_bit_reg(State.C, 6); break;
@@ -1318,7 +1318,7 @@ namespace Core
 			case 0xCBB3: instruction_res_bit_reg(State.E, 6); break;
 			case 0xCBB4: instruction_res_bit_reg(State.H, 6); break;
 			case 0xCBB5: instruction_res_bit_reg(State.L, 6); break;
-			case 0xCBB6: instruction_res_bit_hl(gb, 6); m_cycles = 16; break;
+			case 0xCBB6: instruction_res_bit_hl(6); m_cycles = 16; break;
 			case 0xCBB7: instruction_res_bit_reg(State.A, 6); break;
 			case 0xCBB8: instruction_res_bit_reg(State.B, 7); break;
 			case 0xCBB9: instruction_res_bit_reg(State.C, 7); break;
@@ -1326,7 +1326,7 @@ namespace Core
 			case 0xCBBB: instruction_res_bit_reg(State.E, 7); break;
 			case 0xCBBC: instruction_res_bit_reg(State.H, 7); break;
 			case 0xCBBD: instruction_res_bit_reg(State.L, 7); break;
-			case 0xCBBE: instruction_res_bit_hl(gb, 7); m_cycles = 16; break;
+			case 0xCBBE: instruction_res_bit_hl(7); m_cycles = 16; break;
 			case 0xCBBF: instruction_res_bit_reg(State.A, 7); break;
 
 				// "SET bit, register" B:2 C:8 - - - -
@@ -1336,7 +1336,7 @@ namespace Core
 			case 0xCBC3: instruction_set_bit_reg(State.E, 0); break;
 			case 0xCBC4: instruction_set_bit_reg(State.H, 0); break;
 			case 0xCBC5: instruction_set_bit_reg(State.L, 0); break;
-			case 0xCBC6: instruction_set_bit_hl(gb, 0); m_cycles = 16; break;
+			case 0xCBC6: instruction_set_bit_hl(0); m_cycles = 16; break;
 			case 0xCBC7: instruction_set_bit_reg(State.A, 0); break;
 			case 0xCBC8: instruction_set_bit_reg(State.B, 1); break;
 			case 0xCBC9: instruction_set_bit_reg(State.C, 1); break;
@@ -1344,7 +1344,7 @@ namespace Core
 			case 0xCBCB: instruction_set_bit_reg(State.E, 1); break;
 			case 0xCBCC: instruction_set_bit_reg(State.H, 1); break;
 			case 0xCBCD: instruction_set_bit_reg(State.L, 1); break;
-			case 0xCBCE: instruction_set_bit_hl(gb, 1); m_cycles = 16; break;
+			case 0xCBCE: instruction_set_bit_hl(1); m_cycles = 16; break;
 			case 0xCBCF: instruction_set_bit_reg(State.A, 1); break;
 			case 0xCBD0: instruction_set_bit_reg(State.B, 2); break;
 			case 0xCBD1: instruction_set_bit_reg(State.C, 2); break;
@@ -1352,7 +1352,7 @@ namespace Core
 			case 0xCBD3: instruction_set_bit_reg(State.E, 2); break;
 			case 0xCBD4: instruction_set_bit_reg(State.H, 2); break;
 			case 0xCBD5: instruction_set_bit_reg(State.L, 2); break;
-			case 0xCBD6: instruction_set_bit_hl(gb, 2); m_cycles = 16; break;
+			case 0xCBD6: instruction_set_bit_hl(2); m_cycles = 16; break;
 			case 0xCBD7: instruction_set_bit_reg(State.A, 2); break;
 			case 0xCBD8: instruction_set_bit_reg(State.B, 3); break;
 			case 0xCBD9: instruction_set_bit_reg(State.C, 3); break;
@@ -1360,7 +1360,7 @@ namespace Core
 			case 0xCBDB: instruction_set_bit_reg(State.E, 3); break;
 			case 0xCBDC: instruction_set_bit_reg(State.H, 3); break;
 			case 0xCBDD: instruction_set_bit_reg(State.L, 3); break;
-			case 0xCBDE: instruction_set_bit_hl(gb, 3); m_cycles = 16; break;
+			case 0xCBDE: instruction_set_bit_hl(3); m_cycles = 16; break;
 			case 0xCBDF: instruction_set_bit_reg(State.A, 3); break;
 			case 0xCBE0: instruction_set_bit_reg(State.B, 4); break;
 			case 0xCBE1: instruction_set_bit_reg(State.C, 4); break;
@@ -1368,7 +1368,7 @@ namespace Core
 			case 0xCBE3: instruction_set_bit_reg(State.E, 4); break;
 			case 0xCBE4: instruction_set_bit_reg(State.H, 4); break;
 			case 0xCBE5: instruction_set_bit_reg(State.L, 4); break;
-			case 0xCBE6: instruction_set_bit_hl(gb, 4); m_cycles = 16; break;
+			case 0xCBE6: instruction_set_bit_hl(4); m_cycles = 16; break;
 			case 0xCBE7: instruction_set_bit_reg(State.A, 4); break;
 			case 0xCBE8: instruction_set_bit_reg(State.B, 5); break;
 			case 0xCBE9: instruction_set_bit_reg(State.C, 5); break;
@@ -1376,7 +1376,7 @@ namespace Core
 			case 0xCBEB: instruction_set_bit_reg(State.E, 5); break;
 			case 0xCBEC: instruction_set_bit_reg(State.H, 5); break;
 			case 0xCBED: instruction_set_bit_reg(State.L, 5); break;
-			case 0xCBEE: instruction_set_bit_hl(gb, 5); m_cycles = 16; break;
+			case 0xCBEE: instruction_set_bit_hl(5); m_cycles = 16; break;
 			case 0xCBEF: instruction_set_bit_reg(State.A, 5); break;
 			case 0xCBF0: instruction_set_bit_reg(State.B, 6); break;
 			case 0xCBF1: instruction_set_bit_reg(State.C, 6); break;
@@ -1384,7 +1384,7 @@ namespace Core
 			case 0xCBF3: instruction_set_bit_reg(State.E, 6); break;
 			case 0xCBF4: instruction_set_bit_reg(State.H, 6); break;
 			case 0xCBF5: instruction_set_bit_reg(State.L, 6); break;
-			case 0xCBF6: instruction_set_bit_hl(gb, 6); m_cycles = 16; break;
+			case 0xCBF6: instruction_set_bit_hl(6); m_cycles = 16; break;
 			case 0xCBF7: instruction_set_bit_reg(State.A, 6); break;
 			case 0xCBF8: instruction_set_bit_reg(State.B, 7); break;
 			case 0xCBF9: instruction_set_bit_reg(State.C, 7); break;
@@ -1392,7 +1392,7 @@ namespace Core
 			case 0xCBFB: instruction_set_bit_reg(State.E, 7); break;
 			case 0xCBFC: instruction_set_bit_reg(State.H, 7); break;
 			case 0xCBFD: instruction_set_bit_reg(State.L, 7); break;
-			case 0xCBFE: instruction_set_bit_hl(gb, 7); m_cycles = 16; break;
+			case 0xCBFE: instruction_set_bit_hl(7); m_cycles = 16; break;
 			case 0xCBFF: instruction_set_bit_reg(State.A, 7); break;
 
 			default:
@@ -1719,7 +1719,7 @@ namespace Core
 		return opBytes;
 	}
 
-	std::map<uint16_t, std::string> Cpu::DisassebleAll(GameBoy& gb)
+	std::map<uint16_t, std::string> Cpu::DisassebleAll()
 	{
 		std::map<uint16_t, std::string> mapLines;
 		uint16_t pc = 0;
@@ -2068,7 +2068,7 @@ namespace Core
 		return currentInstructionName;
 	}
 
-	void Cpu::Reset(GameBoy& gb, bool enableBootRom)
+	void Cpu::Reset(bool enableBootRom)
 	{
 		Cpu::m_TotalCycles = 0;
 
@@ -2150,13 +2150,13 @@ namespace Core
 		gb.WriteToMemoryMap(HW_INTERRUPT_ENABLE, 0x00);
 	}
 
-	void Cpu::pushSP(GameBoy& gb, uint16_t value)
+	void Cpu::pushSP(uint16_t value)
 	{
 		gb.WriteToMemoryMap(--State.SP, (value >> 8) & 0xFF);
 		gb.WriteToMemoryMap(--State.SP, value & 0xFF);
 	}
 
-	uint16_t Cpu::popSP(GameBoy& gb)
+	uint16_t Cpu::popSP()
 	{
 		uint8_t firstByte = gb.ReadFromMemoryMap(State.SP++);
 		uint8_t secondByte = gb.ReadFromMemoryMap(State.SP++);
@@ -2181,12 +2181,12 @@ namespace Core
 		reg = value;
 	}
 
-	void Cpu::instruction_ld_addr_reg(GameBoy& gb, uint16_t& address, uint8_t& reg)
+	void Cpu::instruction_ld_addr_reg(uint16_t& address, uint8_t& reg)
 	{
 		gb.WriteToMemoryMap(address, reg);
 	}
 
-	void Cpu::instruction_ld_reg_addr(GameBoy& gb, uint8_t& reg, uint16_t& address)
+	void Cpu::instruction_ld_reg_addr(uint8_t& reg, uint16_t& address)
 	{
 		reg = gb.ReadFromMemoryMap(address);
 	}
@@ -2205,7 +2205,7 @@ namespace Core
 		setCPUFlag(FLAG_HALF_CARRY, (reg & 0x0F) == 0x00);
 	}
 
-	void Cpu::instruction_inc_hl(GameBoy& gb)
+	void Cpu::instruction_inc_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_inc_reg(value);
@@ -2221,7 +2221,7 @@ namespace Core
 		setCPUFlag(FLAG_HALF_CARRY, (reg & 0x0F) == 0x0F);
 	}
 
-	void Cpu::instruction_dec_hl(GameBoy& gb)
+	void Cpu::instruction_dec_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_dec_reg(value);
@@ -2242,7 +2242,7 @@ namespace Core
 		State.A = result;
 	}
 
-	void Cpu::instruction_add_hl(GameBoy& gb)
+	void Cpu::instruction_add_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_add_reg(value);
@@ -2264,7 +2264,7 @@ namespace Core
 		State.A = result;
 	}
 
-	void Cpu::instruction_adc_hl(GameBoy& gb)
+	void Cpu::instruction_adc_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_adc_reg(value);
@@ -2284,7 +2284,7 @@ namespace Core
 		State.A = result;
 	}
 
-	void Cpu::instruction_sub_hl(GameBoy& gb)
+	void Cpu::instruction_sub_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_sub_reg(value);
@@ -2305,7 +2305,7 @@ namespace Core
 		State.A = result;
 	}
 
-	void Cpu::instruction_sbc_hl(GameBoy& gb)
+	void Cpu::instruction_sbc_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_sbc_reg(value);
@@ -2322,7 +2322,7 @@ namespace Core
 		setCPUFlag(FLAG_CARRY, false);
 	}
 
-	void Cpu::instruction_and_hl(GameBoy& gb)
+	void Cpu::instruction_and_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_and_reg(value);
@@ -2339,7 +2339,7 @@ namespace Core
 		setCPUFlag(FLAG_CARRY, false);
 	}
 
-	void Cpu::instruction_xor_hl(GameBoy& gb)
+	void Cpu::instruction_xor_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_xor_reg(value);
@@ -2356,7 +2356,7 @@ namespace Core
 		setCPUFlag(FLAG_CARRY, false);
 	}
 
-	void Cpu::instruction_or_hl(GameBoy& gb)
+	void Cpu::instruction_or_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_or_reg(value);
@@ -2371,7 +2371,7 @@ namespace Core
 		setCPUFlag(FLAG_CARRY, State.A < reg);
 	}
 
-	void Cpu::instruction_cp_hl(GameBoy& gb)
+	void Cpu::instruction_cp_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_cp_reg(value);
@@ -2400,10 +2400,10 @@ namespace Core
 		State.HL = result;
 	}
 
-	void Cpu::instruction_add_sp_e8(GameBoy& gb, uint8_t& e8)
+	void Cpu::instruction_add_sp_e8(uint8_t& e8)
 	{
 		int8_t offset = e8;
-		uint16_t result = popSP(gb) + offset + 1;
+		uint16_t result = popSP() + offset + 1;
 
 		setCPUFlag(FLAG_ZERO, false);
 		setCPUFlag(FLAG_SUBTRACT, false);
@@ -2411,7 +2411,7 @@ namespace Core
 		//setCPUFlag(FLAG_HALF_CARRY, ((cpu->sp.read() ^ offset ^ (result & 0xFFFF)) & 0x10) == 0x10);
 		//setCPUFlag(FLAG_CARRY, ((cpu->sp.read() ^ offset ^ (result & 0xFFFF)) & 0x100) == 0x100);
 
-		pushSP(gb, result);
+		pushSP(result);
 	}
 
 	void Cpu::instruction_rlc_reg(uint8_t& reg)
@@ -2427,7 +2427,7 @@ namespace Core
 		setCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
-	void Cpu::instruction_rlc_hl(GameBoy& gb)
+	void Cpu::instruction_rlc_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_rlc_reg(value);
@@ -2445,7 +2445,7 @@ namespace Core
 		setCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
-	void Cpu::instruction_rrc_hl(GameBoy& gb)
+	void Cpu::instruction_rrc_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_rrc_reg(value);
@@ -2467,7 +2467,7 @@ namespace Core
 		setCPUFlag(FLAG_CARRY, carry);
 	}
 
-	void Cpu::instruction_rl_hl(GameBoy& gb)
+	void Cpu::instruction_rl_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_rl_reg(value);
@@ -2486,7 +2486,7 @@ namespace Core
 		setCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
-	void Cpu::instruction_rr_hl(GameBoy& gb)
+	void Cpu::instruction_rr_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_rr_reg(value);
@@ -2504,7 +2504,7 @@ namespace Core
 		setCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
-	void Cpu::instruction_sla_hl(GameBoy& gb)
+	void Cpu::instruction_sla_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_sla_reg(value);
@@ -2522,7 +2522,7 @@ namespace Core
 		setCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
-	void Cpu::instruction_sra_hl(GameBoy& gb)
+	void Cpu::instruction_sra_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_sra_reg(value);
@@ -2539,7 +2539,7 @@ namespace Core
 		setCPUFlag(FLAG_CARRY, false);
 	}
 
-	void Cpu::instruction_swap_hl(GameBoy& gb)
+	void Cpu::instruction_swap_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_swap_reg(value);
@@ -2557,7 +2557,7 @@ namespace Core
 		setCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
-	void Cpu::instruction_srl_hl(GameBoy& gb)
+	void Cpu::instruction_srl_hl()
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_srl_reg(value);
@@ -2571,7 +2571,7 @@ namespace Core
 		setCPUFlag(FLAG_HALF_CARRY, true);
 	}
 
-	void Cpu::instruction_bit_bit_hl(GameBoy& gb, uint8_t bit)
+	void Cpu::instruction_bit_bit_hl(uint8_t bit)
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_bit_bit_reg(value, bit);
@@ -2583,7 +2583,7 @@ namespace Core
 		reg &= ~(1 << bit);
 	}
 
-	void Cpu::instruction_res_bit_hl(GameBoy& gb, uint8_t bit)
+	void Cpu::instruction_res_bit_hl(uint8_t bit)
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_res_bit_reg(value, bit);
@@ -2595,7 +2595,7 @@ namespace Core
 		reg |= (1 << bit);
 	}
 
-	void Cpu::instruction_set_bit_hl(GameBoy& gb, uint8_t bit)
+	void Cpu::instruction_set_bit_hl(uint8_t bit)
 	{
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_set_bit_reg(value, bit);

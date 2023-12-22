@@ -12,7 +12,7 @@ namespace Core
 	class Cpu
 	{
 	public:
-		Cpu();
+		Cpu(GameBoy& gb);
 		~Cpu();
 
 	public:
@@ -71,6 +71,7 @@ namespace Core
 		bool m_InstructionCompleted = false;
 
 	private:
+		GameBoy& gb;
 		int m_cycles = 0; // how many cycles remain before the cpu can fetch another instruction
 		std::string currentInstructionName;
 		bool m_interruptMasterFlag = false;
@@ -78,15 +79,15 @@ namespace Core
 		enum Cpu_Flags;
 
 	public:
-		void Reset(GameBoy& gb, bool enableBootRom);
-		void Clock(GameBoy& gb);
+		void Reset(bool enableBootRom);
+		void Clock();
 		int Disassemble(uint8_t* opcode, int pc);
-		std::map<uint16_t, std::string> DisassebleAll(GameBoy& gb);
+		std::map<uint16_t, std::string> DisassebleAll();
 		std::string GetCurrentInstruction();
 
 	private:
-		void process16bitInstruction(GameBoy& gb, uint16_t opcode, Cpu::m_CpuState& state);
-		void processInterrupts(GameBoy& gb);
+		void process16bitInstruction(uint16_t opcode, Cpu::m_CpuState& state);
+		void processInterrupts();
 
 		// disassembly
 		void disasseble16bit(uint8_t* opcode, int pc);
@@ -95,8 +96,8 @@ namespace Core
 
 		// 8-bit Load Instructions
 		void instruction_ld_reg_value(uint8_t& reg, uint8_t& value);
-		void instruction_ld_addr_reg(GameBoy& gb, uint16_t& address, uint8_t& reg);
-		void instruction_ld_reg_addr(GameBoy& gb, uint8_t& reg, uint16_t& address);
+		void instruction_ld_addr_reg(uint16_t& address, uint8_t& reg);
+		void instruction_ld_reg_addr(uint8_t& reg, uint16_t& address);
 
 		// 16-bit Load Instructions
 		void instruction_ld16_reg_value(uint16_t& reg, uint16_t value);
@@ -104,79 +105,79 @@ namespace Core
 
 		// 8-bit Arithmetic/Logical Instructions
 		void instruction_inc_reg(uint8_t& reg);
-		void instruction_inc_hl(GameBoy& gb);
+		void instruction_inc_hl();
 
 		void instruction_dec_reg(uint8_t& reg);
-		void instruction_dec_hl(GameBoy& gb);
+		void instruction_dec_hl();
 
 		void instruction_add_reg(uint8_t& reg);
-		void instruction_add_hl(GameBoy& gb);
+		void instruction_add_hl();
 
 		void instruction_adc_reg(uint8_t& reg);
-		void instruction_adc_hl(GameBoy& gb);
+		void instruction_adc_hl();
 
 		void instruction_sub_reg(uint8_t& reg);
-		void instruction_sub_hl(GameBoy& gb);
+		void instruction_sub_hl();
 
 		void instruction_sbc_reg(uint8_t& reg);
-		void instruction_sbc_hl(GameBoy& gb);
+		void instruction_sbc_hl();
 
 		void instruction_and_reg(uint8_t& reg);
-		void instruction_and_hl(GameBoy& gb);
+		void instruction_and_hl();
 
 		void instruction_xor_reg(uint8_t& reg);
-		void instruction_xor_hl(GameBoy& gb);
+		void instruction_xor_hl();
 
 		void instruction_or_reg(uint8_t& reg);
-		void instruction_or_hl(GameBoy& gb);
+		void instruction_or_hl();
 
 		void instruction_cp_reg(uint8_t& reg);
-		void instruction_cp_hl(GameBoy& gb);
+		void instruction_cp_hl();
 
 
 		// 16-bit Arithmetic/Logical Instructions
 		void instruction_inc_reg16(uint16_t& reg);
 		void instruction_dec_reg16(uint16_t& reg);
 		void instruction_add_reg16(uint16_t& reg);
-		void instruction_add_sp_e8(GameBoy& gb, uint8_t& e8);
+		void instruction_add_sp_e8(uint8_t& e8);
 
 
 		// 16 bit prefix (0xCB) instructions
 		void instruction_rlc_reg(uint8_t& reg);
-		void instruction_rlc_hl(GameBoy& gb);
+		void instruction_rlc_hl();
 
 		void instruction_rrc_reg(uint8_t& reg);
-		void instruction_rrc_hl(GameBoy& gb);
+		void instruction_rrc_hl();
 
 		void instruction_rl_reg(uint8_t& reg);
-		void instruction_rl_hl(GameBoy& gb);
+		void instruction_rl_hl();
 
 		void instruction_rr_reg(uint8_t& reg);
-		void instruction_rr_hl(GameBoy& gb);
+		void instruction_rr_hl();
 
 		void instruction_sla_reg(uint8_t& reg);
-		void instruction_sla_hl(GameBoy& gb);
+		void instruction_sla_hl();
 
 		void instruction_sra_reg(uint8_t& reg);
-		void instruction_sra_hl(GameBoy& gb);
+		void instruction_sra_hl();
 
 		void instruction_swap_reg(uint8_t& reg);
-		void instruction_swap_hl(GameBoy& gb);
+		void instruction_swap_hl();
 
 		void instruction_srl_reg(uint8_t& reg);
-		void instruction_srl_hl(GameBoy& gb);
+		void instruction_srl_hl();
 
 		void instruction_bit_bit_reg(uint8_t& reg, uint8_t bit);
-		void instruction_bit_bit_hl(GameBoy& gb, uint8_t bit);
+		void instruction_bit_bit_hl(uint8_t bit);
 
 		void instruction_res_bit_reg(uint8_t& reg, uint8_t bit);
-		void instruction_res_bit_hl(GameBoy& gb, uint8_t bit);
+		void instruction_res_bit_hl(uint8_t bit);
 
 		void instruction_set_bit_reg(uint8_t& reg, uint8_t bit);
-		void instruction_set_bit_hl(GameBoy& gb, uint8_t bit);
+		void instruction_set_bit_hl(uint8_t bit);
 
-		void pushSP(GameBoy& gb, uint16_t value);
-		uint16_t popSP(GameBoy& gb);
+		void pushSP(uint16_t value);
+		uint16_t popSP();
 
 		bool getCPUFlag(int flag);
 		void setCPUFlag(int flag, bool enable);

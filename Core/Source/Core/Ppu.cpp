@@ -4,62 +4,62 @@
 
 namespace Core
 {
-	Ppu::Ppu() {}
+	Ppu::Ppu(GameBoy& gb) : gb(gb) {}
 	Ppu::~Ppu() {}
 
-	void Ppu::Clock(GameBoy& gb)
+	void Ppu::Clock()
 	{
 		/*if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_Flags::LCDC_LCD_PPU_ENABLE))
 		{
 			return;
 		}*/
 
-		LCD_Mode currentMode = readLCDMode(gb);
+		LCD_Mode currentMode = readLCDMode();
 		m_CycleCount++;
 
 		switch (currentMode)
 		{
 			case LCD_Mode::MODE_2_OAMSCAN:
-				processOAM(gb);
+				processOAM();
 				break;
 			case LCD_Mode::MODE_3_DRAWING:
-				processDrawing(gb);
+				processDrawing();
 				break;
 			case LCD_Mode::MODE_0_HBLANK:
-				processHBlank(gb);
+				processHBlank();
 				break;
 			case LCD_Mode::MODE_1_VBLANK:
-				processVBlank(gb);
+				processVBlank();
 				break;
 		}
 	}
 
-	LCD_Mode Ppu::GetMode(GameBoy& gb)
+	LCD_Mode Ppu::GetMode()
 	{
-		return readLCDMode(gb);
+		return readLCDMode();
 	}
 
-	void Ppu::processOAM(GameBoy& gb)
+	void Ppu::processOAM()
 	{
 		if (m_CycleCount >= OAM_CYCLES)
 		{
-			writeLCDMode(gb, LCD_Mode::MODE_3_DRAWING);
+			writeLCDMode(LCD_Mode::MODE_3_DRAWING);
 			m_CycleCount -= OAM_CYCLES;
 		}
 
 		// TODO: need to handle OAM scanning
 	}
 
-	void Ppu::processDrawing(GameBoy& gb)
+	void Ppu::processDrawing()
 	{
 		if (m_CycleCount >= DRAWING_CYCLES)
 		{
-			writeLCDMode(gb, LCD_Mode::MODE_0_HBLANK);
+			writeLCDMode(LCD_Mode::MODE_0_HBLANK);
 			m_CycleCount -= DRAWING_CYCLES;
 		}
 	}
 
-	void Ppu::processHBlank(GameBoy& gb)
+	void Ppu::processHBlank()
 	{
 		if (m_CycleCount >= HBLANK_CYCLES)
 		{
@@ -70,22 +70,22 @@ namespace Core
 			}
 
 			// render graphics
-			drawBGToBuffer(gb);
+			drawBGToBuffer();
 			// TODO draw window
 			// TODO draw sprites
 
 			uint8_t ly = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
 			if (ly == 143)
-				writeLCDMode(gb, LCD_Mode::MODE_1_VBLANK);
+				writeLCDMode(LCD_Mode::MODE_1_VBLANK);
 			else
-				writeLCDMode(gb, LCD_Mode::MODE_2_OAMSCAN);
+				writeLCDMode(LCD_Mode::MODE_2_OAMSCAN);
 
 			gb.WriteToMemoryMap(HW_LY_LCD_Y_COORD, ly + 1);
 			m_CycleCount -= HBLANK_CYCLES;
 		}
 	}
 
-	void Ppu::processVBlank(GameBoy& gb)
+	void Ppu::processVBlank()
 	{
 		if (m_CycleCount >= VBLANK_CYCLES)
 		{
@@ -101,7 +101,7 @@ namespace Core
 
 			if (ly == 153)
 			{
-				writeLCDMode(gb, LCD_Mode::MODE_2_OAMSCAN);
+				writeLCDMode(LCD_Mode::MODE_2_OAMSCAN);
 				gb.WriteToMemoryMap(HW_LY_LCD_Y_COORD, 0);
 			}
 			else
@@ -112,7 +112,7 @@ namespace Core
 	}
 
 	// This will draw one line of the background to the buffer 
-	void Ppu::drawBGToBuffer(GameBoy& gb)
+	void Ppu::drawBGToBuffer()
 	{
 		//if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_Flags::LCDC_BG_WINDOW_ENABLE_PRIORITY))
 		//{
@@ -212,7 +212,7 @@ namespace Core
 	// The LCD mode is special because it is contained in two bits within the
 	//	STAT register. This seems to be the only place this happens so this 
 	//  function exists just to simply the process of retreiving this value
-	LCD_Mode Ppu::readLCDMode(GameBoy& gb)
+	LCD_Mode Ppu::readLCDMode()
 	{
 		bool lowBit = gb.ReadFromMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT);
 		bool highBit = gb.ReadFromMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT);
@@ -224,7 +224,7 @@ namespace Core
 		return static_cast<LCD_Mode>(value);
 	}
 
-	void Ppu::writeLCDMode(GameBoy& gb, LCD_Mode mode)
+	void Ppu::writeLCDMode(LCD_Mode mode)
 	{
 		uint8_t value = static_cast<uint8_t>(mode);
 		gb.WriteToMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT, (value >> 1) & 0x1);
