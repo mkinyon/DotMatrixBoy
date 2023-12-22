@@ -15,6 +15,11 @@ namespace App
 
 		// Function to render the entire window
 		void Render() {
+			if (!ShowWindow)
+			{
+				return;
+			}
+
 			ImGui::Begin(title);
 
 			RenderContent();
@@ -22,9 +27,11 @@ namespace App
 			ImGui::End();
 		}
 
+	public:
+		bool ShowWindow = true;
+
 	private:
 		const char* title;
-		
 	};
 }
 

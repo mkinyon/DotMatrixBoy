@@ -39,9 +39,10 @@ namespace App
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO(); (void)io;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // enable docking
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; 
 
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
@@ -72,7 +73,7 @@ namespace App
         return window != nullptr && renderer != nullptr;
     }
 
-    void Window::Update(bool& done) 
+    void Window::Update(bool& isRunning, Core::GameBoy& gb) 
     {
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -82,18 +83,40 @@ namespace App
         SDL_Event event;
         while (SDL_PollEvent(&event) != 0) 
         {
-            ImGui_ImplSDL2_ProcessEvent(&event);
-            if (event.type == SDL_QUIT)
+            ImGui_ImplSDL2_ProcessEvent(&event);       
+
+            // handle quit
+            if (event.type == SDL_QUIT ||
+                    (event.type == SDL_WINDOWEVENT &&
+                    event.window.event == SDL_WINDOWEVENT_CLOSE &&
+                    event.window.windowID == SDL_GetWindowID(window)))
             {
-                done = true;
+                isRunning = false;
+            }             
+
+            // handle input
+            if (event.type == SDL_KEYDOWN)
+            {
+                SDL_Keycode pressedKey = event.key.keysym.sym;
+                if (pressedKey == SDLK_p)
+                {
+                    if (gb.IsPaused())
+                    {
+                        gb.Unpause();
+                    }
+                    else
+                    {
+                        gb.Pause();
+                    }
+                }
+                if (pressedKey == SDLK_SPACE)
+                {
+                    if (gb.IsPaused())
+                    {
+                        gb.StepCPU();
+                    }
+                }
             }
-                
-            if (event.type == SDL_WINDOWEVENT &&
-                event.window.event == SDL_WINDOWEVENT_CLOSE &&
-                event.window.windowID == SDL_GetWindowID(window))
-            {
-                done = true;
-            }              
         }
 
         Uint32 currentTime = SDL_GetTicks();
@@ -119,6 +142,11 @@ namespace App
         ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
         ImGui::Render();
+
+        // Update and render ImGui multi-viewports
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+
         SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
         SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
         SDL_RenderClear(renderer);

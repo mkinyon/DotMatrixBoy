@@ -15,6 +15,7 @@
 #include <SDL.h>
 
 #include "Window.h"
+#include "UI/MenuBar.h"
 #include "UI/LCD.h"
 #include "UI/Debugger.h"
 #include "UI/MemoryMap.h"
@@ -25,10 +26,10 @@ App::Window window(1280, 720, "DotMatrixBoy");
 Core::GameBoy gb;
 std::shared_ptr<Core::Cartridge> cart;
 bool isPaused = true;
-bool enableBootRom = true;
-const char* romName = "../Roms/hello-world.gb";
+bool enableBootRom = false;
+//const char* romName = "../Roms/hello-world.gb";
 //const char* romName = "../Roms/02-interrupts.gb";
-//const char* romName = "../Roms/tetris.gb";
+const char* romName = "../Roms/tetris.gb";
 
 // Main code
 int main(int, char**)
@@ -40,6 +41,7 @@ int main(int, char**)
     gb.Run(enableBootRom);
     
     // Widgets
+    App::MenuBar* menuBar = new App::MenuBar();
     App::LCD* lcdWindow = new App::LCD(gb.ppu.m_lcdPixels, window.GetRenderer());
     App::Debugger* debugger = new App::Debugger(gb);
     App::MemoryMap* memoryMap = new App::MemoryMap(gb);
@@ -49,21 +51,21 @@ int main(int, char**)
     bool show_another_window = false;
 
     // Main loop
-    bool done = false;
-    while (!done)
+    bool isRunning = true;
+    while (isRunning)
     {
-        window.Update(done);
+        window.Update(isRunning, gb);
 
         gb.Clock((float)std::min((int)window.GetElapsedTime(), 16 ));
         //gb.Clock(16);
 
         window.BeginRender();
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
         // render widgets
+        menuBar->Render();
         lcdWindow->Render();
         debugger->Render();
         memoryMap->Render();

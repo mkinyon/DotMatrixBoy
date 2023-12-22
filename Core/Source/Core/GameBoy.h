@@ -18,6 +18,11 @@ namespace Core
 	public:
 		void Run(bool enableBootRom);
 		void Clock(float elapsedTimeMS);
+		void Pause();
+		void Unpause();
+		bool IsPaused();
+		void StepCPU();
+
 		void InsertCartridge(Cartridge& cart);
 		uint8_t& ReadFromMemoryMap(uint16_t address);
 		void WriteToMemoryMap(uint16_t address, uint8_t value);
@@ -29,6 +34,8 @@ namespace Core
 		Ppu ppu;
 
 	private:
+		bool m_isPaused = false;
+
 		//devices
 		Cartridge cart;						// $0000-$7FFF   RES and Interrupts, cart header, cart data
 		uint8_t characterRam[6143] = {};	// $8000-$97FF   Character RAM

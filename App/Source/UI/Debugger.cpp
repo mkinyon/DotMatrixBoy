@@ -69,7 +69,7 @@ namespace App
 		ImGui::SeparatorText("Rom Instructions");
 
 		// Rom Data
-		ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x, 260), ImGuiChildFlags_None);
+		ImGui::BeginChild("Instruct", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None);
 
 		for (uint16_t i = 0; i < 0x7FFF; i++)
 		{

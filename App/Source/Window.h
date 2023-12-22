@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SDL.h"
+#include "Core/GameBoy.h"
 
 namespace App
 {
@@ -12,7 +13,7 @@ namespace App
 
 	public:
 		bool Initialize();
-		void Update(bool& done);
+		void Update(bool& isRunning, Core::GameBoy& gb);
 		void BeginRender();
 		void EndRender();
 

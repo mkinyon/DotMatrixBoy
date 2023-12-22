@@ -13,9 +13,40 @@ namespace Core
 
 	void GameBoy::Clock(float elapsedTimeMS)
 	{
-		float cyclesToRun = elapsedTimeMS * Core::CYCLES_PER_MS;
+		if (!m_isPaused)
+		{
+			float cyclesToRun = elapsedTimeMS * Core::CYCLES_PER_MS;
 
-		for (int i = 0; i < cyclesToRun; i++)
+			for (int i = 0; i < cyclesToRun; i++)
+			{
+				cpu.Clock();
+
+				for (int i = 0; i < 4; i++)
+				{
+					ppu.Clock();
+				}
+			}
+		}
+	}
+
+	void GameBoy::Pause()
+	{
+		m_isPaused = true;
+	}
+
+	void GameBoy::Unpause()
+	{
+		m_isPaused = false;
+	}
+
+	bool GameBoy::IsPaused()
+	{
+		return m_isPaused;
+	}
+
+	void GameBoy::StepCPU()
+	{
+		do
 		{
 			cpu.Clock();
 
@@ -23,7 +54,7 @@ namespace Core
 			{
 				ppu.Clock();
 			}
-		}
+		} while (!cpu.m_InstructionCompleted);
 	}
 
 	void GameBoy::InsertCartridge(Cartridge & cartridge)
