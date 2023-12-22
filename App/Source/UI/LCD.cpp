@@ -19,6 +19,8 @@ namespace App
 
 	void LCD::RenderContent()
 	{
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
 		// Map lcd_pixels to pixels
 		for (int y = 0; y < 144; ++y) {
 			for (int x = 0; x < 160; ++x) {

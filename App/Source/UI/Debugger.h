@@ -2,6 +2,7 @@
 
 #include "ImguiWindowBase.h"
 #include "Core/GameBoy.h"
+#include "Core/Defines.h"
 
 namespace App
 {
@@ -15,7 +16,7 @@ namespace App
 		void RenderContent();
 	
 	private:
-		Core::GameBoy gameboy;
-	
+		Core::GameBoy& gameboy;
+		std::map<uint16_t, std::string> instructions;
 	};
 }

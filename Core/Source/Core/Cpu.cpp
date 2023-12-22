@@ -76,7 +76,7 @@ namespace Core
 				{
 					// note: "e8" in the description refers to a signed char
 					int8_t offset = opcode[1];
-					if (getCPUFlag(FLAG_ZERO) == 0)
+					if (GetCPUFlag(FLAG_ZERO) == 0)
 					{
 						State.PC += offset + 1;
 						m_cycles = 12;
@@ -95,7 +95,7 @@ namespace Core
 				{
 					// note: "e8" in the description refers to a signed char
 					int8_t offset = opcode[1];
-					if (getCPUFlag(FLAG_ZERO) == 1)
+					if (GetCPUFlag(FLAG_ZERO) == 1)
 					{
 						State.PC += offset + 1;
 						m_cycles = 12;
@@ -114,7 +114,7 @@ namespace Core
 				{
 					// note: "s8" in the description refers to a signed char
 					int8_t offset = opcode[1];
-					if (!getCPUFlag(FLAG_CARRY))
+					if (!GetCPUFlag(FLAG_CARRY))
 					{
 						State.PC += offset + 1;
 						m_cycles = 12;
@@ -133,7 +133,7 @@ namespace Core
 				{
 					// note: "s8" in the description refers to a signed char
 					int8_t offset = opcode[1];
-					if (getCPUFlag(FLAG_CARRY))
+					if (GetCPUFlag(FLAG_CARRY))
 					{
 						State.PC += offset + 1;
 						m_cycles = 12;
@@ -150,7 +150,7 @@ namespace Core
 				// "RET NZ" B:1 C:20/8 FLAGS: - - - -
 				case 0xC0:
 				{
-					if (!getCPUFlag(FLAG_ZERO))
+					if (!GetCPUFlag(FLAG_ZERO))
 					{
 						State.PC = popSP();
 						m_cycles = 20;
@@ -177,7 +177,7 @@ namespace Core
 				// "CALL NZ a16" B:3 C:2412 FLAGS: - - - -
 				case 0xC4:
 				{
-					if (!getCPUFlag(FLAG_ZERO))
+					if (!GetCPUFlag(FLAG_ZERO))
 					{
 						pushSP(State.PC += 2);
 						m_cycles = 24;
@@ -203,7 +203,7 @@ namespace Core
 				// "RET Z" B:1 C:208 FLAGS: - - - -
 				case 0xC8:
 				{
-					if (getCPUFlag(FLAG_ZERO))
+					if (GetCPUFlag(FLAG_ZERO))
 					{
 						State.PC = popSP();
 						m_cycles = 20;
@@ -226,7 +226,7 @@ namespace Core
 				// "JP Z a16" B:3 C:1612 FLAGS: - - - -
 				case 0xCA:
 				{
-					if (getCPUFlag(FLAG_ZERO))
+					if (GetCPUFlag(FLAG_ZERO))
 					{
 						uint16_t offset = (opcode[2] << 8) | (opcode[1]);
 						State.PC = offset;
@@ -244,7 +244,7 @@ namespace Core
 				// "CALL Z a16" B:3 C:2412 FLAGS: - - - -
 				case 0xCC:
 				{
-					if (getCPUFlag(FLAG_ZERO))
+					if (GetCPUFlag(FLAG_ZERO))
 					{
 						pushSP(State.PC += 2);
 						State.PC = (opcode[2] << 8) | (opcode[1]);
@@ -281,7 +281,7 @@ namespace Core
 				// "RET NC" B:1 C:208 FLAGS: - - - -
 				case 0xD0:
 				{
-					if (!getCPUFlag(FLAG_CARRY))
+					if (!GetCPUFlag(FLAG_CARRY))
 					{
 						State.PC = popSP();
 						m_cycles = 20;
@@ -311,7 +311,7 @@ namespace Core
 				// "RET C" B:1 C:208 FLAGS: - - - -
 				case 0xD8:
 				{
-					if (getCPUFlag(FLAG_CARRY))
+					if (GetCPUFlag(FLAG_CARRY))
 					{
 						State.PC = popSP();
 						m_cycles = 20;
@@ -716,10 +716,10 @@ namespace Core
 					int32_t fullResult = State.SP + signedValue;
 					uint16_t result = static_cast<uint16_t>(fullResult);
 
-					setCPUFlag(FLAG_ZERO, false);
-					setCPUFlag(FLAG_SUBTRACT, false);
-					setCPUFlag(FLAG_HALF_CARRY, ((State.SP ^ signedValue ^ (fullResult & 0xFFFF)) & 0x10) == 0x10);
-					setCPUFlag(FLAG_CARRY, ((State.SP ^ signedValue ^ (fullResult & 0xFFFF)) & 0x100) == 0x100);
+					SetCPUFlag(FLAG_ZERO, false);
+					SetCPUFlag(FLAG_SUBTRACT, false);
+					SetCPUFlag(FLAG_HALF_CARRY, ((State.SP ^ signedValue ^ (fullResult & 0xFFFF)) & 0x10) == 0x10);
+					SetCPUFlag(FLAG_CARRY, ((State.SP ^ signedValue ^ (fullResult & 0xFFFF)) & 0x100) == 0x100);
 
 					State.HL = result;
 					State.PC++;
@@ -796,10 +796,10 @@ namespace Core
 				{
 					// SUB A A is a special case where the flags need to be 1 1 0 0
 					instruction_sub_reg(State.A);
-					setCPUFlag(FLAG_ZERO, true);
-					setCPUFlag(FLAG_SUBTRACT, true);
-					setCPUFlag(FLAG_HALF_CARRY, false);
-					setCPUFlag(FLAG_CARRY, false);
+					SetCPUFlag(FLAG_ZERO, true);
+					SetCPUFlag(FLAG_SUBTRACT, true);
+					SetCPUFlag(FLAG_HALF_CARRY, false);
+					SetCPUFlag(FLAG_CARRY, false);
 					m_cycles = 4;
 					break;
 				}
@@ -860,10 +860,10 @@ namespace Core
 				case 0xBF:
 				{
 					// CP A A is a special case where the flags need to be 1 1 0 0
-					setCPUFlag(FLAG_ZERO, true);
-					setCPUFlag(FLAG_SUBTRACT, true);
-					setCPUFlag(FLAG_HALF_CARRY, false);
-					setCPUFlag(FLAG_CARRY, false);
+					SetCPUFlag(FLAG_ZERO, true);
+					SetCPUFlag(FLAG_SUBTRACT, true);
+					SetCPUFlag(FLAG_HALF_CARRY, false);
+					SetCPUFlag(FLAG_CARRY, false);
 
 					m_cycles = 4;
 					break;
@@ -909,10 +909,10 @@ namespace Core
 					// Perform the rotation to the right through the carry flag
 					State.A = ((State.A << 1) | oldBit7);
 
-					setCPUFlag(FLAG_ZERO, false);
-					setCPUFlag(FLAG_SUBTRACT, false);
-					setCPUFlag(FLAG_HALF_CARRY, false);
-					setCPUFlag(FLAG_CARRY, oldBit7);
+					SetCPUFlag(FLAG_ZERO, false);
+					SetCPUFlag(FLAG_SUBTRACT, false);
+					SetCPUFlag(FLAG_HALF_CARRY, false);
+					SetCPUFlag(FLAG_CARRY, oldBit7);
 
 					m_cycles = 4;
 					break;
@@ -927,10 +927,10 @@ namespace Core
 					// Perform the rotation to the right through the carry flag
 					State.A = (State.A >> 1) | (bit0 << 7);
 
-					setCPUFlag(FLAG_ZERO, false);
-					setCPUFlag(FLAG_SUBTRACT, false);
-					setCPUFlag(FLAG_HALF_CARRY, false);
-					setCPUFlag(FLAG_CARRY, bit0);
+					SetCPUFlag(FLAG_ZERO, false);
+					SetCPUFlag(FLAG_SUBTRACT, false);
+					SetCPUFlag(FLAG_HALF_CARRY, false);
+					SetCPUFlag(FLAG_CARRY, bit0);
 
 					m_cycles = 4;
 					break;
@@ -939,14 +939,14 @@ namespace Core
 				// "RLA" B:1 C:4 FLAGS: 0 0 0 C
 				case 0x17:
 				{
-					uint8_t result = (State.A << 1) | (getCPUFlag(FLAG_CARRY) ? 1 : 0);
+					uint8_t result = (State.A << 1) | (GetCPUFlag(FLAG_CARRY) ? 1 : 0);
 					bool carry = (State.A & 0x80) != 0;
 					State.A = result;
 
-					setCPUFlag(FLAG_ZERO, false);
-					setCPUFlag(FLAG_SUBTRACT, false);
-					setCPUFlag(FLAG_HALF_CARRY, false);
-					setCPUFlag(FLAG_CARRY, carry);
+					SetCPUFlag(FLAG_ZERO, false);
+					SetCPUFlag(FLAG_SUBTRACT, false);
+					SetCPUFlag(FLAG_HALF_CARRY, false);
+					SetCPUFlag(FLAG_CARRY, carry);
 
 					m_cycles = 4;
 					break;
@@ -955,13 +955,13 @@ namespace Core
 				// "RRA" B:1 C:4 FLAGS: 0 0 0 C
 				case 0x1F:
 				{
-					uint8_t carry = getCPUFlag(FLAG_CARRY) ? 0x80 : 0;
+					uint8_t carry = GetCPUFlag(FLAG_CARRY) ? 0x80 : 0;
 					uint8_t result = carry | (State.A >> 1);
 
-					setCPUFlag(FLAG_ZERO, false);
-					setCPUFlag(FLAG_SUBTRACT, false);
-					setCPUFlag(FLAG_HALF_CARRY, false);
-					setCPUFlag(FLAG_CARRY, (State.A & 0x1) != 0);
+					SetCPUFlag(FLAG_ZERO, false);
+					SetCPUFlag(FLAG_SUBTRACT, false);
+					SetCPUFlag(FLAG_HALF_CARRY, false);
+					SetCPUFlag(FLAG_CARRY, (State.A & 0x1) != 0);
 
 					State.A = result;
 
@@ -973,26 +973,26 @@ namespace Core
 				case 0x27:
 				{
 					int8_t result = State.A;
-					if (getCPUFlag(FLAG_SUBTRACT))
+					if (GetCPUFlag(FLAG_SUBTRACT))
 					{
-						if (getCPUFlag(FLAG_HALF_CARRY))
+						if (GetCPUFlag(FLAG_HALF_CARRY))
 						{
 							result -= 6;
 						}
 
-						if (getCPUFlag(FLAG_CARRY))
+						if (GetCPUFlag(FLAG_CARRY))
 						{
 							result -= 0x60;
 						}
 					}
 					else
 					{
-						if (getCPUFlag(FLAG_HALF_CARRY) || (State.A & 0x0F) > 9)
+						if (GetCPUFlag(FLAG_HALF_CARRY) || (State.A & 0x0F) > 9)
 						{
 							result += 6;
 						}
 
-						if (getCPUFlag(FLAG_CARRY) || result > 0x9F)
+						if (GetCPUFlag(FLAG_CARRY) || result > 0x9F)
 						{
 							result += 0x60;
 						}
@@ -1001,10 +1001,10 @@ namespace Core
 					State.A = static_cast<uint8_t>(result);
 
 					if (result > 0xFF)
-						setCPUFlag(FLAG_CARRY, true);
+						SetCPUFlag(FLAG_CARRY, true);
 
-					setCPUFlag(FLAG_ZERO, State.A == 0);
-					setCPUFlag(FLAG_HALF_CARRY, false);
+					SetCPUFlag(FLAG_ZERO, State.A == 0);
+					SetCPUFlag(FLAG_HALF_CARRY, false);
 
 					m_cycles = 4;
 					break;
@@ -1014,8 +1014,8 @@ namespace Core
 				case 0x2F:
 				{
 					State.A = ~State.A;
-					setCPUFlag(FLAG_SUBTRACT, true);
-					setCPUFlag(FLAG_HALF_CARRY, true);
+					SetCPUFlag(FLAG_SUBTRACT, true);
+					SetCPUFlag(FLAG_HALF_CARRY, true);
 
 					m_cycles = 4;
 					break;
@@ -1024,9 +1024,9 @@ namespace Core
 				// "SCF" B:1 C:4 FLAGS: - 0 0 1
 				case 0x37:
 				{
-					setCPUFlag(FLAG_SUBTRACT, false);
-					setCPUFlag(FLAG_HALF_CARRY, false);
-					setCPUFlag(FLAG_CARRY, true);
+					SetCPUFlag(FLAG_SUBTRACT, false);
+					SetCPUFlag(FLAG_HALF_CARRY, false);
+					SetCPUFlag(FLAG_CARRY, true);
 
 					m_cycles = 4;
 					break;
@@ -1036,10 +1036,10 @@ namespace Core
 				case 0x3F:
 				{
 					// flip the carry flag
-					getCPUFlag(FLAG_CARRY) == true ? setCPUFlag(FLAG_CARRY, false) : setCPUFlag(FLAG_CARRY, true);
+					GetCPUFlag(FLAG_CARRY) == true ? SetCPUFlag(FLAG_CARRY, false) : SetCPUFlag(FLAG_CARRY, true);
 
-					setCPUFlag(FLAG_SUBTRACT, false);
-					setCPUFlag(FLAG_HALF_CARRY, false);
+					SetCPUFlag(FLAG_SUBTRACT, false);
+					SetCPUFlag(FLAG_HALF_CARRY, false);
 
 					m_cycles = 4;
 					break;
@@ -1418,10 +1418,10 @@ namespace Core
 		printf("#    HL: %04x \n", State.HL);
 		printf("#\n");
 		printf("# Flags:\n");
-		printf("#    Zero flag (Z): %02x \n", getCPUFlag(FLAG_ZERO));
-		printf("#    Subtract flag (N): %02x \n", getCPUFlag(FLAG_SUBTRACT));
-		printf("#    Half Carry Flag (H): %02x \n", getCPUFlag(FLAG_HALF_CARRY));
-		printf("#    Carry flag (C): %02x \n", getCPUFlag(FLAG_CARRY));
+		printf("#    Zero flag (Z): %02x \n", GetCPUFlag(FLAG_ZERO));
+		printf("#    Subtract flag (N): %02x \n", GetCPUFlag(FLAG_SUBTRACT));
+		printf("#    Half Carry Flag (H): %02x \n", GetCPUFlag(FLAG_HALF_CARRY));
+		printf("#    Carry flag (C): %02x \n", GetCPUFlag(FLAG_CARRY));
 		printf("######################################################\n");
 		exit(1);
 	}
@@ -2015,10 +2015,10 @@ namespace Core
 		output += FormatHex(pc, 4) + " ";
 
 		// print flags
-		//output += "Z" + FormatHex(getCPUFlag(FLAG_ZERO), 1) + " ";
-		//output += "N" + FormatHex(getCPUFlag(FLAG_SUBTRACT), 1) + " ";
-		//output += "H" + FormatHex(getCPUFlag(FLAG_HALF_CARRY), 1) + " ";
-		//output += "C" + FormatHex(getCPUFlag(FLAG_CARRY), 1) + " ";
+		//output += "Z" + FormatHex(GetCPUFlag(FLAG_ZERO), 1) + " ";
+		//output += "N" + FormatHex(GetCPUFlag(FLAG_SUBTRACT), 1) + " ";
+		//output += "H" + FormatHex(GetCPUFlag(FLAG_HALF_CARRY), 1) + " ";
+		//output += "C" + FormatHex(GetCPUFlag(FLAG_CARRY), 1) + " ";
 
 		// print address values
 		if (totalOpBytes == 3)
@@ -2081,10 +2081,10 @@ namespace Core
 		State.SP = 0xFFFE;
 
 		// flags - should be reset to $B0
-		setCPUFlag(FLAG_CARRY, true);
-		setCPUFlag(FLAG_HALF_CARRY, true);
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_ZERO, true);
+		SetCPUFlag(FLAG_CARRY, true);
+		SetCPUFlag(FLAG_HALF_CARRY, true);
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_ZERO, true);
 
 		// randomize memory to mimick real gameboy
 		for (uint16_t address = 0x8000; address <= 0x97FF; address++)
@@ -2163,12 +2163,12 @@ namespace Core
 		return (secondByte << 8) | (firstByte);
 	}
 
-	bool Cpu::getCPUFlag(int flag)
+	bool Cpu::GetCPUFlag(int flag)
 	{
 		return (State.F & flag) != 0;
 	}
 
-	void Cpu::setCPUFlag(int flag, bool enable)
+	void Cpu::SetCPUFlag(int flag, bool enable)
 	{
 		if (enable)
 			State.F |= flag;
@@ -2200,9 +2200,9 @@ namespace Core
 	{
 		reg++;
 
-		setCPUFlag(FLAG_ZERO, (reg == 0));
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, (reg & 0x0F) == 0x00);
+		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, (reg & 0x0F) == 0x00);
 	}
 
 	void Cpu::instruction_inc_hl()
@@ -2216,9 +2216,9 @@ namespace Core
 	{
 		reg--;
 
-		setCPUFlag(FLAG_ZERO, (reg == 0));
-		setCPUFlag(FLAG_SUBTRACT, true);
-		setCPUFlag(FLAG_HALF_CARRY, (reg & 0x0F) == 0x0F);
+		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_SUBTRACT, true);
+		SetCPUFlag(FLAG_HALF_CARRY, (reg & 0x0F) == 0x0F);
 	}
 
 	void Cpu::instruction_dec_hl()
@@ -2234,10 +2234,10 @@ namespace Core
 		uint8_t result = static_cast<uint8_t>(fullResult);
 
 		// Update flags
-		setCPUFlag(FLAG_ZERO, result == 0);
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (reg & 0x0F) > 0x0F));
-		setCPUFlag(FLAG_CARRY, (fullResult > 0xFFFF));
+		SetCPUFlag(FLAG_ZERO, result == 0);
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (reg & 0x0F) > 0x0F));
+		SetCPUFlag(FLAG_CARRY, (fullResult > 0xFFFF));
 
 		State.A = result;
 	}
@@ -2251,15 +2251,15 @@ namespace Core
 
 	void Cpu::instruction_adc_reg(uint8_t& reg)
 	{
-		bool carry = getCPUFlag(FLAG_CARRY);
+		bool carry = GetCPUFlag(FLAG_CARRY);
 		uint16_t fullResult = State.A + reg + (carry ? 1 : 0);
 		uint8_t result = static_cast<uint8_t>(fullResult);
 
 		// Update flags
-		setCPUFlag(FLAG_ZERO, result == 0);
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, (State.A & 0xF) + (reg & 0xF) + (carry ? 1 : 0) > 0xF);
-		setCPUFlag(FLAG_CARRY, (fullResult > 0xFF));
+		SetCPUFlag(FLAG_ZERO, result == 0);
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, (State.A & 0xF) + (reg & 0xF) + (carry ? 1 : 0) > 0xF);
+		SetCPUFlag(FLAG_CARRY, (fullResult > 0xFF));
 
 		State.A = result;
 	}
@@ -2276,10 +2276,10 @@ namespace Core
 		uint8_t result = State.A - reg;
 
 		// Update flags
-		setCPUFlag(FLAG_ZERO, result == 0);
-		setCPUFlag(FLAG_SUBTRACT, true);
-		setCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) - (reg & 0x0F) < 0);
-		setCPUFlag(FLAG_CARRY, State.A < reg);
+		SetCPUFlag(FLAG_ZERO, result == 0);
+		SetCPUFlag(FLAG_SUBTRACT, true);
+		SetCPUFlag(FLAG_HALF_CARRY, (State.A & 0x0F) - (reg & 0x0F) < 0);
+		SetCPUFlag(FLAG_CARRY, State.A < reg);
 
 		State.A = result;
 	}
@@ -2293,14 +2293,14 @@ namespace Core
 
 	void Cpu::instruction_sbc_reg(uint8_t& reg)
 	{
-		bool carry = getCPUFlag(FLAG_CARRY);
+		bool carry = GetCPUFlag(FLAG_CARRY);
 		int32_t fullResult = State.A - reg - (carry ? 1 : 0);
 		uint8_t result = static_cast<uint8_t>(fullResult);
 
-		setCPUFlag(FLAG_ZERO, result == 0);
-		setCPUFlag(FLAG_SUBTRACT, true);
-		setCPUFlag(FLAG_HALF_CARRY, (State.A & 0xF) - (reg & 0xF) - carry < 0);
-		setCPUFlag(FLAG_CARRY, fullResult < 0);
+		SetCPUFlag(FLAG_ZERO, result == 0);
+		SetCPUFlag(FLAG_SUBTRACT, true);
+		SetCPUFlag(FLAG_HALF_CARRY, (State.A & 0xF) - (reg & 0xF) - carry < 0);
+		SetCPUFlag(FLAG_CARRY, fullResult < 0);
 
 		State.A = result;
 	}
@@ -2316,10 +2316,10 @@ namespace Core
 	{
 		State.A = State.A & reg;
 
-		setCPUFlag(FLAG_ZERO, State.A == 0);
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, true);
-		setCPUFlag(FLAG_CARRY, false);
+		SetCPUFlag(FLAG_ZERO, State.A == 0);
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, true);
+		SetCPUFlag(FLAG_CARRY, false);
 	}
 
 	void Cpu::instruction_and_hl()
@@ -2333,10 +2333,10 @@ namespace Core
 	{
 		State.A = State.A ^ reg;
 
-		setCPUFlag(FLAG_ZERO, State.A == 0);
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, false);
-		setCPUFlag(FLAG_CARRY, false);
+		SetCPUFlag(FLAG_ZERO, State.A == 0);
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_CARRY, false);
 	}
 
 	void Cpu::instruction_xor_hl()
@@ -2350,10 +2350,10 @@ namespace Core
 	{
 		State.A = State.A | reg;
 
-		setCPUFlag(FLAG_ZERO, State.A == 0);
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, false);
-		setCPUFlag(FLAG_CARRY, false);
+		SetCPUFlag(FLAG_ZERO, State.A == 0);
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_CARRY, false);
 	}
 
 	void Cpu::instruction_or_hl()
@@ -2365,10 +2365,10 @@ namespace Core
 
 	void Cpu::instruction_cp_reg(uint8_t& reg)
 	{
-		setCPUFlag(FLAG_ZERO, State.A == reg);
-		setCPUFlag(FLAG_SUBTRACT, true);
-		setCPUFlag(FLAG_HALF_CARRY, (State.A & 0xF) - (reg & 0xF) < 0);
-		setCPUFlag(FLAG_CARRY, State.A < reg);
+		SetCPUFlag(FLAG_ZERO, State.A == reg);
+		SetCPUFlag(FLAG_SUBTRACT, true);
+		SetCPUFlag(FLAG_HALF_CARRY, (State.A & 0xF) - (reg & 0xF) < 0);
+		SetCPUFlag(FLAG_CARRY, State.A < reg);
 	}
 
 	void Cpu::instruction_cp_hl()
@@ -2393,9 +2393,9 @@ namespace Core
 		uint32_t fullResult = State.HL + reg;
 		uint16_t result = static_cast<uint16_t>(fullResult);
 
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, (State.HL ^ reg ^ (fullResult & 0xFFFF)) & 0x1000);
-		setCPUFlag(FLAG_CARRY, fullResult > 0xFFFF);
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, (State.HL ^ reg ^ (fullResult & 0xFFFF)) & 0x1000);
+		SetCPUFlag(FLAG_CARRY, fullResult > 0xFFFF);
 
 		State.HL = result;
 	}
@@ -2405,26 +2405,26 @@ namespace Core
 		int8_t offset = e8;
 		uint16_t result = popSP() + offset + 1;
 
-		setCPUFlag(FLAG_ZERO, false);
-		setCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_ZERO, false);
+		SetCPUFlag(FLAG_SUBTRACT, false);
 		// TODO!
-		//setCPUFlag(FLAG_HALF_CARRY, ((cpu->sp.read() ^ offset ^ (result & 0xFFFF)) & 0x10) == 0x10);
-		//setCPUFlag(FLAG_CARRY, ((cpu->sp.read() ^ offset ^ (result & 0xFFFF)) & 0x100) == 0x100);
+		//SetCPUFlag(FLAG_HALF_CARRY, ((cpu->sp.read() ^ offset ^ (result & 0xFFFF)) & 0x10) == 0x10);
+		//SetCPUFlag(FLAG_CARRY, ((cpu->sp.read() ^ offset ^ (result & 0xFFFF)) & 0x100) == 0x100);
 
 		pushSP(result);
 	}
 
 	void Cpu::instruction_rlc_reg(uint8_t& reg)
 	{
-		bool oldCarry = getCPUFlag(FLAG_CARRY);
+		bool oldCarry = GetCPUFlag(FLAG_CARRY);
 
-		setCPUFlag(FLAG_CARRY, (reg & 0x80) != 0);
+		SetCPUFlag(FLAG_CARRY, (reg & 0x80) != 0);
 
 		reg = (reg << 1) | oldCarry;
 
-		setCPUFlag(FLAG_ZERO, (reg == 0));
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
 	void Cpu::instruction_rlc_hl()
@@ -2436,13 +2436,13 @@ namespace Core
 
 	void Cpu::instruction_rrc_reg(uint8_t& reg)
 	{
-		setCPUFlag(FLAG_CARRY, (reg & 0x01) != 0);
+		SetCPUFlag(FLAG_CARRY, (reg & 0x01) != 0);
 
-		reg = (reg >> 1) | (getCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
+		reg = (reg >> 1) | (GetCPUFlag(FLAG_CARRY) ? 0x80 : 0x00);
 
-		setCPUFlag(FLAG_ZERO, (reg == 0));
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
 	void Cpu::instruction_rrc_hl()
@@ -2455,16 +2455,16 @@ namespace Core
 	void Cpu::instruction_rl_reg(uint8_t& reg)
 	{
 		// Rotate left through carry
-		bool carry = getCPUFlag(FLAG_CARRY);
+		bool carry = GetCPUFlag(FLAG_CARRY);
 		uint8_t temp = (reg << 1) | (carry ? 1 : 0);
 		carry = (reg & 0x80) != 0;
 		reg = temp;
 
 		// Update flags
-		setCPUFlag(FLAG_ZERO, (reg == 0));
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, false);
-		setCPUFlag(FLAG_CARRY, carry);
+		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_CARRY, carry);
 	}
 
 	void Cpu::instruction_rl_hl()
@@ -2477,13 +2477,13 @@ namespace Core
 	void Cpu::instruction_rr_reg(uint8_t& reg)
 	{
 		bool oldCarry = (reg & 0x01) != 0;
-		setCPUFlag(FLAG_CARRY, oldCarry);
+		SetCPUFlag(FLAG_CARRY, oldCarry);
 
 		reg = (reg >> 1) | (oldCarry ? 0x80 : 0x00);
 
-		setCPUFlag(FLAG_ZERO, (reg == 0));
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
 	void Cpu::instruction_rr_hl()
@@ -2495,13 +2495,13 @@ namespace Core
 
 	void Cpu::instruction_sla_reg(uint8_t& reg)
 	{
-		setCPUFlag(FLAG_CARRY, (reg & 0x80) != 0);
+		SetCPUFlag(FLAG_CARRY, (reg & 0x80) != 0);
 
 		reg = reg << 1;
 
-		setCPUFlag(FLAG_ZERO, (reg == 0));
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
 	void Cpu::instruction_sla_hl()
@@ -2513,13 +2513,13 @@ namespace Core
 
 	void Cpu::instruction_sra_reg(uint8_t& reg)
 	{
-		setCPUFlag(FLAG_CARRY, (reg & 0x80) != 0);
+		SetCPUFlag(FLAG_CARRY, (reg & 0x80) != 0);
 
 		reg = (reg >> 1) | (reg & 0x80);
 
-		setCPUFlag(FLAG_ZERO, (reg == 0));
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
 	void Cpu::instruction_sra_hl()
@@ -2533,10 +2533,10 @@ namespace Core
 	{
 		reg = ((reg & 0x0F) << 4) | ((reg & 0xF0) >> 4);
 
-		setCPUFlag(FLAG_ZERO, (reg == 0));
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, false);
-		setCPUFlag(FLAG_CARRY, false);
+		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_CARRY, false);
 	}
 
 	void Cpu::instruction_swap_hl()
@@ -2548,13 +2548,13 @@ namespace Core
 
 	void Cpu::instruction_srl_reg(uint8_t& reg)
 	{
-		setCPUFlag(FLAG_CARRY, (reg & 0x01) != 0);
+		SetCPUFlag(FLAG_CARRY, (reg & 0x01) != 0);
 
 		reg = reg >> 1;
 
-		setCPUFlag(FLAG_ZERO, (reg == 0));
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, false);
 	}
 
 	void Cpu::instruction_srl_hl()
@@ -2566,9 +2566,9 @@ namespace Core
 
 	void Cpu::instruction_bit_bit_reg(uint8_t& reg, uint8_t bit)
 	{
-		setCPUFlag(FLAG_ZERO, (reg & (1 << bit)) == 0);
-		setCPUFlag(FLAG_SUBTRACT, false);
-		setCPUFlag(FLAG_HALF_CARRY, true);
+		SetCPUFlag(FLAG_ZERO, (reg & (1 << bit)) == 0);
+		SetCPUFlag(FLAG_SUBTRACT, false);
+		SetCPUFlag(FLAG_HALF_CARRY, true);
 	}
 
 	void Cpu::instruction_bit_bit_hl(uint8_t bit)

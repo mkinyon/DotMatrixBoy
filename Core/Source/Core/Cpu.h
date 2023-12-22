@@ -85,6 +85,9 @@ namespace Core
 		std::map<uint16_t, std::string> DisassebleAll();
 		std::string GetCurrentInstruction();
 
+		bool GetCPUFlag(int flag);
+		void SetCPUFlag(int flag, bool enable);
+
 	private:
 		void process16bitInstruction(uint16_t opcode, Cpu::m_CpuState& state);
 		void processInterrupts();
@@ -178,9 +181,6 @@ namespace Core
 
 		void pushSP(uint16_t value);
 		uint16_t popSP();
-
-		bool getCPUFlag(int flag);
-		void setCPUFlag(int flag, bool enable);
 	};
 
 }
