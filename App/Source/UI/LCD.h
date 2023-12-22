@@ -4,11 +4,11 @@
 
 #include "SDL.h"
 #include "imgui.h"
-#include "ImguiWindowBase.h"
+#include "ImguiWidgetBase.h"
 
 namespace App
 {
-	class LCD : public ImguiWindowBase
+	class LCD : public ImguiWidgetBase
 	{
 	public:
 		LCD(uint8_t* lcdPixels, SDL_Renderer* renderer);

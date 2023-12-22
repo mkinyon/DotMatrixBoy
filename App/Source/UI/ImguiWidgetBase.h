@@ -5,10 +5,10 @@
 
 namespace App
 {
-	class ImguiWindowBase
+	class ImguiWidgetBase
 	{
 	public:
-		ImguiWindowBase(const char* title) : title(title) {}
+		ImguiWidgetBase(const char* title) : title(title) {}
 
 		// Function to render the window content
 		virtual void RenderContent() = 0;

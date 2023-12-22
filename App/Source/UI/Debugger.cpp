@@ -2,7 +2,7 @@
 
 namespace App
 {
-	Debugger::Debugger(Core::GameBoy& gb) : ImguiWindowBase("CPU Debugger"), gameboy(gb)
+	Debugger::Debugger(Core::GameBoy& gb) : ImguiWidgetBase("CPU Debugger"), gameboy(gb)
 	{
 		instructions = gameboy.cpu.DisassebleAll();
 	}
