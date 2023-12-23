@@ -181,6 +181,8 @@ namespace Core
 
 		void pushSP(uint16_t value);
 		uint16_t popSP();
+
+		int getClockSelect();
 	};
 
 }

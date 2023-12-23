@@ -15,7 +15,7 @@ namespace App
 		ImGui::SeparatorText("CPU/PPU State");
 
 		// CPU Info
-		ImGui::BeginChild("L", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 120), ImGuiChildFlags_None);
+		ImGui::BeginChild("L", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 150), ImGuiChildFlags_None);
 		ImGui::Text("PC: $%04x", gameboy.cpu.State.PC);
 		ImGui::Text("SP: $%04x", gameboy.cpu.State.SP);
 		ImGui::Text("AF: $%04x", gameboy.cpu.State.AF);
@@ -28,7 +28,7 @@ namespace App
 		ImGui::SameLine();
 
 		// CPU Flags
-		ImGui::BeginChild("LM", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 120), ImGuiChildFlags_None);
+		ImGui::BeginChild("LM", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 150), ImGuiChildFlags_None);
 		// Flags
 		// todo: the cpu flags are currently read only but should be read/write
 		bool z = gameboy.cpu.GetCPUFlag(Core::FLAG_ZERO); ImGui::Checkbox("Z", &z);
@@ -40,7 +40,7 @@ namespace App
 		ImGui::SameLine();
 
 		// PPU Info
-		ImGui::BeginChild("RM", ImVec2(ImGui::GetContentRegionAvail().x * 0.50f, 120), ImGuiChildFlags_None);
+		ImGui::BeginChild("RM", ImVec2(ImGui::GetContentRegionAvail().x * 0.50f, 150), ImGuiChildFlags_None);
 		if (gameboy.ppu.GetMode() == Core::MODE_0_HBLANK)  ImGui::Text("Mode: MODE_0_HBLANK");
 		if (gameboy.ppu.GetMode() == Core::MODE_1_VBLANK)  ImGui::Text("Mode: MODE_1_VBLANK");
 		if (gameboy.ppu.GetMode() == Core::MODE_2_OAMSCAN) ImGui::Text("Mode: MODE_2_OAMSCAN");
@@ -51,11 +51,16 @@ namespace App
 		
 		ImGui::Text("SCX: %1d", gameboy.ReadFromMemoryMap(Core::HW_SCX_VIEWPORT_X_POS));
 		ImGui::Text("SCY: %1d", gameboy.ReadFromMemoryMap(Core::HW_SCY_VIEWPORT_Y_POS));
+
+		ImGui::Text("DIV: %2d", gameboy.ReadFromMemoryMap(Core::HW_DIV_DIVIDER_REGISTER));
+		ImGui::Text("TIMA: %1d", gameboy.ReadFromMemoryMap(Core::HW_TIMA_TIMER_COUNTER));
+		ImGui::Text("TMA: %1d", gameboy.ReadFromMemoryMap(Core::HW_TMA_TIMER_MODULO));
+		ImGui::Text("TAC: %1d", gameboy.ReadFromMemoryMap(Core::HW_TAC_TIMER_CONTROL));
 		ImGui::EndChild();
 
 		ImGui::SameLine();
 
-		ImGui::BeginChild("R", ImVec2(ImGui::GetContentRegionAvail().x, 120), ImGuiChildFlags_None);
+		ImGui::BeginChild("R", ImVec2(ImGui::GetContentRegionAvail().x, 150), ImGuiChildFlags_None);
 		ImGui::Text("LY (Scanline): %1d", gameboy.ReadFromMemoryMap(Core::HW_LY_LCD_Y_COORD));
 		ImGui::Text("LYC: %1d", gameboy.ReadFromMemoryMap(Core::HW_LYC_LY_COMPARE));
 		

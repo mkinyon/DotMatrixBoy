@@ -74,11 +74,11 @@ namespace Core
 	/********************************************************************************************
 		CPU Specific
 	*********************************************************************************************/
-#define DEST_ADDRESS_VBLANK 0x0040 
-#define DEST_ADDRESS_LCD_STAT 0x0048
-#define DEST_ADDRESS_TIMER 0x0050
-#define DEST_ADDRESS_SERIAL 0x0058
-#define DEST_ADDRESS_JOYPAD 0x0060
+	#define DEST_ADDRESS_VBLANK 0x0040 
+	#define DEST_ADDRESS_LCD_STAT 0x0048
+	#define DEST_ADDRESS_TIMER 0x0050
+	#define DEST_ADDRESS_SERIAL 0x0058
+	#define DEST_ADDRESS_JOYPAD 0x0060
 
 	typedef enum
 	{
@@ -104,21 +104,42 @@ namespace Core
 		IF_TIMER = (0x01 << 2),
 		IF_SERIAL = (0x01 << 3),
 		IF_JOYPAD = (0x01 << 4),
-	} InterruptFlags;
+	} Interrupt_Flags;
+
+	typedef enum
+	{
+		TAC_CLOCK_SELECT_LBIT = 0x01, // this is two bits !!
+		TAC_CLOCK_SELECT_HBIT = (0x01 << 1),
+		TAC_ENABLE = (0x01 << 2)
+	} TimerControl_Flags;
+
+	typedef enum
+	{
+		CLOCK_00 = 0x00,
+		CLOCK_01 = 0x01,
+		CLOCK_10 = 0x02,
+		CLOCK_11 = 0x03
+	} Clock_Select;
+
+	#define CLOCK_SPEED 16384
+	#define CLOCK_SPEED_00 CLOCK_SPEED / 1024
+	#define CLOCK_SPEED_01 CLOCK_SPEED / 16
+	#define CLOCK_SPEED_10 CLOCK_SPEED / 64
+	#define CLOCK_SPEED_11 CLOCK_SPEED / 256
 
 
 	/********************************************************************************************
 		PPU Specific
 	*********************************************************************************************/
 
-#define LCD_WIDTH  160
-#define LCD_HEIGHT 144
-#define FIFO_SIZE  8
+	#define LCD_WIDTH  160
+	#define LCD_HEIGHT 144
+	#define FIFO_SIZE  8
 
-#define OAM_CYCLES     80
-#define VBLANK_CYCLES  456
-#define HBLANK_CYCLES  204
-#define DRAWING_CYCLES 173
+	#define OAM_CYCLES     80
+	#define VBLANK_CYCLES  456
+	#define HBLANK_CYCLES  204
+	#define DRAWING_CYCLES 173
 
 	typedef enum
 	{

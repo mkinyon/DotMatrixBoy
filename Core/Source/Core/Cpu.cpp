@@ -8,7 +8,15 @@
 
 namespace Core
 {
-	Cpu::Cpu(GameBoy& gb) : gb(gb) {}
+	Cpu::Cpu(GameBoy& gb) : gb(gb)
+	{
+		// Check if the log file already exists
+		if (std::filesystem::exists("cpu.txt")) {
+			// If it exists, delete it
+			std::filesystem::remove("cpu.txt");
+		}
+	}
+
 	Cpu::~Cpu() {}
 
 	int linecount = 0;
@@ -17,6 +25,21 @@ namespace Core
 	void Cpu::Clock()
 	{
 		Cpu::m_TotalCycles++;
+
+		// increment DIV register
+		if (Cpu::m_TotalCycles % 16384 == 0)
+		{
+			uint8_t div = gb.ReadFromMemoryMap(HW_DIV_DIVIDER_REGISTER);
+			gb.WriteToMemoryMap(HW_DIV_DIVIDER_REGISTER, ++div);
+		}
+
+		// increment TIMA register
+		if (Cpu::m_TotalCycles % getClockSelect() == 0)
+		{
+			uint8_t div = gb.ReadFromMemoryMap(HW_TIMA_TIMER_COUNTER);
+			gb.WriteToMemoryMap(HW_TIMA_TIMER_COUNTER, ++div);
+		}
+
 
 		// Each instruction takes a certain amount of cycles to complete so
 		// if there are still cycles remaining then we shoud just decrement 
@@ -346,12 +369,42 @@ namespace Core
 				}
 
 				// "JP NC a16" B:3 C:1612 FLAGS: - - - -
-				case 0xD2: { unimplementedInstruction(State, *opcode); break; }
+				case 0xD2:
+				{
+					if (!GetCPUFlag(FLAG_CARRY))
+					{
+						uint16_t offset = (opcode[2] << 8) | (opcode[1]);
+						State.PC = offset;
 
-						 // "CALL NC a16" B:3 C:2412 FLAGS: - - - -
-				case 0xD4: { unimplementedInstruction(State, *opcode); break; }
+						m_cycles = 16;
+						break;
+					}
 
-						 // "RST $10" B:1 C:16 FLAGS: - - - -
+					State.PC += 2;
+
+					m_cycles = 12;
+					break;
+				}
+
+				// "CALL NC a16" B:3 C:2412 FLAGS: - - - -
+				case 0xD4:
+				{
+					if (!GetCPUFlag(FLAG_CARRY))
+					{
+						pushSP(State.PC += 2);
+						State.PC = (opcode[2] << 8) | (opcode[1]);
+
+						m_cycles = 24;
+						break;
+					}
+
+					State.PC += 2;
+
+					m_cycles = 12;
+					break;
+				}
+
+				// "RST $10" B:1 C:16 FLAGS: - - - -
 				case 0xD7:
 				{
 					pushSP(State.PC);
@@ -386,10 +439,40 @@ namespace Core
 				}
 
 				// "JP C a16" B:3 C:1612 FLAGS: - - - -
-				case 0xDA: { unimplementedInstruction(State, *opcode); break; }
+				case 0xDA:
+				{
+					if (GetCPUFlag(FLAG_CARRY))
+					{
+						uint16_t offset = (opcode[2] << 8) | (opcode[1]);
+						State.PC = offset;
+
+						m_cycles = 16;
+						break;
+					}
+
+					State.PC += 2;
+
+					m_cycles = 12;
+					break;
+				}
 
 						 // "CALL C a16" B:3 C:2412 FLAGS: - - - -
-				case 0xDC: { unimplementedInstruction(State, *opcode); break; }
+				case 0xDC:
+				{
+					if (GetCPUFlag(FLAG_CARRY))
+					{
+						pushSP(State.PC += 2);
+						State.PC = (opcode[2] << 8) | (opcode[1]);
+
+						m_cycles = 24;
+						break;
+					}
+
+					State.PC += 2;
+
+					m_cycles = 12;
+					break;
+				}
 
 						 // "RST $18" B:1 C:16 FLAGS: - - - -
 				case 0xDF:
@@ -462,6 +545,7 @@ namespace Core
 				case 0x12: instruction_ld_addr_reg(State.DE, State.A); m_cycles = 8; break;
 
 					// "LD reg [addr]" B:1 C:8 FLAGS: - - - -
+				case 0x0A: instruction_ld_reg_addr(State.A, State.BC); m_cycles = 8; break;
 				case 0x1A: instruction_ld_reg_addr(State.A, State.DE); m_cycles = 8; break;
 				case 0x46: instruction_ld_reg_addr(State.B, State.HL); m_cycles = 8; break;
 				case 0x4E: instruction_ld_reg_addr(State.C, State.HL); m_cycles = 8; break;
@@ -953,7 +1037,7 @@ namespace Core
 				case 0x39: instruction_add_reg16(State.SP); m_cycles = 8; break;
 
 					// "ADD SP e8" B:2 C:16 FLAGS: 0 0 H C
-				case 0xE8: instruction_add_sp_e8(opcode[1]); m_cycles = 8; break;
+				case 0xE8: instruction_add_sp_e8(opcode[1]); State.PC++; m_cycles = 16; break;
 
 					/********************************************************************************************
 						8-bit Shift. Rotate and Bit Instructions
@@ -2461,28 +2545,28 @@ namespace Core
 	void Cpu::instruction_add_sp_e8(uint8_t& e8)
 	{
 		int8_t offset = e8;
-		uint16_t result = popSP() + offset + 1;
+		int32_t fullResult = State.SP + offset;
+		uint16_t result = static_cast<uint16_t>(fullResult);
 
 		SetCPUFlag(FLAG_ZERO, false);
 		SetCPUFlag(FLAG_SUBTRACT, false);
-		// TODO!
-		//SetCPUFlag(FLAG_HALF_CARRY, ((cpu->sp.read() ^ offset ^ (result & 0xFFFF)) & 0x10) == 0x10);
-		//SetCPUFlag(FLAG_CARRY, ((cpu->sp.read() ^ offset ^ (result & 0xFFFF)) & 0x100) == 0x100);
 
-		pushSP(result);
+		SetCPUFlag(FLAG_HALF_CARRY, ((State.SP ^ offset ^ (fullResult & 0xFFFF)) & 0x10) == 0x10);
+		SetCPUFlag(FLAG_CARRY, ((State.SP ^ offset ^ (fullResult & 0xFFFF)) & 0x100) == 0x100);
+
+		State.SP = result;
 	}
 
 	void Cpu::instruction_rlc_reg(uint8_t& reg)
 	{
-		bool oldCarry = GetCPUFlag(FLAG_CARRY);
+		uint8_t result = (reg << 1) | ((reg >> 7) & 0x1);
 
-		SetCPUFlag(FLAG_CARRY, (reg & 0x80) != 0);
-
-		reg = (reg << 1) | oldCarry;
-
-		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_ZERO, result == 0);
 		SetCPUFlag(FLAG_SUBTRACT, false);
 		SetCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_CARRY, ((reg >> 7) & 0x1) != 0);
+
+		reg = result;
 	}
 
 	void Cpu::instruction_rlc_hl()
@@ -2572,13 +2656,14 @@ namespace Core
 
 	void Cpu::instruction_sra_reg(uint8_t& reg)
 	{
-		SetCPUFlag(FLAG_CARRY, (reg & 0x80) != 0);
+		uint8_t result = (reg & 0x80) | (reg >> 1);
 
-		reg = (reg >> 1) | (reg & 0x80);
-
-		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_ZERO, result == 0);
 		SetCPUFlag(FLAG_SUBTRACT, false);
 		SetCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_CARRY, ((reg & 0x1) != 0));
+
+		reg = result;
 	}
 
 	void Cpu::instruction_sra_hl()
@@ -2659,5 +2744,24 @@ namespace Core
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_set_bit_reg(value, bit);
 		gb.WriteToMemoryMap(State.HL, value);
+	}
+
+	int Cpu::getClockSelect()
+	{
+		bool lowBit = gb.ReadFromMemoryMapRegister(HW_TAC_TIMER_CONTROL, TimerControl_Flags::TAC_CLOCK_SELECT_LBIT);
+		bool highBit = gb.ReadFromMemoryMapRegister(HW_TAC_TIMER_CONTROL, TimerControl_Flags::TAC_CLOCK_SELECT_HBIT);
+
+		uint8_t value = 0;
+		value |= lowBit ? 0x01 : 0;
+		value |= highBit ? 0x02 : 0;
+
+		if (value == 0x00)
+			return CLOCK_SPEED_00;
+		if (value == 0x01)
+			return CLOCK_SPEED_01;
+		if (value == 0x10)
+			return CLOCK_SPEED_10;
+		if (value == 0x11)
+			return CLOCK_SPEED_11;
 	}
 }
