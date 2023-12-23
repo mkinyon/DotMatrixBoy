@@ -28,11 +28,11 @@ std::shared_ptr<Core::Cartridge> cart;
 bool isPaused = true;
 bool enableBootRom = false;
 //const char* romName = "../Roms/hello-world.gb";
-//const char* romName = "../Roms/02-interrupts.gb";
-const char* romName = "../Roms/tetris.gb";
+const char* romName = "../Roms/01-special.gb";
+//const char* romName = "../Roms/tetris.gb";
 
 // Main code
-int main(int, char**)
+int main(int argv, char** args)
 {
     window.Initialize();
 

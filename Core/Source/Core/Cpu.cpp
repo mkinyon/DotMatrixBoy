@@ -2,10 +2,17 @@
 #include "GameBoy.h"
 #include "Defines.h"
 
+#include <fstream>
+#include <filesystem>
+#include <sstream>
+
 namespace Core
 {
 	Cpu::Cpu(GameBoy& gb) : gb(gb) {}
 	Cpu::~Cpu() {}
+
+	int linecount = 0;
+	std::ostringstream logBuffer;
 
 	void Cpu::Clock()
 	{
@@ -22,8 +29,37 @@ namespace Core
 			return;
 		}
 
+		linecount++;
+
 		// read opcode from memory
 		uint8_t* opcode = &gb.ReadFromMemoryMap(State.PC);
+
+		logBuffer << std::hex << std::setfill('0') << std::uppercase <<
+			"A: "   << std::setw(2) << static_cast<int>(State.A) <<
+			" F: "  << std::setw(2) << static_cast<int>(State.F) <<
+			" B: "  << std::setw(2) << static_cast<int>(State.B) <<
+			" C: "  << std::setw(2) << static_cast<int>(State.C) <<
+			" D: "  << std::setw(2) << static_cast<int>(State.D) <<
+			" E: "  << std::setw(2) << static_cast<int>(State.E) <<
+			" H: "  << std::setw(2) << static_cast<int>(State.H) <<
+			" L: "  << std::setw(2) << static_cast<int>(State.L) <<
+			" SP: " << std::setw(4) << static_cast<int>(State.SP) <<
+			" PC: 00:" << std::setw(4) << static_cast<int>(State.PC) <<
+			" (" 
+			<< std::setw(2) << static_cast<int>(opcode[0]) << " "
+			<< std::setw(2) << static_cast<int>(opcode[1]) << " " 
+			<< std::setw(2) << static_cast<int>(opcode[2]) << " " 
+			<< std::setw(2) << static_cast<int>(opcode[3]) << ")" << std::endl;
+
+		if (linecount >= 10000)
+		{
+			std::ofstream outFile("cpu.txt", std::ios::out | std::ios::app);
+			outFile << logBuffer.str();
+			logBuffer.str("");  // Clear the buffer
+			linecount = 0;      // Reset line count
+			outFile.close();
+		}
+		
 
 		// write disassembly to console
 		//Disassemble(opcode, State.PC);
@@ -162,7 +198,22 @@ namespace Core
 				}
 
 				// "JP NZ a16" B:3 C:1612 FLAGS: - - - -
-				case 0xC2: { unimplementedInstruction(State, *opcode); break; }
+				case 0xC2:
+				{
+					if (!GetCPUFlag(FLAG_ZERO))
+					{
+						uint16_t offset = (opcode[2] << 8) | (opcode[1]);
+						State.PC = offset;
+
+						m_cycles = 16;
+						break;
+					}
+
+					State.PC += 2;
+
+					m_cycles = 12;
+					break;
+				}
 
 						 // "JP a16" B:3 C:16 FLAGS: - - - -
 				case 0xC3:
@@ -180,6 +231,8 @@ namespace Core
 					if (!GetCPUFlag(FLAG_ZERO))
 					{
 						pushSP(State.PC += 2);
+						State.PC = (opcode[2] << 8) | (opcode[1]);
+
 						m_cycles = 24;
 						break;
 					}
@@ -588,7 +641,13 @@ namespace Core
 				// "LDH A [a8]" B:2 C:12 FLAGS: - - - -
 				case 0xF0:
 				{
-					State.A = gb.ReadFromMemoryMap(0xFF00 + opcode[1]);
+					// just a temp hack to test the cpu output
+					uint8_t test = opcode[1];
+					if (opcode[1] == 0x44)
+						State.A = 0x90;
+					else
+						State.A = gb.ReadFromMemoryMap(0xFF00 + opcode[1]);
+
 					State.PC++;
 
 					m_cycles = 12;
@@ -694,7 +753,7 @@ namespace Core
 				// "POP AF" B:1 C:12 FLAGS: Z N H C
 				case 0xF1:
 				{
-					State.AF = popSP();
+					State.AF = (popSP() & 0xFFF0);
 
 					m_cycles = 12;
 					break;
@@ -972,7 +1031,7 @@ namespace Core
 				// "DAA" B:1 C:4 FLAGS: Z - 0 C
 				case 0x27:
 				{
-					int8_t result = State.A;
+					int32_t result = State.A;
 					if (GetCPUFlag(FLAG_SUBTRACT))
 					{
 						if (GetCPUFlag(FLAG_HALF_CARRY))
@@ -2236,7 +2295,7 @@ namespace Core
 		SetCPUFlag(FLAG_ZERO, result == 0);
 		SetCPUFlag(FLAG_SUBTRACT, false);
 		SetCPUFlag(FLAG_HALF_CARRY, ((State.A & 0x0F) + (reg & 0x0F) > 0x0F));
-		SetCPUFlag(FLAG_CARRY, (fullResult > 0xFFFF));
+		SetCPUFlag(FLAG_CARRY, (fullResult > 0xFF));
 
 		State.A = result;
 	}
@@ -2475,14 +2534,15 @@ namespace Core
 
 	void Cpu::instruction_rr_reg(uint8_t& reg)
 	{
-		bool oldCarry = (reg & 0x01) != 0;
-		SetCPUFlag(FLAG_CARRY, oldCarry);
+		uint8_t carry = GetCPUFlag(FLAG_CARRY) ? 0x80 : 0;
+		uint8_t result = carry | (reg >> 1);
 
-		reg = (reg >> 1) | (oldCarry ? 0x80 : 0x00);
-
-		SetCPUFlag(FLAG_ZERO, (reg == 0));
+		SetCPUFlag(FLAG_ZERO, result == 0);
 		SetCPUFlag(FLAG_SUBTRACT, false);
 		SetCPUFlag(FLAG_HALF_CARRY, false);
+		SetCPUFlag(FLAG_CARRY, (reg & 0x1) != 0);
+
+		reg = result;
 	}
 
 	void Cpu::instruction_rr_hl()
