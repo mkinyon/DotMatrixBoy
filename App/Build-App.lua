@@ -1,5 +1,5 @@
 project "App"
-   kind "WindowedApp"
+   kind "ConsoleApp"
    language "C++"
    cppdialect "C++20"
    targetdir "Binaries/%{cfg.buildcfg}"
