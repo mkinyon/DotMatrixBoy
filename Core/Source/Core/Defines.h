@@ -14,7 +14,7 @@ namespace Core
 		HW_SB_SERIAL_TRANSFER_DATA = 0xFF01,
 		HW_SC_SERIAL_TRANSFER_CONTROL = 0xFF02,
 
-		HW_DIV_INTERRNAL_CLOCK_LOW = 0xFF03,
+		HW_DIV_DIVIDER_REGISTER_LOW = 0xFF03,
 		HW_DIV_DIVIDER_REGISTER = 0xFF04, // 16 bit
 		HW_TIMA_TIMER_COUNTER = 0xFF05,
 		HW_TMA_TIMER_MODULO = 0xFF06,
@@ -122,11 +122,10 @@ namespace Core
 		CLOCK_11 = 0x03
 	} Clock_Select;
 
-	#define CLOCK_SPEED 16384
-	#define CLOCK_SPEED_00 CLOCK_SPEED / 1024
-	#define CLOCK_SPEED_01 CLOCK_SPEED / 16
-	#define CLOCK_SPEED_10 CLOCK_SPEED / 64
-	#define CLOCK_SPEED_11 CLOCK_SPEED / 256
+	#define TIMA_CLOCK_SPEED_00 1024
+	#define TIMA_CLOCK_SPEED_01 16
+	#define TIMA_CLOCK_SPEED_10 64
+	#define TIMA_CLOCK_SPEED_11 256
 
 
 	/********************************************************************************************

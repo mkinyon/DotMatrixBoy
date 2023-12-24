@@ -52,10 +52,13 @@ namespace App
 		ImGui::Text("SCX: %1d", gameboy.ReadFromMemoryMap(Core::HW_SCX_VIEWPORT_X_POS));
 		ImGui::Text("SCY: %1d", gameboy.ReadFromMemoryMap(Core::HW_SCY_VIEWPORT_Y_POS));
 
-		ImGui::Text("DIV: %2d", gameboy.ReadFromMemoryMap(Core::HW_DIV_DIVIDER_REGISTER));
-		ImGui::Text("TIMA: %2d", gameboy.ReadFromMemoryMap(Core::HW_TIMA_TIMER_COUNTER));
-		ImGui::Text("TMA: %2d", gameboy.ReadFromMemoryMap(Core::HW_TMA_TIMER_MODULO));
-		ImGui::Text("TAC: %2d", gameboy.ReadFromMemoryMap(Core::HW_TAC_TIMER_CONTROL));
+		uint16_t internalClock = (gameboy.ReadFromMemoryMap(Core::HW_DIV_DIVIDER_REGISTER) << 8)
+			| gameboy.ReadFromMemoryMap(Core::HW_DIV_DIVIDER_REGISTER_LOW);
+
+		ImGui::Text("DIV: %04x", internalClock);
+		ImGui::Text("TIMA: %02x", gameboy.ReadFromMemoryMap(Core::HW_TIMA_TIMER_COUNTER));
+		ImGui::Text("TMA: %02x", gameboy.ReadFromMemoryMap(Core::HW_TMA_TIMER_MODULO));
+		ImGui::Text("TAC: %02x", gameboy.ReadFromMemoryMap(Core::HW_TAC_TIMER_CONTROL));
 		ImGui::EndChild();
 
 		ImGui::SameLine();

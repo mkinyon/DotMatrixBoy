@@ -26,21 +26,6 @@ namespace Core
 	{
 		Cpu::m_TotalCycles++;
 
-		// increment DIV register
-		if (Cpu::m_TotalCycles % 16384 == 0)
-		{
-			uint8_t div = gb.ReadFromMemoryMap(HW_DIV_DIVIDER_REGISTER);
-			gb.WriteToMemoryMap(HW_DIV_DIVIDER_REGISTER, ++div);
-		}
-
-		// increment TIMA register
-		if (Cpu::m_TotalCycles % getClockSelect() == 0)
-		{
-			uint8_t div = gb.ReadFromMemoryMap(HW_TIMA_TIMER_COUNTER);
-			gb.WriteToMemoryMap(HW_TIMA_TIMER_COUNTER, ++div);
-		}
-
-
 		// Each instruction takes a certain amount of cycles to complete so
 		// if there are still cycles remaining then we shoud just decrement 
 		// the cycles and return;
@@ -82,16 +67,13 @@ namespace Core
 		//	linecount = 0;      // Reset line count
 		//	outFile.close();
 		//}
-		
 
-		// write disassembly to console
-		//Disassemble(opcode, State.PC);
-
-		// increment program counter
-		State.PC++;
 
 		if (!m_isHalted)
 		{
+			// increment program counter
+			State.PC++;
+
 			switch (*opcode)
 			{
 				/********************************************************************************************
@@ -726,10 +708,10 @@ namespace Core
 				case 0xF0:
 				{
 					// just a temp hack to test the cpu output
-					//uint8_t test = opcode[1];
-					//if (opcode[1] == 0x44)
-					//	State.A = 0x90;
-					//else
+					uint8_t test = opcode[1];
+					if (opcode[1] == 0x44)
+						State.A = 0x90;
+					else
 						State.A = gb.ReadFromMemoryMap(0xFF00 + opcode[1]);
 
 					State.PC++;
@@ -1046,16 +1028,14 @@ namespace Core
 					// "RLCA" B:1 C:4 FLAGS: 0 0 0 C
 				case 0x07:
 				{
-					// Save the previous value of bit 7 for the carry flag
-					bool oldBit7 = (State.A & 0x80) != 0;
-
-					// Perform the rotation to the right through the carry flag
-					State.A = ((State.A << 1) | oldBit7);
+					uint8_t result = (State.A << 1) | ((State.A >> 7) & 0x1);
 
 					SetCPUFlag(FLAG_ZERO, false);
 					SetCPUFlag(FLAG_SUBTRACT, false);
 					SetCPUFlag(FLAG_HALF_CARRY, false);
-					SetCPUFlag(FLAG_CARRY, oldBit7);
+					SetCPUFlag(FLAG_CARRY, ((State.A >> 7) & 0x1) != 0);
+
+					State.A = result;
 
 					m_cycles = 4;
 					break;
@@ -1064,16 +1044,14 @@ namespace Core
 				// "RRCA" B:1 C:4 FLAGS: 0 0 0 C
 				case 0x0F:
 				{
-					// Get the least significant bit (bit 0) before the rotation
-					bool bit0 = (State.A & 0x01) != 0;
-
-					// Perform the rotation to the right through the carry flag
-					State.A = (State.A >> 1) | (bit0 << 7);
+					uint8_t result = ((State.A & 0x1) << 7) | (State.A >> 1);
 
 					SetCPUFlag(FLAG_ZERO, false);
 					SetCPUFlag(FLAG_SUBTRACT, false);
 					SetCPUFlag(FLAG_HALF_CARRY, false);
-					SetCPUFlag(FLAG_CARRY, bit0);
+					SetCPUFlag(FLAG_CARRY, (State.A & 0x1) != 0);
+
+					State.A = result;
 
 					m_cycles = 4;
 					break;
@@ -2757,12 +2735,51 @@ namespace Core
 		value |= highBit ? 0x02 : 0;
 
 		if (value == 0x00)
-			return CLOCK_SPEED_00;
+			return TIMA_CLOCK_SPEED_00;
 		if (value == 0x01)
-			return CLOCK_SPEED_01;
+			return TIMA_CLOCK_SPEED_01;
 		if (value == 0x10)
-			return CLOCK_SPEED_10;
+			return TIMA_CLOCK_SPEED_10;
 		if (value == 0x11)
-			return CLOCK_SPEED_11;
+			return TIMA_CLOCK_SPEED_11;
+	}
+
+	void Cpu::processTimers() 
+	{
+		// increment DIV register
+		uint16_t internalClock = (gb.ReadFromMemoryMap(HW_DIV_DIVIDER_REGISTER) << 8)
+			| gb.ReadFromMemoryMap(HW_DIV_DIVIDER_REGISTER_LOW);
+		internalClock++;
+
+		// if the div clock rolls over then we need to copy the value of TIMA to TMA
+		if (internalClock == 0xFFFF)
+		{
+			gb.WriteToMemoryMap(HW_TMA_TIMER_MODULO, HW_TIMA_TIMER_COUNTER);
+		}
+
+		// write updated DIV register
+		gb.WriteToMemoryMap(HW_DIV_DIVIDER_REGISTER, (internalClock & 0xFF00) >> 8);
+		gb.WriteToMemoryMap(HW_DIV_DIVIDER_REGISTER_LOW, internalClock & 0x00FF);
+
+		// now increment the TIMA register
+		uint8_t tima = gb.ReadFromMemoryMap(HW_TIMA_TIMER_COUNTER);
+
+		// the TIMA register ticks at a specific clock speed based on the TAC Timer Control register
+		if (internalClock % getClockSelect() == 0)
+		{
+			tima++;
+			gb.WriteToMemoryMap(HW_TIMA_TIMER_COUNTER, tima);
+		}
+
+		// if the TIMA register rolls over then we need to trigger an interrupt
+		if (tima == 0xFF)
+		{
+			gb.WriteToMemoryMap(HW_TIMA_TIMER_COUNTER, HW_TMA_TIMER_MODULO);
+
+			if (gb.ReadFromMemoryMapRegister(HW_TAC_TIMER_CONTROL, TAC_ENABLE))
+			{
+				gb.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_TIMER, true);
+			}
+		}
 	}
 }

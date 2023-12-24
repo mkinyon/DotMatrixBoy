@@ -183,6 +183,7 @@ namespace Core
 		uint16_t popSP();
 
 		int getClockSelect();
+		void processTimers();
 	};
 
 }

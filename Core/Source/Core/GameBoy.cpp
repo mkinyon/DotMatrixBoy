@@ -197,6 +197,14 @@ namespace Core
 		else if (address >= 0xFF00 && address <= 0xFF7F)
 		{
 			uint16_t offset = address - 0xFF00;
+
+			// writing to the DIV register will cause is to reset to zero 
+			if (address == 0xFF04)
+			{
+				hardwareIO[offset] = value;
+				hardwareIO[offset - 1] = value;
+			}
+			
 			hardwareIO[offset] = value;
 		}
 		// $FF80-$FFFE   Zero Page
