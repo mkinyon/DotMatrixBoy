@@ -140,9 +140,15 @@ namespace Core
 		// $0000-$7FFF   RES and Interrupts, cart header, cart data
 		if (address >= 0x0000 && address <= 0x7FFF)
 		{
-			// this should never happen
-			printf("Can't write to cartridge! Address: %04x Value: %02x \n", address, value);
-			//throw std::runtime_error("Can't write to cartridge!");
+			if (address >= 0x2000 && address <= 0x3FFF)
+			{
+				cart.CurrentBankNumber = value;
+			}
+			else
+			{
+				printf("Unmapped cart address Address: %04x Value: %02x \n", address, value);
+				//throw std::runtime_error("Can't write to cartridge!");
+			}
 		}
 		// $8000-$97FF   Character RAM
 		else if (address >= 0x8000 && address <= 0x97FF)

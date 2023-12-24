@@ -53,9 +53,9 @@ namespace App
 		ImGui::Text("SCY: %1d", gameboy.ReadFromMemoryMap(Core::HW_SCY_VIEWPORT_Y_POS));
 
 		ImGui::Text("DIV: %2d", gameboy.ReadFromMemoryMap(Core::HW_DIV_DIVIDER_REGISTER));
-		ImGui::Text("TIMA: %1d", gameboy.ReadFromMemoryMap(Core::HW_TIMA_TIMER_COUNTER));
-		ImGui::Text("TMA: %1d", gameboy.ReadFromMemoryMap(Core::HW_TMA_TIMER_MODULO));
-		ImGui::Text("TAC: %1d", gameboy.ReadFromMemoryMap(Core::HW_TAC_TIMER_CONTROL));
+		ImGui::Text("TIMA: %2d", gameboy.ReadFromMemoryMap(Core::HW_TIMA_TIMER_COUNTER));
+		ImGui::Text("TMA: %2d", gameboy.ReadFromMemoryMap(Core::HW_TMA_TIMER_MODULO));
+		ImGui::Text("TAC: %2d", gameboy.ReadFromMemoryMap(Core::HW_TAC_TIMER_CONTROL));
 		ImGui::EndChild();
 
 		ImGui::SameLine();
@@ -69,6 +69,8 @@ namespace App
 		
 		ImGui::Text("Dots This Frame: %1d", gameboy.ppu.m_TotalDotsThisFrame);
 		ImGui::Text("Total Frames: %1d", gameboy.ppu.m_TotalFrames);
+
+		ImGui::Text("JOY: %2d", gameboy.ReadFromMemoryMap(Core::HW_P1JOYP_JOYPAD));
 		ImGui::EndChild();
 
 		ImGui::SeparatorText("Rom Instructions");
