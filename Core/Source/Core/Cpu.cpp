@@ -74,14 +74,14 @@ namespace Core
 			<< std::setw(2) << static_cast<int>(opcode[2]) << " " 
 			<< std::setw(2) << static_cast<int>(opcode[3]) << ")" << std::endl;
 
-		if (linecount >= 10000)
-		{
-			std::ofstream outFile("cpu.txt", std::ios::out | std::ios::app);
-			outFile << logBuffer.str();
-			logBuffer.str("");  // Clear the buffer
-			linecount = 0;      // Reset line count
-			outFile.close();
-		}
+		//if (linecount >= 10000)
+		//{
+		//	std::ofstream outFile("cpu.txt", std::ios::out | std::ios::app);
+		//	outFile << logBuffer.str();
+		//	logBuffer.str("");  // Clear the buffer
+		//	linecount = 0;      // Reset line count
+		//	outFile.close();
+		//}
 		
 
 		// write disassembly to console
@@ -726,10 +726,10 @@ namespace Core
 				case 0xF0:
 				{
 					// just a temp hack to test the cpu output
-					uint8_t test = opcode[1];
-					if (opcode[1] == 0x44)
-						State.A = 0x90;
-					else
+					//uint8_t test = opcode[1];
+					//if (opcode[1] == 0x44)
+					//	State.A = 0x90;
+					//else
 						State.A = gb.ReadFromMemoryMap(0xFF00 + opcode[1]);
 
 					State.PC++;
@@ -1566,6 +1566,7 @@ namespace Core
 		printf("#    Half Carry Flag (H): %02x \n", GetCPUFlag(FLAG_HALF_CARRY));
 		printf("#    Carry flag (C): %02x \n", GetCPUFlag(FLAG_CARRY));
 		printf("######################################################\n");
+		
 		exit(1);
 	}
 

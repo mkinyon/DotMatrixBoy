@@ -28,8 +28,8 @@ std::shared_ptr<Core::Cartridge> cart;
 bool isPaused = true;
 bool enableBootRom = false;
 //const char* romName = "../Roms/hello-world.gb";
-const char* romName = "../Roms/01-special.gb";
-//const char* romName = "../Roms/tetris.gb";
+//const char* romName = "../Roms/cpu_instrs/cpu_instrs.gb";
+const char* romName = "../Roms/tetris.gb";
 
 // Main code
 int main(int argv, char** args)
