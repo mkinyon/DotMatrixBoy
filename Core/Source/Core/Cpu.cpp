@@ -26,6 +26,8 @@ namespace Core
 	{
 		Cpu::m_TotalCycles++;
 
+		processTimers();
+
 		// Each instruction takes a certain amount of cycles to complete so
 		// if there are still cycles remaining then we shoud just decrement 
 		// the cycles and return;
@@ -2754,7 +2756,7 @@ namespace Core
 		// if the div clock rolls over then we need to copy the value of TIMA to TMA
 		if (internalClock == 0xFFFF)
 		{
-			gb.WriteToMemoryMap(HW_TMA_TIMER_MODULO, HW_TIMA_TIMER_COUNTER);
+			gb.WriteToMemoryMap(HW_TMA_TIMER_MODULO, gb.ReadFromMemoryMap(HW_TIMA_TIMER_COUNTER));
 		}
 
 		// write updated DIV register
@@ -2774,7 +2776,7 @@ namespace Core
 		// if the TIMA register rolls over then we need to trigger an interrupt
 		if (tima == 0xFF)
 		{
-			gb.WriteToMemoryMap(HW_TIMA_TIMER_COUNTER, HW_TMA_TIMER_MODULO);
+			gb.WriteToMemoryMap(HW_TIMA_TIMER_COUNTER, gb.ReadFromMemoryMap(HW_TMA_TIMER_MODULO));
 
 			if (gb.ReadFromMemoryMapRegister(HW_TAC_TIMER_CONTROL, TAC_ENABLE))
 			{
