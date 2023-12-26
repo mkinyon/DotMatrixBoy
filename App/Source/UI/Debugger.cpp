@@ -16,6 +16,7 @@ namespace App
 
 		// CPU Info
 		ImGui::BeginChild("L", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 150), ImGuiChildFlags_None);
+		ImGui::Text("Cycles: %d", gameboy.cpu.m_TotalCycles);
 		ImGui::Text("PC: $%04x", gameboy.cpu.State.PC);
 		ImGui::Text("SP: $%04x", gameboy.cpu.State.SP);
 		ImGui::Text("AF: $%04x", gameboy.cpu.State.AF);

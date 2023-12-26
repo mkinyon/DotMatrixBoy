@@ -44,6 +44,8 @@ namespace Core
 		// read opcode from memory
 		uint8_t* opcode = &gb.ReadFromMemoryMap(State.PC);
 
+		// Disassemble(opcode, State.PC);
+
 		logBuffer << std::hex << std::setfill('0') << std::uppercase <<
 			"A: "   << std::setw(2) << static_cast<int>(State.A) <<
 			" F: "  << std::setw(2) << static_cast<int>(State.F) <<
@@ -133,7 +135,7 @@ namespace Core
 					break;
 				}
 
-				// "JR Z e8" B:2 C:128 FLAGS: - - - -
+				// "JR Z e8" B:2 C:12/8 FLAGS: - - - -
 				case 0x28:
 				{
 					// note: "e8" in the description refers to a signed char
@@ -152,7 +154,7 @@ namespace Core
 					break;
 				}
 
-				// "JR NC e8" B:2 C:128 FLAGS: - - - -
+				// "JR NC e8" B:2 C:12/8 FLAGS: - - - -
 				case 0x30:
 				{
 					// note: "s8" in the description refers to a signed char
@@ -204,7 +206,7 @@ namespace Core
 					break;
 				}
 
-				// "JP NZ a16" B:3 C:1612 FLAGS: - - - -
+				// "JP NZ a16" B:3 C:16/12 FLAGS: - - - -
 				case 0xC2:
 				{
 					if (!GetCPUFlag(FLAG_ZERO))
@@ -232,7 +234,7 @@ namespace Core
 					break;
 				}
 
-				// "CALL NZ a16" B:3 C:2412 FLAGS: - - - -
+				// "CALL NZ a16" B:3 C:24/12 FLAGS: - - - -
 				case 0xC4:
 				{
 					if (!GetCPUFlag(FLAG_ZERO))
@@ -260,7 +262,7 @@ namespace Core
 					break;
 				}
 
-				// "RET Z" B:1 C:208 FLAGS: - - - -
+				// "RET Z" B:1 C:20/8 FLAGS: - - - -
 				case 0xC8:
 				{
 					if (GetCPUFlag(FLAG_ZERO))
@@ -283,7 +285,7 @@ namespace Core
 					break;
 				}
 
-				// "JP Z a16" B:3 C:1612 FLAGS: - - - -
+				// "JP Z a16" B:3 C:16/12 FLAGS: - - - -
 				case 0xCA:
 				{
 					if (GetCPUFlag(FLAG_ZERO))
@@ -301,7 +303,7 @@ namespace Core
 					break;
 				}
 
-				// "CALL Z a16" B:3 C:2412 FLAGS: - - - -
+				// "CALL Z a16" B:3 C:24/12 FLAGS: - - - -
 				case 0xCC:
 				{
 					if (GetCPUFlag(FLAG_ZERO))
@@ -338,7 +340,7 @@ namespace Core
 					break;
 				}
 
-				// "RET NC" B:1 C:208 FLAGS: - - - -
+				// "RET NC" B:1 C:20/8 FLAGS: - - - -
 				case 0xD0:
 				{
 					if (!GetCPUFlag(FLAG_CARRY))
@@ -352,7 +354,7 @@ namespace Core
 					break;
 				}
 
-				// "JP NC a16" B:3 C:1612 FLAGS: - - - -
+				// "JP NC a16" B:3 C:16/12 FLAGS: - - - -
 				case 0xD2:
 				{
 					if (!GetCPUFlag(FLAG_CARRY))
@@ -370,7 +372,7 @@ namespace Core
 					break;
 				}
 
-				// "CALL NC a16" B:3 C:2412 FLAGS: - - - -
+				// "CALL NC a16" B:3 C:24/12 FLAGS: - - - -
 				case 0xD4:
 				{
 					if (!GetCPUFlag(FLAG_CARRY))
@@ -398,7 +400,7 @@ namespace Core
 					break;
 				}
 
-				// "RET C" B:1 C:208 FLAGS: - - - -
+				// "RET C" B:1 C:20/8 FLAGS: - - - -
 				case 0xD8:
 				{
 					if (GetCPUFlag(FLAG_CARRY))
@@ -422,7 +424,7 @@ namespace Core
 					break;
 				}
 
-				// "JP C a16" B:3 C:1612 FLAGS: - - - -
+				// "JP C a16" B:3 C:16/12 FLAGS: - - - -
 				case 0xDA:
 				{
 					if (GetCPUFlag(FLAG_CARRY))
@@ -440,7 +442,7 @@ namespace Core
 					break;
 				}
 
-						 // "CALL C a16" B:3 C:2412 FLAGS: - - - -
+						 // "CALL C a16" B:3 C:24/12 FLAGS: - - - -
 				case 0xDC:
 				{
 					if (GetCPUFlag(FLAG_CARRY))
@@ -594,7 +596,7 @@ namespace Core
 					gb.WriteToMemoryMap(State.HL, opcode[1]);
 					State.PC++;
 
-					m_cycles = 8;
+					m_cycles = 12;
 					break;
 				}
 
@@ -710,10 +712,10 @@ namespace Core
 				case 0xF0:
 				{
 					// just a temp hack to test the cpu output
-					uint8_t test = opcode[1];
-					if (opcode[1] == 0x44)
-						State.A = 0x90;
-					else
+					//uint8_t test = opcode[1];
+					//if (opcode[1] == 0x44)
+					//	State.A = 0x90;
+					//else
 						State.A = gb.ReadFromMemoryMap(0xFF00 + opcode[1]);
 
 					State.PC++;
@@ -1327,7 +1329,7 @@ namespace Core
 			case 0xCB43: instruction_bit_bit_reg(State.E, 0); break;
 			case 0xCB44: instruction_bit_bit_reg(State.H, 0); break;
 			case 0xCB45: instruction_bit_bit_reg(State.L, 0); break;
-			case 0xCB46: instruction_bit_bit_hl(0); m_cycles = 16; break;
+			case 0xCB46: instruction_bit_bit_hl(0); m_cycles = 12; break;
 			case 0xCB47: instruction_bit_bit_reg(State.A, 0); break;
 			case 0xCB48: instruction_bit_bit_reg(State.B, 1); break;
 			case 0xCB49: instruction_bit_bit_reg(State.C, 1); break;
@@ -1335,7 +1337,7 @@ namespace Core
 			case 0xCB4B: instruction_bit_bit_reg(State.E, 1); break;
 			case 0xCB4C: instruction_bit_bit_reg(State.H, 1); break;
 			case 0xCB4D: instruction_bit_bit_reg(State.L, 1); break;
-			case 0xCB4E: instruction_bit_bit_hl(1); m_cycles = 16; break;
+			case 0xCB4E: instruction_bit_bit_hl(1); m_cycles = 12; break;
 			case 0xCB4F: instruction_bit_bit_reg(State.A, 1); break;
 			case 0xCB50: instruction_bit_bit_reg(State.B, 2); break;
 			case 0xCB51: instruction_bit_bit_reg(State.C, 2); break;
@@ -1343,7 +1345,7 @@ namespace Core
 			case 0xCB53: instruction_bit_bit_reg(State.E, 2); break;
 			case 0xCB54: instruction_bit_bit_reg(State.H, 2); break;
 			case 0xCB55: instruction_bit_bit_reg(State.L, 2); break;
-			case 0xCB56: instruction_bit_bit_hl(2); m_cycles = 16; break;
+			case 0xCB56: instruction_bit_bit_hl(2); m_cycles = 12; break;
 			case 0xCB57: instruction_bit_bit_reg(State.A, 2); break;
 			case 0xCB58: instruction_bit_bit_reg(State.B, 3); break;
 			case 0xCB59: instruction_bit_bit_reg(State.C, 3); break;
@@ -1351,7 +1353,7 @@ namespace Core
 			case 0xCB5B: instruction_bit_bit_reg(State.E, 3); break;
 			case 0xCB5C: instruction_bit_bit_reg(State.H, 3); break;
 			case 0xCB5D: instruction_bit_bit_reg(State.L, 3); break;
-			case 0xCB5E: instruction_bit_bit_hl(3); m_cycles = 16; break;
+			case 0xCB5E: instruction_bit_bit_hl(3); m_cycles = 12; break;
 			case 0xCB5F: instruction_bit_bit_reg(State.A, 3); break;
 			case 0xCB60: instruction_bit_bit_reg(State.B, 4); break;
 			case 0xCB61: instruction_bit_bit_reg(State.C, 4); break;
@@ -1359,7 +1361,7 @@ namespace Core
 			case 0xCB63: instruction_bit_bit_reg(State.E, 4); break;
 			case 0xCB64: instruction_bit_bit_reg(State.H, 4); break;
 			case 0xCB65: instruction_bit_bit_reg(State.L, 4); break;
-			case 0xCB66: instruction_bit_bit_hl(4); m_cycles = 16; break;
+			case 0xCB66: instruction_bit_bit_hl(4); m_cycles = 12; break;
 			case 0xCB67: instruction_bit_bit_reg(State.A, 4); break;
 			case 0xCB68: instruction_bit_bit_reg(State.B, 5); break;
 			case 0xCB69: instruction_bit_bit_reg(State.C, 5); break;
@@ -1367,7 +1369,7 @@ namespace Core
 			case 0xCB6B: instruction_bit_bit_reg(State.E, 5); break;
 			case 0xCB6C: instruction_bit_bit_reg(State.H, 5); break;
 			case 0xCB6D: instruction_bit_bit_reg(State.L, 5); break;
-			case 0xCB6E: instruction_bit_bit_hl(5); m_cycles = 16; break;
+			case 0xCB6E: instruction_bit_bit_hl(5); m_cycles = 12; break;
 			case 0xCB6F: instruction_bit_bit_reg(State.A, 5); break;
 			case 0xCB70: instruction_bit_bit_reg(State.B, 6); break;
 			case 0xCB71: instruction_bit_bit_reg(State.C, 6); break;
@@ -1375,7 +1377,7 @@ namespace Core
 			case 0xCB73: instruction_bit_bit_reg(State.E, 6); break;
 			case 0xCB74: instruction_bit_bit_reg(State.H, 6); break;
 			case 0xCB75: instruction_bit_bit_reg(State.L, 6); break;
-			case 0xCB76: instruction_bit_bit_hl(6); m_cycles = 16; break;
+			case 0xCB76: instruction_bit_bit_hl(6); m_cycles = 12; break;
 			case 0xCB77: instruction_bit_bit_reg(State.A, 6); break;
 			case 0xCB78: instruction_bit_bit_reg(State.B, 7); break;
 			case 0xCB79: instruction_bit_bit_reg(State.C, 7); break;
@@ -1383,7 +1385,7 @@ namespace Core
 			case 0xCB7B: instruction_bit_bit_reg(State.E, 7); break;
 			case 0xCB7C: instruction_bit_bit_reg(State.H, 7); break;
 			case 0xCB7D: instruction_bit_bit_reg(State.L, 7); break;
-			case 0xCB7E: instruction_bit_bit_hl(7); m_cycles = 16; break;
+			case 0xCB7E: instruction_bit_bit_hl(7); m_cycles = 12; break;
 			case 0xCB7F: instruction_bit_bit_reg(State.A, 7); break;
 
 				// "RES bit, reg" B:2 C:8 FLAGS: - - - -
@@ -2184,6 +2186,7 @@ namespace Core
 		output += "\n";
 
 		currentInstructionName = output;
+		printf(output.c_str());
 	}
 
 	std::string Cpu::GetCurrentInstruction()
@@ -2196,12 +2199,12 @@ namespace Core
 		Cpu::m_TotalCycles = 0;
 
 		// registers
-		State.AF = 0x01B0;
-		State.BC = 0x0013;
-		State.DE = 0x00D8;
-		State.HL = 0x014D;
+		State.AF = enableBootRom ? 0x000 : 0x01B0;
+		State.BC = enableBootRom ? 0x000 : 0x0013;
+		State.DE = enableBootRom ? 0x000 : 0x00D8;
+		State.HL = enableBootRom ? 0x000 : 0x014D;
 		State.PC = enableBootRom ? 0x000 : 0x100; // game boy execution start point
-		State.SP = 0xFFFE;
+		State.SP = enableBootRom ? 0x000 : 0xFFFE;
 
 		// flags - should be reset to $B0
 		SetCPUFlag(FLAG_CARRY, true);

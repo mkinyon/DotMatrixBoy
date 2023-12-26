@@ -171,4 +171,18 @@ namespace Core
 		STAT_MODE_2_INT_SELECT = (0x01 << 5),
 		STATE_LYC_INT_SELECT = (0x01 << 6)
 	} STAT_FLags;
+
+
+	/********************************************************************************************
+	Joypad
+	*********************************************************************************************/
+	typedef enum
+	{
+		JOYP_A_RIGHT = 0x01,
+		JOYP_B_LEFT = (0x01 << 1),
+		JOYP_SELECT_UP = (0x01 << 2),
+		JOYP_START_DOWN = (0x01 << 3),
+		JOYP_SELECT_DPAD = (0x01 << 4),
+		JOYP_SELECT_BUTTONS = (0x01 << 5),
+	} JOYPAD;
 }
