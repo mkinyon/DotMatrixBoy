@@ -1,9 +1,8 @@
 #include "GameBoy.h"
-#include "Utils.h"
 
 namespace Core
 {
-	GameBoy::GameBoy() : cpu(*this), ppu(*this) {}
+	GameBoy::GameBoy() : cpu(*this), ppu(*this), input(*this) {}
 	GameBoy::~GameBoy() {}
 
 	void GameBoy::Run(bool enableBootRom)
@@ -25,6 +24,8 @@ namespace Core
 				{
 					ppu.Clock();
 				}
+
+				input.Clock();
 			}
 		}
 	}
@@ -115,13 +116,6 @@ namespace Core
 		else if (address >= 0xFF00 && address <= 0xFF7F)
 		{
 			uint16_t offset = address - 0xFF00;
-
-			// TODO: stubbed the joy pad for now
-			if (address == 0xFF00)
-			{
-				hardwareIO[offset] = 0xFF;
-			}
-			
 			return hardwareIO[offset];
 		}
 		// $FF80-$FFFE   Zero Page

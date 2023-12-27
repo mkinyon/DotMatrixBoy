@@ -4,6 +4,7 @@
 
 #include "Cpu.h"
 #include "Ppu.h"
+#include "Input.h"
 #include "Cartridge.h"
 #include "Utils.h"
 
@@ -32,6 +33,7 @@ namespace Core
 	public:
 		Cpu cpu;
 		Ppu ppu;
+		Input input;
 
 	private:
 		bool m_isPaused = false;

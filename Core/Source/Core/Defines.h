@@ -174,8 +174,25 @@ namespace Core
 
 
 	/********************************************************************************************
-	Joypad
+		Joypad
 	*********************************************************************************************/
+
+	/* 	
+		The 8 buttons (dpad + face buttons) are arranged in a 2x4 matrix.
+	
+			+-----------------+-------+--------+-------+-------+
+			|  Mask           | Bit 3 | Bit 2  | Bit 1 | Bit 0 |
+			+-----------------+-------+--------+-------+-------+
+			| Buttons (bit 5) | Start | Select | B     | A     |
+			+-----------------+-------+--------+-------+-------+
+			| DPAD    (bit 4) | Down  | Up     | Left  | Right |
+			+-----------------+-------+--------+-------+-------+
+
+		- If the DPAD (bit 4) is zero, then the directional buttons can be read.
+		- If the Buttons (bit5) is zero, then the face buttons can be read.
+		- Buttons (Bits 3 - 0) are considered pressed is set to 0. 1 means the buttons are released.
+	*/
+
 	typedef enum
 	{
 		JOYP_A_RIGHT = 0x01,
@@ -184,5 +201,23 @@ namespace Core
 		JOYP_START_DOWN = (0x01 << 3),
 		JOYP_SELECT_DPAD = (0x01 << 4),
 		JOYP_SELECT_BUTTONS = (0x01 << 5),
-	} JOYPAD;
+	} JOYPAD_Flags;
+
+	// These values are arranged in specific order so they line up with the matrix above..
+	//  i.e.. Right is paired with the A button.
+	typedef enum
+	{
+		RIGHT = 0x01,
+		LEFT = (0x01 << 1),
+		UP = (0x01 << 2),
+		DOWN = (0x01 << 3),
+	} Joypad_DPAD;
+
+	typedef enum
+	{
+		A = 0x01,
+		B = (0x01 << 1),
+		SELECT = (0x01 << 2),
+		START = (0x01 << 3),
+	} Joypad_Button;
 }

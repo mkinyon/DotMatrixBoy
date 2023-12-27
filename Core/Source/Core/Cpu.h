@@ -7,6 +7,7 @@
 
 namespace Core
 {
+	// forward decl
 	class GameBoy;
 
 	class Cpu

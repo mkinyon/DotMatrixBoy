@@ -5,6 +5,8 @@
 #include "imgui_impl_sdlrenderer2.h"
 #include "imgui.h"
 
+#include "Core/Defines.h"
+
 namespace App
 {
     Window::Window(int screenWidth, int screenHeight, const char* windowTitle) 
@@ -98,23 +100,85 @@ namespace App
             if (event.type == SDL_KEYDOWN)
             {
                 SDL_Keycode pressedKey = event.key.keysym.sym;
-                if (pressedKey == SDLK_p)
+                switch (pressedKey)
                 {
-                    if (gb.IsPaused())
+                    case SDLK_p:
                     {
-                        gb.Unpause();
+                        if (gb.IsPaused())
+                        {
+                            gb.Unpause();
+                        }
+                        else
+                        {
+                            gb.Pause();
+                        }
+                        break;
                     }
-                    else
+                    case SDLK_SPACE:
                     {
-                        gb.Pause();
+                        if (gb.IsPaused())
+                        {
+                            gb.StepCPU();
+                        }
+                        break;
                     }
+                    // game controls
+                    case SDLK_UP:
+                        gb.input.SetDPADState(Core::Joypad_DPAD::UP, true);
+                        break;
+                    case SDLK_DOWN:
+                        gb.input.SetDPADState(Core::Joypad_DPAD::DOWN, true);
+                        break;
+                    case SDLK_LEFT:
+                        gb.input.SetDPADState(Core::Joypad_DPAD::LEFT, true);
+                        break;
+                    case SDLK_RIGHT:
+                        gb.input.SetDPADState(Core::Joypad_DPAD::RIGHT, true);
+                        break;
+                    case SDLK_TAB:
+                        gb.input.SetButtonState(Core::Joypad_Button::SELECT, true);
+                        break;
+                    case SDLK_RETURN:
+                        gb.input.SetButtonState(Core::Joypad_Button::START, true);
+                        break;
+                    case SDLK_s:
+                        gb.input.SetButtonState(Core::Joypad_Button::B, true);
+                        break;
+                    case SDLK_a:
+                        gb.input.SetButtonState(Core::Joypad_Button::A, true);
+                        break;
                 }
-                if (pressedKey == SDLK_SPACE)
+            }
+            else if (event.type == SDL_KEYUP)
+            {
+                SDL_Keycode releasedKey = event.key.keysym.sym;
+                switch (releasedKey)
                 {
-                    if (gb.IsPaused())
-                    {
-                        gb.StepCPU();
-                    }
+                    // game controls
+                    case SDLK_UP:
+                        gb.input.SetDPADState(Core::Joypad_DPAD::UP, false);
+                        break;
+                    case SDLK_DOWN:
+                        gb.input.SetDPADState(Core::Joypad_DPAD::DOWN, false);
+                        break;
+                    case SDLK_LEFT:
+                        gb.input.SetDPADState(Core::Joypad_DPAD::LEFT, false);
+                        break;
+                    case SDLK_RIGHT:
+                        gb.input.SetDPADState(Core::Joypad_DPAD::RIGHT, false);
+                        break;
+                    case SDLK_TAB:
+                        gb.input.SetButtonState(Core::Joypad_Button::SELECT, false);
+                        break;
+                    case SDLK_RETURN:
+                        gb.input.SetButtonState(Core::Joypad_Button::START, false);
+                        break;
+                    case SDLK_s:
+                        gb.input.SetButtonState(Core::Joypad_Button::B, false);
+                        break;
+                    case SDLK_a:
+                        gb.input.SetButtonState(Core::Joypad_Button::A, false);
+                        break;
                 }
             }
         }

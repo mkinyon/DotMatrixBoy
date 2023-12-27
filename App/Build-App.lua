@@ -22,7 +22,7 @@ project "App"
     "../ThirdParty/imgui/imstb_truetype.h",
     "../ThirdParty/imgui/imgui_demo.cpp",
 
-    -- backends
+    -- imgui backends
     "../ThirdParty/imgui/backends/imgui_impl_sdl2.cpp",
     "../ThirdParty/imgui/backends/imgui_impl_sdl2.h",
     "../ThirdParty/imgui/backends/imgui_impl_sdlrenderer2.cpp",

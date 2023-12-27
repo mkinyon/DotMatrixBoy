@@ -22,8 +22,8 @@ namespace Core
 		unsigned int m_CurrentScanLine = 0;
 		unsigned int m_TotalDotsThisFrame = 0;
 
-		uint8_t m_lcdPixels[160 * 144];
-		uint8_t m_backBuffer[160 * 144];
+		uint8_t m_lcdPixels[160 * 144] = {};
+		uint8_t m_backBuffer[160 * 144] = {};
 
 	private:
 		// lcd mode functions
