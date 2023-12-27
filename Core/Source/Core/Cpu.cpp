@@ -46,31 +46,34 @@ namespace Core
 
 		// Disassemble(opcode, State.PC);
 
-		logBuffer << std::hex << std::setfill('0') << std::uppercase <<
-			"A: "   << std::setw(2) << static_cast<int>(State.A) <<
-			" F: "  << std::setw(2) << static_cast<int>(State.F) <<
-			" B: "  << std::setw(2) << static_cast<int>(State.B) <<
-			" C: "  << std::setw(2) << static_cast<int>(State.C) <<
-			" D: "  << std::setw(2) << static_cast<int>(State.D) <<
-			" E: "  << std::setw(2) << static_cast<int>(State.E) <<
-			" H: "  << std::setw(2) << static_cast<int>(State.H) <<
-			" L: "  << std::setw(2) << static_cast<int>(State.L) <<
-			" SP: " << std::setw(4) << static_cast<int>(State.SP) <<
-			" PC: 00:" << std::setw(4) << static_cast<int>(State.PC) <<
-			" (" 
-			<< std::setw(2) << static_cast<int>(opcode[0]) << " "
-			<< std::setw(2) << static_cast<int>(opcode[1]) << " " 
-			<< std::setw(2) << static_cast<int>(opcode[2]) << " " 
-			<< std::setw(2) << static_cast<int>(opcode[3]) << ")" << std::endl;
+		if (false)
+		{
+			logBuffer << std::hex << std::setfill('0') << std::uppercase <<
+				"A: " << std::setw(2) << static_cast<int>(State.A) <<
+				" F: " << std::setw(2) << static_cast<int>(State.F) <<
+				" B: " << std::setw(2) << static_cast<int>(State.B) <<
+				" C: " << std::setw(2) << static_cast<int>(State.C) <<
+				" D: " << std::setw(2) << static_cast<int>(State.D) <<
+				" E: " << std::setw(2) << static_cast<int>(State.E) <<
+				" H: " << std::setw(2) << static_cast<int>(State.H) <<
+				" L: " << std::setw(2) << static_cast<int>(State.L) <<
+				" SP: " << std::setw(4) << static_cast<int>(State.SP) <<
+				" PC: 00:" << std::setw(4) << static_cast<int>(State.PC) <<
+				" ("
+				<< std::setw(2) << static_cast<int>(opcode[0]) << " "
+				<< std::setw(2) << static_cast<int>(opcode[1]) << " "
+				<< std::setw(2) << static_cast<int>(opcode[2]) << " "
+				<< std::setw(2) << static_cast<int>(opcode[3]) << ")" << std::endl;
 
-		//if (linecount >= 10000)
-		//{
-		//	std::ofstream outFile("cpu.txt", std::ios::out | std::ios::app);
-		//	outFile << logBuffer.str();
-		//	logBuffer.str("");  // Clear the buffer
-		//	linecount = 0;      // Reset line count
-		//	outFile.close();
-		//}
+			if (linecount >= 10000)
+			{
+				std::ofstream outFile("cpu.txt", std::ios::out | std::ios::app);
+				outFile << logBuffer.str();
+				logBuffer.str("");  // Clear the buffer
+				linecount = 0;      // Reset line count
+				outFile.close();
+			}
+		}
 
 
 		if (!m_isHalted)
@@ -2186,7 +2189,7 @@ namespace Core
 		output += "\n";
 
 		currentInstructionName = output;
-		printf(output.c_str());
+		//printf(output.c_str());
 	}
 
 	std::string Cpu::GetCurrentInstruction()
