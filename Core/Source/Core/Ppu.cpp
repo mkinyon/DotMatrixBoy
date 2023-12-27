@@ -178,7 +178,7 @@ namespace Core
 	{
 		uint8_t color = bgPalette >> (colorIndex * 2) & 0x03;
 
-		if (x >= 160)
+		if (x >= 160 || y >= 144)
 		{
 			return;
 			//_ASSERT(x >= 160, "bad ppu!")
