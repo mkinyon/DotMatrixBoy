@@ -16,6 +16,7 @@ namespace App
 
 	private:
 		void RenderContent();
+		void OnEvent(Event event);
 
 	private:
 		SDL_Texture* texture;

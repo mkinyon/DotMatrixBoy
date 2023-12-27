@@ -2,22 +2,22 @@
 
 #include "ImguiWidgetBase.h"
 #include "Core/GameBoy.h"
-#include "Core/Defines.h"
+#include <imfilebrowser.h>
 
 namespace App
 {
-	class Debugger : public ImguiWidgetBase
+	class FileDialog : public ImguiWidgetBase
 	{
 	public:
-		Debugger(Core::GameBoy* gb);
-		~Debugger();
+		FileDialog(Core::GameBoy* gb);
+		~FileDialog();
 
 	private:
 		void RenderContent();
 		void OnEvent(Event event);
-	
+
 	private:
+		ImGui::FileBrowser fileDialog;
 		Core::GameBoy* gameboy;
-		std::map<uint16_t, std::string> instructions;
 	};
 }

@@ -1,11 +1,16 @@
 #include "VRAMViewer.h"
+#include "EventManager.h"
+
 #include <algorithm>
 
 
 namespace App
 {
-	VRAMViewer::VRAMViewer(Core::GameBoy& gb, SDL_Renderer* renderer) : ImguiWidgetBase("VRAM Viewer"), gameboy(gb)
+	VRAMViewer::VRAMViewer(Core::GameBoy* gb, SDL_Renderer* renderer) : ImguiWidgetBase("VRAM Viewer"), gameboy(gb)
 	{
+		EventManager::Instance().Subscribe(Event::VRAM_VIEWER_ENABLE, this);
+		EventManager::Instance().Subscribe(Event::VRAM_VIEWER_DISABLE, this);
+
 		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 128, 192);
 	}
 
@@ -22,8 +27,8 @@ namespace App
 		int count = 0;
 		for (uint16_t byte = 0x8000; byte <= 0x97FF; byte += 2)
 		{
-			uint8_t firstByte = gameboy.ReadFromMemoryMap(byte);
-			uint8_t secondByte = gameboy.ReadFromMemoryMap(byte + 1);
+			uint8_t firstByte = gameboy->ReadFromMemoryMap(byte);
+			uint8_t secondByte = gameboy->ReadFromMemoryMap(byte + 1);
 			for (int iBit = 0; iBit < 8; iBit++)
 			{
 				uint8_t firstBit = (firstByte >> iBit) & 0x01;
@@ -34,7 +39,7 @@ namespace App
 				int draw_y = y + count; // Adjusted y coordinate for drawing
 		
 				// get the background palette
-				uint8_t bgPalette = gameboy.ReadFromMemoryMap(Core::HW_BGP_BG_PALETTE_DATA);
+				uint8_t bgPalette = gameboy->ReadFromMemoryMap(Core::HW_BGP_BG_PALETTE_DATA);
 				uint8_t colorId = bgPalette >> (colorIndex * 2) & 0x03;
 		
 				int blockIndex = (draw_y * 128 + draw_x) * 4;
@@ -97,5 +102,17 @@ namespace App
 		ImVec2 imageSize(originalWidth * minScale, originalHeight * minScale);
 
 		ImGui::Image(reinterpret_cast<ImTextureID>(texture), imageSize);
+	}
+
+	void VRAMViewer::OnEvent(Event event)
+	{
+		if (event == Event::VRAM_VIEWER_ENABLE)
+		{
+			ShowWindow = true;
+		}
+		if (event == Event::VRAM_VIEWER_DISABLE)
+		{
+			ShowWindow = false;
+		}
 	}
 }

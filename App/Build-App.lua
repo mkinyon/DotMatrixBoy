@@ -27,6 +27,9 @@ project "App"
     "../ThirdParty/imgui/backends/imgui_impl_sdl2.h",
     "../ThirdParty/imgui/backends/imgui_impl_sdlrenderer2.cpp",
     "../ThirdParty/imgui/backends/imgui_impl_sdlrenderer2.h",
+
+    -- imgui file browser
+    "../ThirdParty/imgui-filebrowser/imfilebrowser.h",
 }
    
 
@@ -39,6 +42,7 @@ project "App"
 
       "../ThirdParty/imgui",
       "../ThirdParty/imgui/backends",
+      "../ThirdParty/imgui-filebrowser",
       "../ThirdParty/OneLoneCoder",
       "../ThirdParty/SDL2/include"
    }

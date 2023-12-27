@@ -1,14 +1,17 @@
 #include "Debugger.h"
+#include "EventManager.h"
 
 namespace App
 {
-	Debugger::Debugger(Core::GameBoy& gb) : ImguiWidgetBase("Debugger"), gameboy(gb)
+	Debugger::Debugger(Core::GameBoy* gb) : ImguiWidgetBase("Debugger"), gameboy(gb)
 	{
-		instructions = gameboy.cpu.DisassebleAll();
+		EventManager::Instance().Subscribe(Event::DEBUGGER_ENABLE, this);
+		EventManager::Instance().Subscribe(Event::DEBUGGER_DISABLE, this);
+
+		instructions = gameboy->cpu.DisassebleAll();
 	}
 
 	Debugger::~Debugger() {}
-
 
 	void Debugger::RenderContent()
 	{
@@ -16,14 +19,14 @@ namespace App
 
 		// CPU Info
 		ImGui::BeginChild("L", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 150), ImGuiChildFlags_None);
-		ImGui::Text("Cycles: %d", gameboy.cpu.m_TotalCycles);
-		ImGui::Text("PC: $%04x", gameboy.cpu.State.PC);
-		ImGui::Text("SP: $%04x", gameboy.cpu.State.SP);
-		ImGui::Text("AF: $%04x", gameboy.cpu.State.AF);
-		ImGui::Text("BC: $%04x", gameboy.cpu.State.BC);
-		ImGui::Text("DE: $%04x", gameboy.cpu.State.DE);
-		ImGui::Text("HL: $%04x", gameboy.cpu.State.HL);
-		ImGui::Text("IE: %01d", gameboy.ReadFromMemoryMap(Core::HW_INTERRUPT_ENABLE));
+		ImGui::Text("Cycles: %d", gameboy->cpu.m_TotalCycles);
+		ImGui::Text("PC: $%04x", gameboy->cpu.State.PC);
+		ImGui::Text("SP: $%04x", gameboy->cpu.State.SP);
+		ImGui::Text("AF: $%04x", gameboy->cpu.State.AF);
+		ImGui::Text("BC: $%04x", gameboy->cpu.State.BC);
+		ImGui::Text("DE: $%04x", gameboy->cpu.State.DE);
+		ImGui::Text("HL: $%04x", gameboy->cpu.State.HL);
+		ImGui::Text("IE: %01d", gameboy->ReadFromMemoryMap(Core::HW_INTERRUPT_ENABLE));
 		ImGui::EndChild();
 
 		ImGui::SameLine();
@@ -32,49 +35,49 @@ namespace App
 		ImGui::BeginChild("LM", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 150), ImGuiChildFlags_None);
 		// Flags
 		// todo: the cpu flags are currently read only but should be read/write
-		bool z = gameboy.cpu.GetCPUFlag(Core::FLAG_ZERO); ImGui::Checkbox("Z", &z);
-		bool n = gameboy.cpu.GetCPUFlag(Core::FLAG_SUBTRACT); ImGui::Checkbox("N", &n);
-		bool h = gameboy.cpu.GetCPUFlag(Core::FLAG_HALF_CARRY); ImGui::Checkbox("H", &h);
-		bool c = gameboy.cpu.GetCPUFlag(Core::FLAG_CARRY); ImGui::Checkbox("C", &c);
+		bool z = gameboy->cpu.GetCPUFlag(Core::FLAG_ZERO); ImGui::Checkbox("Z", &z);
+		bool n = gameboy->cpu.GetCPUFlag(Core::FLAG_SUBTRACT); ImGui::Checkbox("N", &n);
+		bool h = gameboy->cpu.GetCPUFlag(Core::FLAG_HALF_CARRY); ImGui::Checkbox("H", &h);
+		bool c = gameboy->cpu.GetCPUFlag(Core::FLAG_CARRY); ImGui::Checkbox("C", &c);
 		ImGui::EndChild();
 
 		ImGui::SameLine();
 
 		// PPU Info
 		ImGui::BeginChild("RM", ImVec2(ImGui::GetContentRegionAvail().x * 0.50f, 150), ImGuiChildFlags_None);
-		if (gameboy.ppu.GetMode() == Core::MODE_0_HBLANK)  ImGui::Text("Mode: MODE_0_HBLANK");
-		if (gameboy.ppu.GetMode() == Core::MODE_1_VBLANK)  ImGui::Text("Mode: MODE_1_VBLANK");
-		if (gameboy.ppu.GetMode() == Core::MODE_2_OAMSCAN) ImGui::Text("Mode: MODE_2_OAMSCAN");
-		if (gameboy.ppu.GetMode() == Core::MODE_3_DRAWING) ImGui::Text("Mode: MODE_3_DRAWING");
+		if (gameboy->ppu.GetMode() == Core::MODE_0_HBLANK)  ImGui::Text("Mode: MODE_0_HBLANK");
+		if (gameboy->ppu.GetMode() == Core::MODE_1_VBLANK)  ImGui::Text("Mode: MODE_1_VBLANK");
+		if (gameboy->ppu.GetMode() == Core::MODE_2_OAMSCAN) ImGui::Text("Mode: MODE_2_OAMSCAN");
+		if (gameboy->ppu.GetMode() == Core::MODE_3_DRAWING) ImGui::Text("Mode: MODE_3_DRAWING");
 		
-		ImGui::Text("LCDC: %1d", gameboy.ReadFromMemoryMap(Core::HW_LCDC_LCD_CONTROL));
-		ImGui::Text("STAT: %1d", gameboy.ReadFromMemoryMap(Core::HW_STAT_LCD_STATUS));
+		ImGui::Text("LCDC: %1d", gameboy->ReadFromMemoryMap(Core::HW_LCDC_LCD_CONTROL));
+		ImGui::Text("STAT: %1d", gameboy->ReadFromMemoryMap(Core::HW_STAT_LCD_STATUS));
 		
-		ImGui::Text("SCX: %1d", gameboy.ReadFromMemoryMap(Core::HW_SCX_VIEWPORT_X_POS));
-		ImGui::Text("SCY: %1d", gameboy.ReadFromMemoryMap(Core::HW_SCY_VIEWPORT_Y_POS));
+		ImGui::Text("SCX: %1d", gameboy->ReadFromMemoryMap(Core::HW_SCX_VIEWPORT_X_POS));
+		ImGui::Text("SCY: %1d", gameboy->ReadFromMemoryMap(Core::HW_SCY_VIEWPORT_Y_POS));
 
-		uint16_t internalClock = (gameboy.ReadFromMemoryMap(Core::HW_DIV_DIVIDER_REGISTER) << 8)
-			| gameboy.ReadFromMemoryMap(Core::HW_DIV_DIVIDER_REGISTER_LOW);
+		uint16_t internalClock = (gameboy->ReadFromMemoryMap(Core::HW_DIV_DIVIDER_REGISTER) << 8)
+			| gameboy->ReadFromMemoryMap(Core::HW_DIV_DIVIDER_REGISTER_LOW);
 
 		ImGui::Text("DIV: %04x", internalClock);
-		ImGui::Text("TIMA: %02x", gameboy.ReadFromMemoryMap(Core::HW_TIMA_TIMER_COUNTER));
-		ImGui::Text("TMA: %02x", gameboy.ReadFromMemoryMap(Core::HW_TMA_TIMER_MODULO));
-		ImGui::Text("TAC: %02x", gameboy.ReadFromMemoryMap(Core::HW_TAC_TIMER_CONTROL));
+		ImGui::Text("TIMA: %02x", gameboy->ReadFromMemoryMap(Core::HW_TIMA_TIMER_COUNTER));
+		ImGui::Text("TMA: %02x", gameboy->ReadFromMemoryMap(Core::HW_TMA_TIMER_MODULO));
+		ImGui::Text("TAC: %02x", gameboy->ReadFromMemoryMap(Core::HW_TAC_TIMER_CONTROL));
 		ImGui::EndChild();
 
 		ImGui::SameLine();
 
 		ImGui::BeginChild("R", ImVec2(ImGui::GetContentRegionAvail().x, 150), ImGuiChildFlags_None);
-		ImGui::Text("LY (Scanline): %1d", gameboy.ReadFromMemoryMap(Core::HW_LY_LCD_Y_COORD));
-		ImGui::Text("LYC: %1d", gameboy.ReadFromMemoryMap(Core::HW_LYC_LY_COMPARE));
+		ImGui::Text("LY (Scanline): %1d", gameboy->ReadFromMemoryMap(Core::HW_LY_LCD_Y_COORD));
+		ImGui::Text("LYC: %1d", gameboy->ReadFromMemoryMap(Core::HW_LYC_LY_COMPARE));
 		
-		ImGui::Text("WX: %1d", gameboy.ReadFromMemoryMap(Core::HW_WX_WINDOW_X_POS));
-		ImGui::Text("WY: %1d", gameboy.ReadFromMemoryMap(Core::HW_WY_WINDOW_Y_POS));
+		ImGui::Text("WX: %1d", gameboy->ReadFromMemoryMap(Core::HW_WX_WINDOW_X_POS));
+		ImGui::Text("WY: %1d", gameboy->ReadFromMemoryMap(Core::HW_WY_WINDOW_Y_POS));
 		
-		ImGui::Text("Dots This Frame: %1d", gameboy.ppu.m_TotalDotsThisFrame);
-		ImGui::Text("Total Frames: %1d", gameboy.ppu.m_TotalFrames);
+		ImGui::Text("Dots This Frame: %1d", gameboy->ppu.m_TotalDotsThisFrame);
+		ImGui::Text("Total Frames: %1d", gameboy->ppu.m_TotalFrames);
 
-		ImGui::Text("JOY: %2d", gameboy.ReadFromMemoryMap(Core::HW_P1JOYP_JOYPAD));
+		ImGui::Text("JOY: %2d", gameboy->ReadFromMemoryMap(Core::HW_P1JOYP_JOYPAD));
 		ImGui::EndChild();
 
 		ImGui::SeparatorText("Rom Instructions");
@@ -87,7 +90,7 @@ namespace App
 			// todo: currently skipping instructions that are blank.  The cpu should clean this up
 			if (!instructions[i].empty())
 			{
-				bool isCurrentInstr = gameboy.cpu.State.PC == i;
+				bool isCurrentInstr = gameboy->cpu.State.PC == i;
 
 				if (isCurrentInstr)
 					ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
@@ -103,5 +106,17 @@ namespace App
 		}
 
 		ImGui::EndChild();
+	}
+
+	void Debugger::OnEvent(Event event)
+	{
+		if (event == Event::DEBUGGER_ENABLE)
+		{
+			ShowWindow = true;
+		}
+		if (event == Event::DEBUGGER_DISABLE)
+		{
+			ShowWindow = false;
+		}
 	}
 }

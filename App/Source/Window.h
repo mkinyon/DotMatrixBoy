@@ -13,7 +13,7 @@ namespace App
 
 	public:
 		bool Initialize();
-		void Update(bool& isRunning, Core::GameBoy& gb);
+		void Update(bool& isRunning, Core::GameBoy* gb);
 		void BeginRender();
 		void EndRender();
 

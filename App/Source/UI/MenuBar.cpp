@@ -1,29 +1,35 @@
 #include "MenuBar.h"
+#include "EventManager.h"
 
 namespace App
 {
-	MenuBar::MenuBar() : ImguiWidgetBase("MemoryMap")
+	MenuBar::MenuBar() : ImguiWidgetBase("MenuBar")
 	{
+        disableTitleWrapper = true;
 	}
 
 	MenuBar::~MenuBar() {}
 
 
 	void MenuBar::RenderContent()
-	{
+	{ 
         static bool isPaused = false;
         static bool enableBootRom = false;
-        static bool showDebugger = true;
-        static bool showVRAMViewer = true;
-        static bool showLCD = true;
-        static bool showMemoryMap = true;
 
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("File"))
             {
-                if (ImGui::MenuItem("Open Rom", "CTRL+O")) {}
-                if (ImGui::MenuItem("Exit", "CTRL+Q")) {}
+                if (ImGui::MenuItem("Open Rom", "CTRL+O"))
+                {
+                    EventManager::Instance().Emit(Event::OPEN_FILE_DIALOG);
+                }
+
+                if (ImGui::MenuItem("Exit", "CTRL+Q"))
+                {
+                    ExitPressed = true;
+                }
+
                 ImGui::EndMenu();
             }
             
@@ -39,13 +45,46 @@ namespace App
 
             if (ImGui::BeginMenu("Tools"))
             {
-                if (ImGui::MenuItem("Debugger", "CTRL+F5", &showDebugger)) {}
-                if (ImGui::MenuItem("VRAM Viewer", "CTRL+F6", &showVRAMViewer)) {}
-                if (ImGui::MenuItem("LCD", "CTRL+F7", &showLCD)) {}
-                if (ImGui::MenuItem("Memory Map", "CTRL+F8", &showMemoryMap)) {}
+                if (ImGui::MenuItem("Debugger", "F5", &showDebugger))
+                {
+                    if (showDebugger)
+                        EventManager::Instance().Emit(Event::DEBUGGER_ENABLE);
+                    else
+                        EventManager::Instance().Emit(Event::DEBUGGER_DISABLE);
+                }
+
+                if (ImGui::MenuItem("VRAM Viewer", "F6", &showVRAMViewer))
+                {
+                    if (showVRAMViewer)
+                        EventManager::Instance().Emit(Event::VRAM_VIEWER_ENABLE);
+                    else
+                        EventManager::Instance().Emit(Event::VRAM_VIEWER_DISABLE);
+                }
+
+                if (ImGui::MenuItem("LCD", "F7", &showLCD))
+                {
+                    if (showLCD)
+                        EventManager::Instance().Emit(Event::LCD_ENABLE);
+                    else
+                        EventManager::Instance().Emit(Event::LCD_DISABLE);
+                }
+
+                if (ImGui::MenuItem("Memory Map", "F8", &showMemoryMap))
+                {
+                    if (showMemoryMap)
+                        EventManager::Instance().Emit(Event::MEMORY_MAP_ENABLE);
+                    else
+                        EventManager::Instance().Emit(Event::MEMORY_MAP_DISABLE);
+                }
+
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
         }
 	}
+
+    void MenuBar::OnEvent(Event event)
+    {
+
+    }
 }

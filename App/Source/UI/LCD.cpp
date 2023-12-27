@@ -1,4 +1,6 @@
 #include "LCD.h"
+#include "EventManager.h"
+
 #include <algorithm>
 
 
@@ -6,6 +8,9 @@ namespace App
 {
 	LCD::LCD(uint8_t* lcdPixels, SDL_Renderer* renderer) : ImguiWidgetBase("LCD")
 	{
+		EventManager::Instance().Subscribe(Event::LCD_ENABLE, this);
+		EventManager::Instance().Subscribe(Event::LCD_DISABLE, this);
+
 		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 160, 144);
 		pixels = lcdPixels;
 	}
@@ -72,5 +77,17 @@ namespace App
 		ImVec2 imageSize(originalWidth * minScale, originalHeight * minScale);
 
 		ImGui::Image(reinterpret_cast<ImTextureID>(texture), imageSize);
+	}
+
+	void LCD::OnEvent(Event event)
+	{
+		if (event == Event::LCD_ENABLE)
+		{
+			ShowWindow = true;
+		}
+		if (event == Event::LCD_DISABLE)
+		{
+			ShowWindow = false;
+		}
 	}
 }

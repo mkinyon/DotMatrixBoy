@@ -1,0 +1,17 @@
+#pragma once
+
+namespace App
+{
+	enum class Event {
+		MEMORY_MAP_ENABLE,
+		MEMORY_MAP_DISABLE,
+		VRAM_VIEWER_ENABLE,
+		VRAM_VIEWER_DISABLE,
+		DEBUGGER_ENABLE,
+		DEBUGGER_DISABLE,
+		LCD_ENABLE,
+		LCD_DISABLE,
+		OPEN_FILE_DIALOG
+	};
+
+}

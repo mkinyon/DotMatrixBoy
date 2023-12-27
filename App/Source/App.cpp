@@ -16,6 +16,7 @@
 
 #include "Window.h"
 #include "UI/MenuBar.h"
+#include "UI/FileDialog.h"
 #include "UI/LCD.h"
 #include "UI/Debugger.h"
 #include "UI/MemoryMap.h"
@@ -23,27 +24,26 @@
 
 App::Window window(1280, 720, "DotMatrixBoy");
 
-Core::GameBoy gb;
-std::shared_ptr<Core::Cartridge> cart;
+Core::GameBoy* gb;
+Core::Cartridge* cart;
 bool isPaused = true;
 bool enableBootRom = false;
-//const char* romName = "../Roms/hello-world.gb";
-//const char* romName = "../Roms/cpu_instrs/individual/02-interrupts.gb";
-const char* romName = "../Roms/cpu_instrs/cpu_instrs.gb";
-//const char* romName = "../Roms/tetris.gb";
+const char* romName = "../Roms/dmg-acid2.gb";
 
 // Main code
 int main(int argv, char** args)
 {
     window.Initialize();
 
-    cart = std::make_shared<Core::Cartridge>(romName, enableBootRom);
-    gb.InsertCartridge(*cart);
-    gb.Run(enableBootRom);
+    gb = new Core::GameBoy();
+    cart = new Core::Cartridge(romName, enableBootRom);
+    gb->InsertCartridge(*cart);
+    gb->Run(enableBootRom);
     
     // Widgets
+    App::FileDialog* fileDialog = new App::FileDialog(gb);
     App::MenuBar* menuBar = new App::MenuBar();
-    App::LCD* lcdWindow = new App::LCD(gb.ppu.m_lcdPixels, window.GetRenderer());
+    App::LCD* lcdWindow = new App::LCD(gb->ppu.m_lcdPixels, window.GetRenderer());
     App::Debugger* debugger = new App::Debugger(gb);
     App::MemoryMap* memoryMap = new App::MemoryMap(gb);
     App::VRAMViewer* vramViewer = new App::VRAMViewer(gb, window.GetRenderer());
@@ -57,22 +57,27 @@ int main(int argv, char** args)
     {
         window.Update(isRunning, gb);
 
-        gb.Clock((float)std::min((int)window.GetElapsedTime(), 16 ));
-        //gb.Clock(16);
+        gb->Clock((float)min((int)window.GetElapsedTime(), 16 ));
 
         window.BeginRender();
 
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+       /* if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);*/
 
         // render widgets
         menuBar->Render();
+        fileDialog->Render();
         lcdWindow->Render();
         debugger->Render();
         memoryMap->Render();
         vramViewer->Render();
 
         window.EndRender();
+
+        if (menuBar->ExitPressed)
+        {
+            isRunning = false;
+        }
     }
 
     return 0;

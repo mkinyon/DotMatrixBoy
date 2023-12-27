@@ -75,7 +75,7 @@ namespace App
         return window != nullptr && renderer != nullptr;
     }
 
-    void Window::Update(bool& isRunning, Core::GameBoy& gb) 
+    void Window::Update(bool& isRunning, Core::GameBoy* gb) 
     {
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -104,48 +104,48 @@ namespace App
                 {
                     case SDLK_p:
                     {
-                        if (gb.IsPaused())
+                        if (gb->IsPaused())
                         {
-                            gb.Unpause();
+                            gb->Unpause();
                         }
                         else
                         {
-                            gb.Pause();
+                            gb->Pause();
                         }
                         break;
                     }
                     case SDLK_SPACE:
                     {
-                        if (gb.IsPaused())
+                        if (gb->IsPaused())
                         {
-                            gb.StepCPU();
+                            gb->StepCPU();
                         }
                         break;
                     }
                     // game controls
                     case SDLK_UP:
-                        gb.input.SetDPADState(Core::Joypad_DPAD::UP, true);
+                        gb->input.SetDPADState(Core::Joypad_DPAD::UP, true);
                         break;
                     case SDLK_DOWN:
-                        gb.input.SetDPADState(Core::Joypad_DPAD::DOWN, true);
+                        gb->input.SetDPADState(Core::Joypad_DPAD::DOWN, true);
                         break;
                     case SDLK_LEFT:
-                        gb.input.SetDPADState(Core::Joypad_DPAD::LEFT, true);
+                        gb->input.SetDPADState(Core::Joypad_DPAD::LEFT, true);
                         break;
                     case SDLK_RIGHT:
-                        gb.input.SetDPADState(Core::Joypad_DPAD::RIGHT, true);
+                        gb->input.SetDPADState(Core::Joypad_DPAD::RIGHT, true);
                         break;
                     case SDLK_TAB:
-                        gb.input.SetButtonState(Core::Joypad_Button::SELECT, true);
+                        gb->input.SetButtonState(Core::Joypad_Button::SELECT, true);
                         break;
                     case SDLK_RETURN:
-                        gb.input.SetButtonState(Core::Joypad_Button::START, true);
+                        gb->input.SetButtonState(Core::Joypad_Button::START, true);
                         break;
                     case SDLK_s:
-                        gb.input.SetButtonState(Core::Joypad_Button::B, true);
+                        gb->input.SetButtonState(Core::Joypad_Button::B, true);
                         break;
                     case SDLK_a:
-                        gb.input.SetButtonState(Core::Joypad_Button::A, true);
+                        gb->input.SetButtonState(Core::Joypad_Button::A, true);
                         break;
                 }
             }
@@ -156,28 +156,28 @@ namespace App
                 {
                     // game controls
                     case SDLK_UP:
-                        gb.input.SetDPADState(Core::Joypad_DPAD::UP, false);
+                        gb->input.SetDPADState(Core::Joypad_DPAD::UP, false);
                         break;
                     case SDLK_DOWN:
-                        gb.input.SetDPADState(Core::Joypad_DPAD::DOWN, false);
+                        gb->input.SetDPADState(Core::Joypad_DPAD::DOWN, false);
                         break;
                     case SDLK_LEFT:
-                        gb.input.SetDPADState(Core::Joypad_DPAD::LEFT, false);
+                        gb->input.SetDPADState(Core::Joypad_DPAD::LEFT, false);
                         break;
                     case SDLK_RIGHT:
-                        gb.input.SetDPADState(Core::Joypad_DPAD::RIGHT, false);
+                        gb->input.SetDPADState(Core::Joypad_DPAD::RIGHT, false);
                         break;
                     case SDLK_TAB:
-                        gb.input.SetButtonState(Core::Joypad_Button::SELECT, false);
+                        gb->input.SetButtonState(Core::Joypad_Button::SELECT, false);
                         break;
                     case SDLK_RETURN:
-                        gb.input.SetButtonState(Core::Joypad_Button::START, false);
+                        gb->input.SetButtonState(Core::Joypad_Button::START, false);
                         break;
                     case SDLK_s:
-                        gb.input.SetButtonState(Core::Joypad_Button::B, false);
+                        gb->input.SetButtonState(Core::Joypad_Button::B, false);
                         break;
                     case SDLK_a:
-                        gb.input.SetButtonState(Core::Joypad_Button::A, false);
+                        gb->input.SetButtonState(Core::Joypad_Button::A, false);
                         break;
                 }
             }

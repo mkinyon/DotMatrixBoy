@@ -1,13 +1,15 @@
 #include "MemoryMap.h"
+#include "EventManager.h"
 
 namespace App
 {
-	MemoryMap::MemoryMap(Core::GameBoy& gb) : ImguiWidgetBase("MemoryMap"), gameboy(gb)
+	MemoryMap::MemoryMap(Core::GameBoy* gb) : ImguiWidgetBase("Memory Map"), gameboy(gb)
 	{
+		EventManager::Instance().Subscribe(Event::MEMORY_MAP_ENABLE, this);
+		EventManager::Instance().Subscribe(Event::MEMORY_MAP_DISABLE, this);
 	}
 
 	MemoryMap::~MemoryMap() {}
-
 
 	void MemoryMap::RenderContent()
 	{
@@ -20,7 +22,7 @@ namespace App
 			ImGui::Text("$%04x", addr); ImGui::SameLine();
 			for (int col = 0; col < nColumns; col++)
 			{
-				ImGui::Text(" %02x", gameboy.ReadFromMemoryMap(addr)); ImGui::SameLine();
+				ImGui::Text(" %02x", gameboy->ReadFromMemoryMap(addr)); ImGui::SameLine();
 				addr += 1;
 			}
 			
@@ -29,10 +31,22 @@ namespace App
 			ImGui::Text(" "); ImGui::SameLine();
 			for (int col = 0; col < nColumns; col++)
 			{
-				ImGui::Text("%c", gameboy.ReadFromMemoryMap(addr));
+				ImGui::Text("%c", gameboy->ReadFromMemoryMap(addr));
 				if (col != 15) ImGui::SameLine();
 				addr += 1;
 			}
+		}
+	}
+
+	void MemoryMap::OnEvent(Event event)
+	{
+		if (event == Event::MEMORY_MAP_ENABLE)
+		{
+			ShowWindow = true;
+		}
+		if (event == Event::MEMORY_MAP_DISABLE)
+		{
+			ShowWindow = false;
 		}
 	}
 }

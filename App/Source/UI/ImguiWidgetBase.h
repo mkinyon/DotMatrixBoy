@@ -3,6 +3,8 @@
 #include <imgui.h>
 #include "SDL.h"
 
+#include "Enums.h"
+
 namespace App
 {
 	class ImguiWidgetBase
@@ -14,21 +16,25 @@ namespace App
 		virtual void RenderContent() = 0;
 
 		// Function to render the entire window
-		void Render() {
+		void Render()
+		{
 			if (!ShowWindow)
 			{
 				return;
 			}
 
-			ImGui::Begin(title);
+			if (!disableTitleWrapper) ImGui::Begin(title);
 
 			RenderContent();
 
-			ImGui::End();
+			if (!disableTitleWrapper) ImGui::End();
 		}
+
+		virtual void OnEvent(Event event) {};
 
 	public:
 		bool ShowWindow = true;
+		bool disableTitleWrapper = false;
 
 	private:
 		const char* title;
