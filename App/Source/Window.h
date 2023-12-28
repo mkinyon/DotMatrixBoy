@@ -20,9 +20,12 @@ namespace App
 		SDL_Renderer* GetRenderer();
 		Uint32 GetElapsedTime();
 
+		static void AudioCallback(void* userdata, Uint8* stream, int len);
+
 	private:
 		SDL_Window* window;
 		SDL_Renderer* renderer;
+		SDL_AudioDeviceID audioDevice;
 
 		Uint32 startTime;
 		Uint32 elapsedTime;

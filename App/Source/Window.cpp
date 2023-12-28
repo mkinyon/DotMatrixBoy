@@ -28,6 +28,27 @@ namespace App
             SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
         #endif
 
+        // Setup audio
+        if (SDL_Init(SDL_INIT_AUDIO) < 0)
+        {
+            // Handle SDL initialization failure
+            return;
+        }
+
+        SDL_AudioSpec want, have;
+        SDL_memset(&want, 0, sizeof(want));
+        want.freq = 44100;
+        want.format = AUDIO_S16SYS;   // Signed 16-bit samples in little-endian byte order
+        want.channels = 1;            // Stereo
+        want.samples = 2048;          // Buffer size (adjust as needed)
+        want.callback = AudioCallback;
+
+        int sample_nr = 0;
+        want.userdata = &sample_nr;
+
+        audioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+        SDL_PauseAudioDevice(audioDevice, 0);  // Start audio playback
+
         // Create window with SDL_Renderer graphics context
         SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
         window = SDL_CreateWindow( windowTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, window_flags);
@@ -49,7 +70,7 @@ namespace App
 
         // Setup Dear ImGui style
         ImGui::StyleColorsLight();
-        setTheme();
+        //setTheme();
 
         // Setup Platform/Renderer backends
         ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
@@ -66,6 +87,7 @@ namespace App
         ImGui::DestroyContext();
 
         // Clean up SDL resources
+        SDL_CloseAudioDevice(audioDevice);
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -228,5 +250,26 @@ namespace App
     Uint32 Window::GetElapsedTime()
     {
         return elapsedTime;
+    }
+
+    const int AMPLITUDE = 28000;
+    const int SAMPLE_RATE = 44100;
+
+    void Window::AudioCallback(void* userdata, Uint8* stream, int len)
+    {
+        // Your audio generation or processing logic goes here
+        // Fill the 'stream' buffer with the audio data
+
+        Sint16* buffer = (Sint16*)stream;
+        int length = len / 2; // 2 bytes per sample for AUDIO_S16SYS
+        int& sample_nr(*(int*)userdata);
+
+        for (int i = 0; i < length; i++, sample_nr++)
+        {
+            double time = (double)sample_nr / (double)SAMPLE_RATE;
+            buffer[i] = (Sint16)(AMPLITUDE * sin(2.0f * M_PI * 441.0f * time)); // render 441 HZ sine wave
+        }
+
+        //GenerateSineWave(stream, len);
     }
 }
