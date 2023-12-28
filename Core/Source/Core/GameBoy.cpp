@@ -193,7 +193,7 @@ namespace Core
 		{
 			uint16_t offset = address - 0xFE00;
 			oam[offset] = value;
-			printf("OAM Write! Address: %04x Value: %02x \n", address, value);
+			//printf("OAM Write! Address: %04x Value: %02x \n", address, value);
 		}
 		// $FF00-$FF7F   Hardware IO
 		else if (address >= 0xFF00 && address <= 0xFF7F)

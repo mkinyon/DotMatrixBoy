@@ -260,16 +260,14 @@ namespace App
         // Your audio generation or processing logic goes here
         // Fill the 'stream' buffer with the audio data
 
-        Sint16* buffer = (Sint16*)stream;
-        int length = len / 2; // 2 bytes per sample for AUDIO_S16SYS
-        int& sample_nr(*(int*)userdata);
+        //Sint16* buffer = (Sint16*)stream;
+        //int length = len / 2; // 2 bytes per sample for AUDIO_S16SYS
+        //int& sample_nr(*(int*)userdata);
 
-        for (int i = 0; i < length; i++, sample_nr++)
-        {
-            double time = (double)sample_nr / (double)SAMPLE_RATE;
-            buffer[i] = (Sint16)(AMPLITUDE * sin(2.0f * M_PI * 441.0f * time)); // render 441 HZ sine wave
-        }
-
-        //GenerateSineWave(stream, len);
+        //for (int i = 0; i < length; i++, sample_nr++)
+        //{
+        //    double time = (double)sample_nr / (double)SAMPLE_RATE;
+        //    buffer[i] = (Sint16)(AMPLITUDE * sin(2.0f * M_PI * 441.0f * time)); // render 441 HZ sine wave
+        //}
     }
 }

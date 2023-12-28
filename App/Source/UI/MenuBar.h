@@ -23,5 +23,6 @@ namespace App
 		bool showDebugger;
 		bool showVRAMViewer;
 		bool showLCD;
+		bool showAudioDebugger;
 	};
 }

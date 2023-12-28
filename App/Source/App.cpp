@@ -18,6 +18,7 @@
 #include "UI/MenuBar.h"
 #include "UI/FileDialog.h"
 #include "UI/LCD.h"
+#include "UI/AudioDebugger.h"
 #include "UI/Debugger.h"
 #include "UI/MemoryMap.h"
 #include "UI/VRAMViewer.h"
@@ -44,6 +45,7 @@ int main(int argv, char** args)
     App::FileDialog* fileDialog = new App::FileDialog(gb);
     App::MenuBar* menuBar = new App::MenuBar();
     App::LCD* lcdWindow = new App::LCD(gb->ppu.m_lcdPixels, window.GetRenderer());
+    App::AudioDebugger* audioDebugger = new App::AudioDebugger(gb);
     App::Debugger* debugger = new App::Debugger(gb);
     App::MemoryMap* memoryMap = new App::MemoryMap(gb);
     App::VRAMViewer* vramViewer = new App::VRAMViewer(gb, window.GetRenderer());
@@ -61,8 +63,8 @@ int main(int argv, char** args)
 
         window.BeginRender();
 
-       /* if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);*/
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
 
         // render widgets
         menuBar->Render();
@@ -71,6 +73,7 @@ int main(int argv, char** args)
         debugger->Render();
         memoryMap->Render();
         vramViewer->Render();
+        audioDebugger->Render();
 
         window.EndRender();
 

@@ -16,7 +16,7 @@ namespace App
         static bool isPaused = false;
         static bool enableBootRom = false;
 
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 255, 255));
+        //ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 255, 255));
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("File"))
@@ -78,11 +78,19 @@ namespace App
                         EventManager::Instance().Emit(Event::MEMORY_MAP_DISABLE);
                 }
 
+                if (ImGui::MenuItem("Audio Debugger", "F9", &showAudioDebugger))
+                {
+                    if (showAudioDebugger)
+                        EventManager::Instance().Emit(Event::AUDIO_DEBUGGER_ENABLE);
+                    else
+                        EventManager::Instance().Emit(Event::AUDIO_DEBUGGER_DISABLE);
+                }
+
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
         }
-        ImGui::PopStyleColor();
+        //ImGui::PopStyleColor();
 	}
 
     void MenuBar::OnEvent(Event event)

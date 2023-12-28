@@ -8,7 +8,7 @@ namespace App
 		EventManager::Instance().Subscribe(Event::DEBUGGER_ENABLE, this);
 		EventManager::Instance().Subscribe(Event::DEBUGGER_DISABLE, this);
 
-		instructions = gameboy->cpu.DisassebleAll();
+		//instructions = gameboy->cpu.DisassebleAll();
 	}
 
 	Debugger::~Debugger() {}
