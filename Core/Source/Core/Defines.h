@@ -183,6 +183,156 @@ namespace Core
 		OAM_PRIORITY = (0x01 << 7)
 	} OAM_Flags;
 
+
+	/********************************************************************************************
+		APU Specific
+	*********************************************************************************************/
+
+	// NR10: Channel 1 sweep
+	typedef enum
+	{
+		NR10_INV_STEP_LBIT = 0x01,
+		NR10_INV_STEP_MBIT = (0x01 << 1),
+		NR10_INV_STEP_HBIT = (0x01 << 2),
+		NR10_DIRECTION =     (0x01 << 3),
+		NR10_PACE_LBIT =	 (0x01 << 4),
+		NR10_PACE_MBIT =	 (0x01 << 5),
+		NR10_PACE_HBIT =	 (0x01 << 6)
+	} NR10_Flags;
+
+	// NR11: Channel 1 length timer & duty cycle
+	typedef enum
+	{
+		NR11_INIT_LEN_TIMER_BIT0 = 0x01,
+		NR11_INIT_LEN_TIMER_BIT1 = (0x01 << 1),
+		NR11_INIT_LEN_TIMER_BIT2 = (0x01 << 2),
+		NR11_INIT_LEN_TIMER_BIT3 = (0x01 << 3),
+		NR11_INIT_LEN_TIMER_BIT4 = (0x01 << 4),
+		NR11_INIT_LEN_TIMER_BIT5 = (0x01 << 5),
+		NR11_DUTY_CYCLE_LBIT =     (0x01 << 6),
+		NR11_DUTY_CYCLE_HBIT =     (0x01 << 7)
+	} NR11_Flags;
+
+	// NR12: Channel 1 volume & envelope
+	typedef enum
+	{
+		NR12_SWEEP_PACE_LBIT = 0x01,
+		NR12_SWEEP_PACE_MBIT = (0x01 << 1),
+		NR12_SWEEP_PACE_HBIT = (0x01 << 2),
+		NR12_ENV_DIR_LBIT = (0x01 << 3),
+		NR12_ENV_DIR_HBIT = (0x01 << 4),
+		NR12_INIT_VOL_LBIT = (0x01 << 5),
+		NR12_INIT_VOL_MBIT = (0x01 << 6),
+		NR12_INIT_VOL_HBIT = (0x01 << 7)
+	} NR12_Flags;
+
+	// NR14: Channel 1 period high & control
+	typedef enum
+	{
+		NR14_PERIOD_BIT0 = 0x01,
+		NR14_PERIOD_BIT1 = (0x01 << 1),
+		NR14_PERIOD_BIT2 = (0x01 << 2),
+		NR14_PERIOD_BIT3 = (0x01 << 3),
+		NR14_PERIOD_BIT4 = (0x01 << 4),
+		NR14_PERIOD_BIT5 = (0x01 << 5),
+		NR14_LEN_ENABLE =  (0x01 << 6),
+		NR14_TRIGGER =     (0x01 << 7)
+	} NR14_Flags;
+
+	// NR30: Channel 3 DAC enable
+	typedef enum
+	{
+		NR30_DAC_ON_OFF = (0x01 << 7)
+	} NR30_Flags;
+
+	// NR32: Channel 3 output level
+	typedef enum
+	{
+		NR32_OUTPUT_LEVEL_LBIT = (0x01 << 5),
+		NR32_OUTPUT_LEVEL_HBIT = (0x01 << 6),
+	} NR32_Flags;
+
+	// NR34: Channel 3 period high & control
+	typedef enum
+	{
+		NR34_PERIOD_BIT0 = 0x01,
+		NR34_PERIOD_BIT1 = (0x01 << 1),
+		NR34_PERIOD_BIT2 = (0x01 << 2),
+		NR34_PERIOD_BIT3 = (0x01 << 3),
+		NR34_PERIOD_BIT4 = (0x01 << 4),
+		NR34_PERIOD_BIT5 = (0x01 << 5),
+		NR34_LEN_ENABLE = (0x01 << 6),
+		NR34_TRIGGER = (0x01 << 7)
+	} NR34_Flags;
+
+	// NR41: Channel 4 length timer
+	typedef enum
+	{
+		NR41_INIT_LEN_TIMER_BIT0 = 0x01,
+		NR41_INIT_LEN_TIMER_BIT1 = (0x01 << 1),
+		NR41_INIT_LEN_TIMER_BIT2 = (0x01 << 2),
+		NR41_INIT_LEN_TIMER_BIT3 = (0x01 << 3),
+		NR41_INIT_LEN_TIMER_BIT4 = (0x01 << 4),
+		NR41_INIT_LEN_TIMER_BIT5 = (0x01 << 5)
+	} NR41_Flags;
+
+	// NR43: Channel 4 frequency & randomness
+	typedef enum
+	{
+		NR43_CLK_DIV_LBIT = 0x01,
+		NR43_CLK_DIV_MBIT = (0x01 << 1),
+		NR43_CLK_DIV_HBIT = (0x01 << 2),
+		NR43_LFSR_WIDTH = (0x01 << 3),
+		NR43_CLOCK_SHFT_BIT0 = (0x01 << 4),
+		NR43_CLOCK_SHFT_BIT1 = (0x01 << 5),
+		NR43_CLOCK_SHFT_BIT2 = (0x01 << 6),
+		NR43_CLOCK_SHFT_BIT3 = (0x01 << 7)
+	} NR43_Flags;
+
+	// NR44: Channel 4 control
+	typedef enum
+	{
+		NR44_LEN_ENABLE = (0x01 << 6),
+		NR44_TRIGGER = (0x01 << 7)
+	} NR44_Flags;
+
+	// NR50: Master volume & VIN panning
+	typedef enum
+	{
+		NR50_R_VOL_LBIT = 0x01,
+		NR50_R_VOL_MBIT = (0x01 << 1),
+		NR50_R_VOL_HBIT = (0x01 << 2),
+		NR50_VIN_R =      (0x01 << 3),
+		NR50_L_VOL_LBIT = (0x01 << 4),
+		NR50_L_VOL_MBIT = (0x01 << 5),
+		NR50_L_VOL_HBIT = (0x01 << 6),
+		NR50_VIN_L =      (0x01 << 7)
+	} NR50_Flags;
+
+	// NR51: Sound panning
+	typedef enum
+	{
+		NR51_CH1_R = 0x01,
+		NR51_CH2_R = (0x01 << 1),
+		NR51_CH3_R = (0x01 << 2),
+		NR51_CH4_R = (0x01 << 3),
+		NR51_CH1_L = (0x01 << 4),
+		NR51_CH2_L = (0x01 << 5),
+		NR51_CH3_L = (0x01 << 6),
+		NR51_CH4_L = (0x01 << 7)
+	} NR51_Flags;
+
+	// NR52: Audio master control
+	typedef enum
+	{
+		NR52_CH1_ON = 0x01,
+		NR52_CH2_ON = (0x01 << 1),
+		NR52_CH3_ON = (0x01 << 2),
+		NR52_CH4_ON = (0x01 << 3),
+		NR52_AUDIO_ON = (0x01 << 7)
+	} NR52_Flags;
+
+
 	/********************************************************************************************
 		Joypad
 	*********************************************************************************************/

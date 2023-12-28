@@ -4,6 +4,7 @@
 
 #include "Cpu.h"
 #include "Ppu.h"
+#include "Apu.h"
 #include "Input.h"
 #include "Cartridge.h"
 #include "Utils.h"
@@ -33,6 +34,7 @@ namespace Core
 	public:
 		Cpu cpu;
 		Ppu ppu;
+		Apu apu;
 		Input input;
 
 	private:

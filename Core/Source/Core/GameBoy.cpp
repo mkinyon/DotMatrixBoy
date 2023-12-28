@@ -2,7 +2,7 @@
 
 namespace Core
 {
-	GameBoy::GameBoy() : cpu(*this), ppu(*this), input(*this) {}
+	GameBoy::GameBoy() : cpu(*this), ppu(*this), apu(*this), input(*this) {}
 	GameBoy::~GameBoy() {}
 
 	void GameBoy::Run(bool enableBootRom)
