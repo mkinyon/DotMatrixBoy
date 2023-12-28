@@ -23,7 +23,7 @@ namespace Core
 		unsigned int m_TotalDotsThisFrame = 0;
 
 		uint8_t m_lcdPixels[160 * 144] = {};
-		uint8_t m_backBuffer[160 * 144] = {};
+		
 
 	private:
 		// lcd mode functions
@@ -36,10 +36,32 @@ namespace Core
 
 		// drawing functions
 		void drawBGToBuffer();
+		void drawWindowToBuffer();
+		void drawSpritesToBuffer();
 
 		void writeToBuffer(int x, int y, uint8_t bgPalette, int colorIndex);
 		void copyBackBufferToLCD();
 		void clearBackBuffer();
+
+		void RefreshOAMEntries();
+
+	private:
+		uint8_t m_backBuffer[160 * 144] = {};
+
+		struct OAM
+		{
+			uint16_t address = 0;
+			uint8_t xPos;
+			uint8_t yPos;
+			uint8_t tileIndex;
+
+			bool priority;
+			bool xFlip;
+			bool yFlip;
+			bool paletteOneSelected;
+		};
+
+		OAM oamEntries[40] = {};
 	};
 }
 

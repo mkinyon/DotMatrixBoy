@@ -109,7 +109,7 @@ namespace Core
 
 	typedef enum
 	{
-		TAC_CLOCK_SELECT_LBIT = 0x01, // this is two bits !!
+		TAC_CLOCK_SELECT_LBIT = 0x01,
 		TAC_CLOCK_SELECT_HBIT = (0x01 << 1),
 		TAC_ENABLE = (0x01 << 2)
 	} TimerControl_Flags;
@@ -141,6 +141,9 @@ namespace Core
 	#define HBLANK_CYCLES  204
 	#define DRAWING_CYCLES 173
 
+	#define BG_MAP_0 0x9800
+	#define BG_MAP_1 0x9C00
+
 	typedef enum
 	{
 		MODE_0_HBLANK = 0,  // Horizontal Blank
@@ -163,7 +166,7 @@ namespace Core
 
 	typedef enum
 	{
-		STAT_PPU_MODE_LBIT = 0x01, // this is two bits !!
+		STAT_PPU_MODE_LBIT = 0x01,
 		STAT_PPU_MODE_HBIT = (0x01 << 1),
 		STAT_LYC_EQUAL_LY = (0x01 << 2),
 		STAT_MODE_0_INT_SELECT = (0x01 << 3),
@@ -172,6 +175,13 @@ namespace Core
 		STATE_LYC_INT_SELECT = (0x01 << 6)
 	} STAT_FLags;
 
+	typedef enum
+	{
+		OAM_PALETTE = (0x01 << 4),
+		OAM_FLIP_X = (0x01 << 5),
+		OAM_FLIP_Y = (0x01 << 6),
+		OAM_PRIORITY = (0x01 << 7)
+	} OAM_Flags;
 
 	/********************************************************************************************
 		Joypad
