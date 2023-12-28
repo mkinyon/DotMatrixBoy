@@ -5,6 +5,7 @@
 #include "imgui_impl_sdlrenderer2.h"
 #include "imgui.h"
 
+#include "Theme.h"
 #include "Core/Defines.h"
 
 namespace App
@@ -47,7 +48,8 @@ namespace App
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; 
 
         // Setup Dear ImGui style
-        ImGui::StyleColorsDark();
+        ImGui::StyleColorsLight();
+        setTheme();
 
         // Setup Platform/Renderer backends
         ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
