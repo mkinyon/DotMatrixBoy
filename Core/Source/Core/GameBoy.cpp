@@ -193,6 +193,7 @@ namespace Core
 		{
 			uint16_t offset = address - 0xFE00;
 			oam[offset] = value;
+			printf("OAM Write! Address: %04x Value: %02x \n", address, value);
 		}
 		// $FF00-$FF7F   Hardware IO
 		else if (address >= 0xFF00 && address <= 0xFF7F)
@@ -200,10 +201,26 @@ namespace Core
 			uint16_t offset = address - 0xFF00;
 
 			// writing to the DIV register will cause is to reset to zero 
-			if (address == 0xFF04)
+			if (address == HW_DIV_DIVIDER_REGISTER)
 			{
 				hardwareIO[offset] = value;
 				hardwareIO[offset - 1] = value;
+			}
+
+			// trigger DMA transfer
+			if (address == HW_DMA_OAM_DMA_SOURCE_ADDRESS)
+			{
+				hardwareIO[offset] = value;
+				uint16_t startAddress = value << 8;
+
+				for (int i = 0x0; i <= 0x9F; i++)
+				{
+					uint16_t copyFrom = startAddress + i;
+					uint16_t copyTo = 0xFE00 + i;
+
+					uint8_t copyValue = ReadFromMemoryMap(copyFrom);
+					WriteToMemoryMap(copyTo, copyValue);
+				}
 			}
 			
 			hardwareIO[offset] = value;

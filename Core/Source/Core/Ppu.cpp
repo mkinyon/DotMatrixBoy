@@ -89,7 +89,7 @@ namespace Core
 			// render graphics
 			drawBGToBuffer();
 			drawWindowToBuffer();
-			//drawSpritesToBuffer();
+			drawSpritesToBuffer();
 
 			uint8_t ly = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
 			if (ly == 143)
@@ -292,7 +292,7 @@ namespace Core
 
 		for (int i = 0; i <= 40; i++)
 		{
-			if (lcdY >= oamEntries[i].yPos - 8  && lcdY < oamEntries[i].yPos && oamIndex < 10)
+			if (lcdY >= oamEntries[i].yPos - 16 && lcdY < oamEntries[i].yPos - 8 && oamIndex < 10)
 			{
 				oamEntriesThisScanLine.push_back(oamEntries[i]);
 				oamIndex++;
@@ -339,7 +339,16 @@ namespace Core
 					uint8_t secondBit = (secondByte >> j) & 0x01;
 					int colorIndex = (secondBit << 1) | firstBit;
 
-					int x = (tileX * 8) + j + 1;
+					int x;
+					if (oamOnThisTile.xFlip)
+					{
+						x = (tileX * 8) - j - 1;
+					}
+					else
+					{
+						x = (tileX * 8) - j - 1;
+					}
+
 					int y = lcdY;
 					writeToBuffer(x, y, palette, colorIndex);
 				}
