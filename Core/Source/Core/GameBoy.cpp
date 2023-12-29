@@ -203,8 +203,8 @@ namespace Core
 			// writing to the DIV register will cause is to reset to zero 
 			if (address == HW_DIV_DIVIDER_REGISTER)
 			{
-				hardwareIO[offset] = value;
-				hardwareIO[offset - 1] = value;
+				hardwareIO[offset] = 0;
+				hardwareIO[offset - 1] = 0;
 			}
 
 			// trigger DMA transfer

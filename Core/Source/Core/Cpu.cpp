@@ -2757,6 +2757,7 @@ namespace Core
 		// increment DIV register
 		uint16_t internalClock = (gb.ReadFromMemoryMap(HW_DIV_DIVIDER_REGISTER) << 8)
 			| gb.ReadFromMemoryMap(HW_DIV_DIVIDER_REGISTER_LOW);
+
 		internalClock++;
 
 		// if the div clock rolls over then we need to copy the value of TIMA to TMA

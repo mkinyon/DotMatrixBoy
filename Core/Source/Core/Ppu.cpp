@@ -209,8 +209,7 @@ namespace Core
 
 	void Ppu::drawWindowToBuffer()
 	{
-		if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_WINDOW_ENABLE) ||
-			!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_WINDOW_ENABLE_PRIORITY))
+		if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_WINDOW_ENABLE))
 		{
 			return;
 		}
