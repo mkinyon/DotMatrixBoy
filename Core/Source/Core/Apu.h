@@ -9,6 +9,7 @@ namespace Core
 		~Apu();
 
 		void Clock();
+		void FeedAudioBuffer(uint8_t* stream, int len);
 
 	private:
 		GameBoy& gameboy;

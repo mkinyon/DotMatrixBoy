@@ -1,6 +1,5 @@
 #include "Window.h"
 
-#include <stdio.h>
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 #include "imgui.h"
@@ -10,7 +9,7 @@
 
 namespace App
 {
-    Window::Window(int screenWidth, int screenHeight, const char* windowTitle) 
+    Window::Window(int screenWidth, int screenHeight, const char* windowTitle, Core::GameBoy* gb) : gameboy(gb)
     {
         #if !SDL_VERSION_ATLEAST(2,0,17)
             #error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
@@ -40,20 +39,19 @@ namespace App
         want.freq = 44100;
         want.format = AUDIO_S16SYS;   // Signed 16-bit samples in little-endian byte order
         want.channels = 1;            // Stereo
-        want.samples = 2048;          // Buffer size (adjust as needed)
-        want.callback = AudioCallback;
+        want.samples = 1024;          // Buffer size (adjust as needed)
+        want.callback = StaticAudioCallback;
 
         int sample_nr = 0;
         want.userdata = &sample_nr;
 
-        audioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
-        SDL_PauseAudioDevice(audioDevice, 0);  // Start audio playback
+        sdlAudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
 
         // Create window with SDL_Renderer graphics context
         SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-        window = SDL_CreateWindow( windowTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, window_flags);
-        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
-        if (renderer == nullptr)
+        sdlWindow = SDL_CreateWindow( windowTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, window_flags);
+        sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+        if (sdlRenderer == nullptr)
         {
             SDL_Log("Error creating SDL_Renderer!");
             return;
@@ -70,11 +68,11 @@ namespace App
 
         // Setup Dear ImGui style
         ImGui::StyleColorsLight();
-        //setTheme();
+        setTheme();
 
         // Setup Platform/Renderer backends
-        ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
-        ImGui_ImplSDLRenderer2_Init(renderer);
+        ImGui_ImplSDL2_InitForSDLRenderer(sdlWindow, sdlRenderer);
+        ImGui_ImplSDLRenderer2_Init(sdlRenderer);
 
         startTime = SDL_GetTicks();
     }
@@ -87,19 +85,21 @@ namespace App
         ImGui::DestroyContext();
 
         // Clean up SDL resources
-        SDL_CloseAudioDevice(audioDevice);
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
+        SDL_CloseAudioDevice(sdlAudioDevice);
+        SDL_DestroyRenderer(sdlRenderer);
+        SDL_DestroyWindow(sdlWindow);
         SDL_Quit();
     }
 
     bool Window::Initialize()
     {
         // Check if SDL initialization was successful
-        return window != nullptr && renderer != nullptr;
+        SDL_PauseAudioDevice(sdlAudioDevice, 0);  // Start audio playback
+        return sdlWindow != nullptr && sdlRenderer != nullptr;
+        
     }
 
-    void Window::Update(bool& isRunning, Core::GameBoy* gb) 
+    void Window::Update(bool& isRunning) 
     {
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -115,7 +115,7 @@ namespace App
             if (event.type == SDL_QUIT ||
                     (event.type == SDL_WINDOWEVENT &&
                     event.window.event == SDL_WINDOWEVENT_CLOSE &&
-                    event.window.windowID == SDL_GetWindowID(window)))
+                    event.window.windowID == SDL_GetWindowID(sdlWindow)))
             {
                 isRunning = false;
             }             
@@ -128,48 +128,48 @@ namespace App
                 {
                     case SDLK_p:
                     {
-                        if (gb->IsPaused())
+                        if (gameboy->IsPaused())
                         {
-                            gb->Unpause();
+                            gameboy->Unpause();
                         }
                         else
                         {
-                            gb->Pause();
+                            gameboy->Pause();
                         }
                         break;
                     }
                     case SDLK_SPACE:
                     {
-                        if (gb->IsPaused())
+                        if (gameboy->IsPaused())
                         {
-                            gb->StepCPU();
+                            gameboy->StepCPU();
                         }
                         break;
                     }
                     // game controls
                     case SDLK_UP:
-                        gb->input.SetDPADState(Core::Joypad_DPAD::UP, true);
+                        gameboy->input.SetDPADState(Core::Joypad_DPAD::UP, true);
                         break;
                     case SDLK_DOWN:
-                        gb->input.SetDPADState(Core::Joypad_DPAD::DOWN, true);
+                        gameboy->input.SetDPADState(Core::Joypad_DPAD::DOWN, true);
                         break;
                     case SDLK_LEFT:
-                        gb->input.SetDPADState(Core::Joypad_DPAD::LEFT, true);
+                        gameboy->input.SetDPADState(Core::Joypad_DPAD::LEFT, true);
                         break;
                     case SDLK_RIGHT:
-                        gb->input.SetDPADState(Core::Joypad_DPAD::RIGHT, true);
+                        gameboy->input.SetDPADState(Core::Joypad_DPAD::RIGHT, true);
                         break;
                     case SDLK_TAB:
-                        gb->input.SetButtonState(Core::Joypad_Button::SELECT, true);
+                        gameboy->input.SetButtonState(Core::Joypad_Button::SELECT, true);
                         break;
                     case SDLK_RETURN:
-                        gb->input.SetButtonState(Core::Joypad_Button::START, true);
+                        gameboy->input.SetButtonState(Core::Joypad_Button::START, true);
                         break;
                     case SDLK_s:
-                        gb->input.SetButtonState(Core::Joypad_Button::B, true);
+                        gameboy->input.SetButtonState(Core::Joypad_Button::B, true);
                         break;
                     case SDLK_a:
-                        gb->input.SetButtonState(Core::Joypad_Button::A, true);
+                        gameboy->input.SetButtonState(Core::Joypad_Button::A, true);
                         break;
                 }
             }
@@ -180,28 +180,28 @@ namespace App
                 {
                     // game controls
                     case SDLK_UP:
-                        gb->input.SetDPADState(Core::Joypad_DPAD::UP, false);
+                        gameboy->input.SetDPADState(Core::Joypad_DPAD::UP, false);
                         break;
                     case SDLK_DOWN:
-                        gb->input.SetDPADState(Core::Joypad_DPAD::DOWN, false);
+                        gameboy->input.SetDPADState(Core::Joypad_DPAD::DOWN, false);
                         break;
                     case SDLK_LEFT:
-                        gb->input.SetDPADState(Core::Joypad_DPAD::LEFT, false);
+                        gameboy->input.SetDPADState(Core::Joypad_DPAD::LEFT, false);
                         break;
                     case SDLK_RIGHT:
-                        gb->input.SetDPADState(Core::Joypad_DPAD::RIGHT, false);
+                        gameboy->input.SetDPADState(Core::Joypad_DPAD::RIGHT, false);
                         break;
                     case SDLK_TAB:
-                        gb->input.SetButtonState(Core::Joypad_Button::SELECT, false);
+                        gameboy->input.SetButtonState(Core::Joypad_Button::SELECT, false);
                         break;
                     case SDLK_RETURN:
-                        gb->input.SetButtonState(Core::Joypad_Button::START, false);
+                        gameboy->input.SetButtonState(Core::Joypad_Button::START, false);
                         break;
                     case SDLK_s:
-                        gb->input.SetButtonState(Core::Joypad_Button::B, false);
+                        gameboy->input.SetButtonState(Core::Joypad_Button::B, false);
                         break;
                     case SDLK_a:
-                        gb->input.SetButtonState(Core::Joypad_Button::A, false);
+                        gameboy->input.SetButtonState(Core::Joypad_Button::A, false);
                         break;
                 }
             }
@@ -235,16 +235,16 @@ namespace App
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
 
-        SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-        SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
-        SDL_RenderClear(renderer);
+        SDL_RenderSetScale(sdlRenderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+        SDL_SetRenderDrawColor(sdlRenderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
+        SDL_RenderClear(sdlRenderer);
         ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
-        SDL_RenderPresent(renderer);
+        SDL_RenderPresent(sdlRenderer);
     }
 
     SDL_Renderer* Window::GetRenderer()
     {
-        return renderer;
+        return sdlRenderer;
     }
 
     Uint32 Window::GetElapsedTime()
@@ -252,22 +252,14 @@ namespace App
         return elapsedTime;
     }
 
-    const int AMPLITUDE = 28000;
-    const int SAMPLE_RATE = 44100;
-
-    void Window::AudioCallback(void* userdata, Uint8* stream, int len)
+    void Window::StaticAudioCallback(void* userdata, Uint8* stream, int len)
     {
-        // Your audio generation or processing logic goes here
-        // Fill the 'stream' buffer with the audio data
+        const auto window = reinterpret_cast<Window*>(userdata);
+        window->AudioCallback(stream, len);
+    }
 
-        //Sint16* buffer = (Sint16*)stream;
-        //int length = len / 2; // 2 bytes per sample for AUDIO_S16SYS
-        //int& sample_nr(*(int*)userdata);
-
-        //for (int i = 0; i < length; i++, sample_nr++)
-        //{
-        //    double time = (double)sample_nr / (double)SAMPLE_RATE;
-        //    buffer[i] = (Sint16)(AMPLITUDE * sin(2.0f * M_PI * 441.0f * time)); // render 441 HZ sine wave
-        //}
+    void Window::AudioCallback(Uint8* stream, int len)
+    {
+        gameboy->apu.FeedAudioBuffer(stream, len);
     }
 }

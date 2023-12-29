@@ -23,7 +23,7 @@ namespace App
 	const ImVec4 consoleRedColor = RGBToImVec4(154, 34, 87);
 
 	void setTheme()
-	{
+	{	/*
 		ImGuiStyle* style = &ImGui::GetStyle();
 
 		style->WindowPadding = ImVec2(5, 5);
@@ -89,6 +89,7 @@ namespace App
 		style->Colors[ImGuiCol_PlotHistogram] = ImVec4(0.40f, 0.39f, 0.38f, 0.63f);
 		style->Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(0.25f, 1.00f, 0.00f, 1.00f);
 		style->Colors[ImGuiCol_TextSelectedBg] = consoleRedColor;
+		*/
 
 		// set font
 		ImGuiIO& io = ImGui::GetIO();

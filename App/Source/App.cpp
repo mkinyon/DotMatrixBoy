@@ -1,35 +1,24 @@
 
-#include "Core\GameBoy.h"
-#include "Core\Cpu.h"
-#include "Core\Cartridge.h"
-#include "Core\Defines.h"
-#include "Core\Utils.h"
-
-#include <vector>
-#include <algorithm>
-
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
-#include <stdio.h>
-#include <SDL.h>
-
 #include "Window.h"
-#include "UI/MenuBar.h"
-#include "UI/FileDialog.h"
-#include "UI/LCD.h"
+
+#include "Core\Cartridge.h"
+#include "Core\GameBoy.h"
+
 #include "UI/AudioDebugger.h"
 #include "UI/Debugger.h"
+#include "UI/FileDialog.h"
+#include "UI/LCD.h"
 #include "UI/MemoryMap.h"
+#include "UI/MenuBar.h"
 #include "UI/VRAMViewer.h"
-
-App::Window window(1280, 720, "DotMatrixBoy");
 
 Core::GameBoy* gb;
 Core::Cartridge* cart;
 bool isPaused = true;
 bool enableBootRom = false;
 const char* romName = "../Roms/dmg-acid2.gb";
+
+App::Window window(1280, 720, "DotMatrixBoy", gb);
 
 // Main code
 int main(int argv, char** args)
@@ -57,7 +46,7 @@ int main(int argv, char** args)
     bool isRunning = true;
     while (isRunning)
     {
-        window.Update(isRunning, gb);
+        window.Update(isRunning);
 
         gb->Clock((float)min((int)window.GetElapsedTime(), 16 ));
 
