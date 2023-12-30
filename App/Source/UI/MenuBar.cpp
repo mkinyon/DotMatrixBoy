@@ -86,6 +86,14 @@ namespace App
                         EventManager::Instance().Emit(Event::AUDIO_DEBUGGER_DISABLE);
                 }
 
+                if (ImGui::MenuItem("Console", "F!)", &showConsole))
+                {
+                    if (showConsole)
+                        EventManager::Instance().Emit(Event::CONSOLE_ENABLE);
+                    else
+                        EventManager::Instance().Emit(Event::CONSOLE_DISABLE);
+                }
+
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();

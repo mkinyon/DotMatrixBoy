@@ -1,6 +1,7 @@
 #include "Cpu.h"
 #include "GameBoy.h"
 #include "Defines.h"
+#include "Logger.h"
 
 #include <fstream>
 #include <filesystem>
@@ -44,7 +45,7 @@ namespace Core
 		// read opcode from memory
 		uint8_t* opcode = &gb.ReadFromMemoryMap(State.PC);
 
-		// Disassemble(opcode, State.PC);
+		//Disassemble(opcode, State.PC);
 
 		if (false)
 		{
@@ -1531,28 +1532,7 @@ namespace Core
 
 	void Cpu::unimplementedInstruction(Cpu::m_CpuState& State, uint8_t opcode)
 	{
-		//pc will have advanced one, so undo that 
-		printf("\n");
-		printf("Error: Unimplemented instruction: %02x \n", opcode);
-		printf("######################################################\n");
-		printf("# CPU Details:\n");
-		printf("# Total Cycles: %d \n", Cpu::m_TotalCycles);
-		printf("# Program Counter: %04x \n", State.PC);
-		printf("#\n");
-		printf("# Registers: \n");
-		printf("#    AF: %04x \n", State.AF);
-		printf("#    BC: %04x \n", State.BC);
-		printf("#    DE: %04x \n", State.DE);
-		printf("#    HL: %04x \n", State.HL);
-		printf("#\n");
-		printf("# Flags:\n");
-		printf("#    Zero flag (Z): %02x \n", GetCPUFlag(FLAG_ZERO));
-		printf("#    Subtract flag (N): %02x \n", GetCPUFlag(FLAG_SUBTRACT));
-		printf("#    Half Carry Flag (H): %02x \n", GetCPUFlag(FLAG_HALF_CARRY));
-		printf("#    Carry flag (C): %02x \n", GetCPUFlag(FLAG_CARRY));
-		printf("######################################################\n");
-		
-		exit(1);
+		Logger::Instance().LogMessage(LogMessageType::MMU, "Error: Unimplemented instruction: %02x"/*, opcode */);
 	}
 
 	int Cpu::Disassemble(uint8_t* opcode, int pc)
@@ -2189,7 +2169,7 @@ namespace Core
 		output += "\n";
 
 		currentInstructionName = output;
-		//printf(output.c_str());
+		Logger::Instance().LogCPUMessage(output);
 	}
 
 	std::string Cpu::GetCurrentInstruction()

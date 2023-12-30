@@ -5,6 +5,7 @@
 #include "Core\GameBoy.h"
 
 #include "UI/AudioDebugger.h"
+#include "UI/Console.h"
 #include "UI/Debugger.h"
 #include "UI/FileDialog.h"
 #include "UI/LCD.h"
@@ -41,6 +42,7 @@ int main(int argv, char** args)
     App::Debugger* debugger = new App::Debugger(gb);
     App::MemoryMap* memoryMap = new App::MemoryMap(gb);
     App::VRAMViewer* vramViewer = new App::VRAMViewer(gb, window->GetRenderer());
+    App::Console* console = new App::Console();
 
     bool show_demo_window = true;
     bool show_another_window = false;
@@ -66,6 +68,7 @@ int main(int argv, char** args)
         memoryMap->Render();
         vramViewer->Render();
         audioDebugger->Render();
+        console->Render();
 
         window->EndRender();
 

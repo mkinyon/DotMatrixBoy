@@ -1,4 +1,5 @@
 #include "GameBoy.h"
+#include "Logger.h"
 
 namespace Core
 {
@@ -131,8 +132,7 @@ namespace Core
 		}
 		else
 		{
-			printf("Bad memory map read Address: %04x \n", address);
-			//throw std::runtime_error("Bad memory map read!");
+			Logger::Instance().LogMessage(LogMessageType::MMU, "Bad memory map read! Address: %04x Value: %02x"/*, address, value*/);
 		}
 	}
 
@@ -143,13 +143,12 @@ namespace Core
 		{
 			if (address >= 0x2000 && address <= 0x3FFF)
 			{
-				printf("Bank Number Write Detected: %04x Value: %02x \n", address, value);
+				Logger::Instance().LogMessage(LogMessageType::MMU, "Bank Number Write Detected: %04x Value: %02x"/*, address, value*/);
 				cart.CurrentBankNumber = value;
 			}
 			else
 			{
-				printf("Unmapped cart address Address: %04x Value: %02x \n", address, value);
-				//throw std::runtime_error("Can't write to cartridge!");
+				Logger::Instance().LogMessage(LogMessageType::MMU, "Unmapped cart address Address: %04x Value: %02x"/*, address, value*/);
 			}
 		}
 		// $8000-$97FF   Character RAM
@@ -186,15 +185,13 @@ namespace Core
 		else if (address >= 0xE000 && address <= 0xFDFF)
 		{
 			// this should never happen
-			printf("Can't write to echo RAM! Address: %04x Value: %02x \n", address, value);
-			//throw std::runtime_error("Can't write to echo RAM!");
+			Logger::Instance().LogMessage(LogMessageType::MMU, "Can't write to echo RAM! Address: %04x Value: %02x"/*, address, value*/);
 		}
 		// $FE00-$FE9F   OAM - Object Attribute Memory
 		else if (address >= 0xFE00 && address <= 0xFE9F)
 		{
 			uint16_t offset = address - 0xFE00;
 			oam[offset] = value;
-			//printf("OAM Write! Address: %04x Value: %02x \n", address, value);
 		}
 		// $FF00-$FF7F   Hardware IO
 		else if (address >= 0xFF00 && address <= 0xFF7F)
@@ -222,6 +219,8 @@ namespace Core
 					uint8_t copyValue = ReadFromMemoryMap(copyFrom);
 					WriteToMemoryMap(copyTo, copyValue);
 				}
+
+				Logger::Instance().LogMessage(LogMessageType::MMU, "DMA write. Address: %04x Value: %02x"/*, address, value*/);
 			}
 			
 			hardwareIO[offset] = value;
@@ -239,7 +238,7 @@ namespace Core
 		}
 		else
 		{
-			printf("Bad memory map write! Address: %04x Value: %02x \n", address, value);
+			Logger::Instance().LogMessage(LogMessageType::MMU, "Bad memory map write! Address: %04x Value: %02x"/*, address, value*/);
 			//throw std::runtime_error("Bad memory map write!");
 		}
 	}
