@@ -5,11 +5,7 @@
 
 namespace Core
 {
-	Apu::Apu(GameBoy& gb) : gameboy(gb)
-	{
-
-	}
-
+	Apu::Apu(GameBoy& gb) : gameboy(gb) {}
 	Apu::~Apu() {}
 
 	void Apu::Clock()
@@ -32,8 +28,8 @@ namespace Core
 
 			int16_t intSample = static_cast<int16_t>(sample * 32767.0);  // Convert to signed 16-bit
 
-			stream[i] = static_cast<uint8_t>(intSample & 0xFF);            // Low byte
-			stream[i + 1] = static_cast<uint8_t>((intSample >> 8) & 0xFF);  // High byte
+			//stream[i] = static_cast<uint8_t>(intSample & 0xFF);            // Low byte
+			//stream[i + 1] = static_cast<uint8_t>((intSample >> 8) & 0xFF);  // High byte
 
 			time += 1.0 / sampleRate;
 			if (time >= 1.0 / freq) {

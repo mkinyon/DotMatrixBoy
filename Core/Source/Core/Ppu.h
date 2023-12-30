@@ -12,8 +12,22 @@ namespace Core
 		~Ppu();
 
 	public:
+		struct OAM
+		{
+			uint16_t address = 0;
+			uint8_t xPos;
+			uint8_t yPos;
+			uint8_t tileIndex;
+
+			bool priority;
+			bool xFlip;
+			bool yFlip;
+			bool paletteOneSelected;
+		};
+
 		void Clock();
 		LCD_Mode GetMode();
+		OAM* GetOAMEntries();
 
 	public:
 		GameBoy& gb;
@@ -47,20 +61,6 @@ namespace Core
 
 	private:
 		uint8_t m_backBuffer[160 * 144] = {};
-
-		struct OAM
-		{
-			uint16_t address = 0;
-			uint8_t xPos;
-			uint8_t yPos;
-			uint8_t tileIndex;
-
-			bool priority;
-			bool xFlip;
-			bool yFlip;
-			bool paletteOneSelected;
-		};
-
 		OAM oamEntries[40] = {};
 	};
 }

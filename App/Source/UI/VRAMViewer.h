@@ -18,10 +18,22 @@ namespace App
 		void RenderContent();
 		void OnEvent(Event event);
 
+		void RenderTilesView();
+		void RenderBGMapsView();
+		void RenderOAMView();
+
 	private:
 		Core::GameBoy* gameboy;
-		SDL_Texture* texture;
-		uint8_t texturePixels[128 * 192 * 4] {};
+		SDL_Texture* tilesTexture;
+		SDL_Texture* oamTexture;
+		uint8_t tilesTexturePixels[128 * 192 * 4] {};
+
+		enum class WindowState
+		{
+			Tiles,
+			BGMaps,
+			OAM
+		};
 	};
 }
 

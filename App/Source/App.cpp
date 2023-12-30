@@ -12,20 +12,23 @@
 #include "UI/MenuBar.h"
 #include "UI/VRAMViewer.h"
 
+App::Window* window;
 Core::GameBoy* gb;
 Core::Cartridge* cart;
 bool isPaused = true;
 bool enableBootRom = false;
 const char* romName = "../Roms/dmg-acid2.gb";
 
-App::Window window(1280, 720, "DotMatrixBoy", gb);
+
 
 // Main code
 int main(int argv, char** args)
 {
-    window.Initialize();
-
     gb = new Core::GameBoy();
+    window = new App::Window(1280, 720, "DotMatrixBoy", gb);
+    window->Initialize();
+
+    
     cart = new Core::Cartridge(romName, enableBootRom);
     gb->InsertCartridge(*cart);
     gb->Run(enableBootRom);
@@ -33,11 +36,11 @@ int main(int argv, char** args)
     // Widgets
     App::FileDialog* fileDialog = new App::FileDialog(gb);
     App::MenuBar* menuBar = new App::MenuBar();
-    App::LCD* lcdWindow = new App::LCD(gb->ppu.m_lcdPixels, window.GetRenderer());
+    App::LCD* lcdWindow = new App::LCD(gb->ppu.m_lcdPixels, window->GetRenderer());
     App::AudioDebugger* audioDebugger = new App::AudioDebugger(gb);
     App::Debugger* debugger = new App::Debugger(gb);
     App::MemoryMap* memoryMap = new App::MemoryMap(gb);
-    App::VRAMViewer* vramViewer = new App::VRAMViewer(gb, window.GetRenderer());
+    App::VRAMViewer* vramViewer = new App::VRAMViewer(gb, window->GetRenderer());
 
     bool show_demo_window = true;
     bool show_another_window = false;
@@ -46,11 +49,11 @@ int main(int argv, char** args)
     bool isRunning = true;
     while (isRunning)
     {
-        window.Update(isRunning);
+        window->Update(isRunning);
 
-        gb->Clock((float)min((int)window.GetElapsedTime(), 16 ));
+        gb->Clock((float)min((int)window->GetElapsedTime(), 16 ));
 
-        window.BeginRender();
+        window->BeginRender();
 
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
@@ -64,7 +67,7 @@ int main(int argv, char** args)
         vramViewer->Render();
         audioDebugger->Render();
 
-        window.EndRender();
+        window->EndRender();
 
         if (menuBar->ExitPressed)
         {

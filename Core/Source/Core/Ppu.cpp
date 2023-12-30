@@ -438,4 +438,9 @@ namespace Core
 			i++;
 		}
 	}
+
+	Ppu::OAM* Ppu::GetOAMEntries()
+	{
+		return oamEntries;
+	}
 }
