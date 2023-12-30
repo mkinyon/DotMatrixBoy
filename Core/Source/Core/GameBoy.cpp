@@ -143,6 +143,7 @@ namespace Core
 		{
 			if (address >= 0x2000 && address <= 0x3FFF)
 			{
+				printf("Bank Number Write Detected: %04x Value: %02x \n", address, value);
 				cart.CurrentBankNumber = value;
 			}
 			else

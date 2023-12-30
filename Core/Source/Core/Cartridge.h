@@ -21,7 +21,7 @@ namespace Core
 		{
 			uint8_t codeBeginPoint[4];
 			uint8_t scrollingNintendoGraphic[48];
-			uint8_t title[10];
+			uint8_t title[15];
 			uint8_t cGBFlag;
 			uint8_t newLicenseeCode[2];
 			uint8_t sGBFlag;
