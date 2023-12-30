@@ -15,11 +15,11 @@ namespace App
 
 	void Console::RenderContent()
 	{
-		ImGui::Button("Info"); ImGui::SameLine();
-		ImGui::Button("Error"); ImGui::SameLine();
-		ImGui::Button("CPU"); ImGui::SameLine();
-		ImGui::Button("PPU"); ImGui::SameLine();
-		ImGui::Button("MMU");
+		infoButton.Render("Info"); ImGui::SameLine();
+		errorButton.Render("Error"); ImGui::SameLine();
+		cpuButton.Render("CPU"); ImGui::SameLine();
+		ppuButton.Render("PPU"); ImGui::SameLine();
+		mmuButton.Render("MMU");
 
 		ImGui::Separator();
 
@@ -31,28 +31,34 @@ namespace App
 			reverse(items.begin(), items.end()); // TODO: need to make this faster
             for (Core::LogMessage item : items)
             {
-				// TODO: wire up message type filtering
-
 				switch (item.type)
 				{
 				case Core::LogMessageType::Info:
-					ImGui::TextUnformatted("[INFO] "); ImGui::SameLine();
+					if (infoButton.Toggled) {
+						ImGui::TextUnformatted("[INFO] "); ImGui::SameLine(); ImGui::TextUnformatted(item.message.c_str());
+					}
 					break;
 				case Core::LogMessageType::Error:
-					ImGui::TextUnformatted("[ERROR] "); ImGui::SameLine();
+					if (errorButton.Toggled) {
+						ImGui::TextUnformatted("[ERROR] "); ImGui::SameLine(); ImGui::TextUnformatted(item.message.c_str());
+					}
 					break;
 				case Core::LogMessageType::CPU:
-					ImGui::TextUnformatted("[CPU] "); ImGui::SameLine();
+					if (cpuButton.Toggled) {
+						ImGui::TextUnformatted("[CPU] "); ImGui::SameLine(); ImGui::TextUnformatted(item.message.c_str());
+					}
 					break;
 				case Core::LogMessageType::PPU:
-					ImGui::TextUnformatted("[PPU] "); ImGui::SameLine();
+					if (ppuButton.Toggled) {
+						ImGui::TextUnformatted("[PPU] "); ImGui::SameLine(); ImGui::TextUnformatted(item.message.c_str());
+					}
 					break;
 				case Core::LogMessageType::MMU:
-					ImGui::TextUnformatted("[MMU] "); ImGui::SameLine();
+					if (mmuButton.Toggled) {
+						ImGui::TextUnformatted("[MMU] "); ImGui::SameLine(); ImGui::TextUnformatted(item.message.c_str());
+					}
 					break;
 				}
-
-                ImGui::TextUnformatted(item.message.c_str());
             }
 
 			ImGui::SetScrollHereY(1.0f);

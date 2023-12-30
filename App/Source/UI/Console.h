@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 #include "ImguiWidgetBase.h"
+#include "UI/Components/Components.h"
 
 namespace App
 {
@@ -15,6 +16,11 @@ namespace App
 		void RenderContent();
 		void OnEvent(Event event);
 
+		UI::ToggleButton infoButton;
+		UI::ToggleButton errorButton;
+		UI::ToggleButton cpuButton;
+		UI::ToggleButton ppuButton;
+		UI::ToggleButton mmuButton;
 	};
 }
 

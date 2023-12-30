@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <sstream>
 
 namespace Core
 {
@@ -30,6 +31,14 @@ namespace Core
         void LogCPUMessage(std::string message)
         {
             LogMessage(LogMessageType::CPU, message);
+        }
+
+        void LogMMUMessage(std::string message, uint16_t address, uint8_t value)
+        {
+            std::ostringstream stream;
+            stream << message << " Address: " << std::hex << address << " Value: " << std::dec << value;
+
+            LogMessage(LogMessageType::MMU, stream.str());
         }
 
         void LogMessage(LogMessageType type, std::string message)

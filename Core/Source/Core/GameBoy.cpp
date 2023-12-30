@@ -132,7 +132,7 @@ namespace Core
 		}
 		else
 		{
-			Logger::Instance().LogMessage(LogMessageType::MMU, "Bad memory map read! Address: %04x Value: %02x"/*, address, value*/);
+			Logger::Instance().LogMMUMessage("Bad memory map read!", address, 0);
 		}
 	}
 
@@ -143,12 +143,12 @@ namespace Core
 		{
 			if (address >= 0x2000 && address <= 0x3FFF)
 			{
-				Logger::Instance().LogMessage(LogMessageType::MMU, "Bank Number Write Detected: %04x Value: %02x"/*, address, value*/);
+				Logger::Instance().LogMMUMessage("Bank Number Write Detected", address, value);
 				cart.CurrentBankNumber = value;
 			}
 			else
 			{
-				Logger::Instance().LogMessage(LogMessageType::MMU, "Unmapped cart address Address: %04x Value: %02x"/*, address, value*/);
+				Logger::Instance().LogMMUMessage("Unmapped cart address.", address, value);
 			}
 		}
 		// $8000-$97FF   Character RAM
@@ -185,7 +185,7 @@ namespace Core
 		else if (address >= 0xE000 && address <= 0xFDFF)
 		{
 			// this should never happen
-			Logger::Instance().LogMessage(LogMessageType::MMU, "Can't write to echo RAM! Address: %04x Value: %02x"/*, address, value*/);
+			Logger::Instance().LogMMUMessage("Can't write to echo RAM!", address, value);
 		}
 		// $FE00-$FE9F   OAM - Object Attribute Memory
 		else if (address >= 0xFE00 && address <= 0xFE9F)
@@ -220,7 +220,7 @@ namespace Core
 					WriteToMemoryMap(copyTo, copyValue);
 				}
 
-				Logger::Instance().LogMessage(LogMessageType::MMU, "DMA write. Address: %04x Value: %02x"/*, address, value*/);
+				Logger::Instance().LogMMUMessage("DMA write.", address, value);
 			}
 			
 			hardwareIO[offset] = value;
@@ -238,7 +238,7 @@ namespace Core
 		}
 		else
 		{
-			Logger::Instance().LogMessage(LogMessageType::MMU, "Bad memory map write! Address: %04x Value: %02x"/*, address, value*/);
+			Logger::Instance().LogMMUMessage("Bad memory map write!", address, value);
 			//throw std::runtime_error("Bad memory map write!");
 		}
 	}
