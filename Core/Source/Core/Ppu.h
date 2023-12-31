@@ -15,14 +15,20 @@ namespace Core
 		struct OAM
 		{
 			uint16_t address = 0;
-			uint8_t xPos;
-			uint8_t yPos;
-			uint8_t tileIndex;
+			uint8_t xPos = 0;
+			uint8_t yPos = 0;
+			uint8_t tileIndex = 0;
 
-			bool priority;
-			bool xFlip;
-			bool yFlip;
-			bool paletteOneSelected;
+			bool bgPriority = false;
+			bool xFlip = false;
+			bool yFlip = false;
+			bool paletteOneSelected = false;
+			bool isTall = false;
+
+			bool operator < (const OAM& other) const
+			{
+				return (xPos < other.xPos) || (xPos == other.xPos && address < other.address);
+			}
 		};
 
 		void Clock();

@@ -1,6 +1,7 @@
 
 #include "GameBoy.h"
 #include "Ppu.h"
+#include "Logger.h"
 
 #include <vector>
 
@@ -287,65 +288,74 @@ namespace Core
 
 		// get oam entries for this scanline
 		std::vector<OAM> oamEntriesThisScanLine;
-		int oamIndex = 0;
-
 		for (int i = 0; i <= 40; i++)
 		{
-			if (lcdY >= oamEntries[i].yPos - 16 && lcdY < oamEntries[i].yPos - 8 && oamIndex < 10)
+			if (lcdY >= oamEntries[i].yPos - 16 && 
+				((oamEntries[i].isTall && lcdY < oamEntries[i].yPos) || (!oamEntries[i].isTall && lcdY < oamEntries[i].yPos - 8)))
 			{
 				oamEntriesThisScanLine.push_back(oamEntries[i]);
-				oamIndex++;
 			}
 		}
 
-		uint8_t backgroundTileYOffset = (0 + lcdY) % 8;
+		// here we sort the tiles based on x position and memory address
+		std::sort(oamEntriesThisScanLine.begin(), oamEntriesThisScanLine.end());
 
-		for (int tileX = 0; tileX < 32; tileX++)
+		// we want to render the first 10 tiles back to front so that tiles in front will
+		//  draw over the tiles in the back.
+		for (int i = 10; i > 0; i--)
 		{
-			OAM oamOnThisTile;
-
-			for (int i = 0; i < oamEntriesThisScanLine.size(); i++)
+			// skip if no oam entry exists
+			if (i > oamEntriesThisScanLine.size() )
 			{
-				if (oamEntriesThisScanLine[i].xPos == tileX * 8)
-				{
-					oamOnThisTile = oamEntriesThisScanLine[i];
-					break;
-				}
+				continue;
 			}
 
-			if (oamOnThisTile.address > 0)
+			OAM oam = oamEntriesThisScanLine[i - 1];
+
+			uint16_t tileAddress = 0x8000 + (oam.tileIndex * 16);
+
+			// need to offset the address based on the y position (backgroundTileYOffset) inside the tile
+			uint8_t backgroundTileYOffset;
+			if (oam.yFlip)
 			{
-				uint16_t tileAddress = 0x8000 + (oamOnThisTile.tileIndex * 16);
+				backgroundTileYOffset = (lcdY + (oam.yPos - 16));
+			}
+			else
+			{
+				backgroundTileYOffset = (lcdY - (oam.yPos - 16));
+			}
 
-				// need to offset the address based on the y position (backgroundTileYOffset) inside the tile
-				uint8_t firstByte = gb.ReadFromMemoryMap(tileAddress + (backgroundTileYOffset * 2));
-				uint8_t secondByte = gb.ReadFromMemoryMap(tileAddress + (backgroundTileYOffset * 2) + 1);
+			uint8_t firstByte = gb.ReadFromMemoryMap(tileAddress + (backgroundTileYOffset * 2));
+			uint8_t secondByte = gb.ReadFromMemoryMap(tileAddress + (backgroundTileYOffset * 2) + 1);
 
-				// get the obj palette
-				uint8_t palette;
-				if (oamOnThisTile.paletteOneSelected)
+			// get the obj palette
+			uint8_t palette;
+			if (oam.paletteOneSelected)
+			{
+				palette = gb.ReadFromMemoryMap(HW_OBP1_OBJ_PALETTE_1_DATA);
+			}
+			else
+			{
+				palette = gb.ReadFromMemoryMap(HW_OBP0_OBJ_PALETTE_0_DATA);
+			}
+
+			for (int p = 0; p < 8; p++)
+			{
+				uint8_t firstBit = (firstByte >> p) & 0x01;
+				uint8_t secondBit = (secondByte >> p) & 0x01;
+				int colorIndex = (secondBit << 1) | firstBit;
+				
+				// color index 0 is considered transparent so ignore it
+				if (colorIndex > 0)
 				{
-					palette = gb.ReadFromMemoryMap(HW_OBP1_OBJ_PALETTE_1_DATA);
-				}
-				else
-				{
-					palette = gb.ReadFromMemoryMap(HW_OBP0_OBJ_PALETTE_0_DATA);
-				}
-
-				for (int j = 0; j < 8; j++)
-				{
-					uint8_t firstBit = (firstByte >> j) & 0x01;
-					uint8_t secondBit = (secondByte >> j) & 0x01;
-					int colorIndex = (secondBit << 1) | firstBit;
-
 					int x;
-					if (oamOnThisTile.xFlip)
+					if (oam.xFlip)
 					{
-						x = (tileX * 8) - j - 1;
+						x = oam.xPos - 8 + p;
 					}
 					else
 					{
-						x = (tileX * 8) - j - 1;
+						x = oam.xPos - p - 1;
 					}
 
 					int y = lcdY;
@@ -361,8 +371,8 @@ namespace Core
 
 		if (x >= 160 || y >= 144)
 		{
+			Logger::Instance().LogMessage(LogMessageType::PPU, "Attempted bad write to backbuffer");
 			return;
-			//_ASSERT(x >= 160, "bad ppu!")
 		}
 
 		m_backBuffer[y * LCD_WIDTH + x] = color;
@@ -414,6 +424,8 @@ namespace Core
 
 	void Ppu::RefreshOAMEntries()
 	{
+		bool objSize = gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_OBJ_SIZE);
+
 		int i = 0;
 		int oamSizeInBytes = 4;
 		for (uint16_t addr = 0xFE00; addr <= 0xFE9C; addr += oamSizeInBytes)
@@ -427,13 +439,19 @@ namespace Core
 			oamEntries[i].xPos = gb.ReadFromMemoryMap(addr + 1);
 
 			// the third oam byte is the tile index
-			oamEntries[i].tileIndex = gb.ReadFromMemoryMap(addr + 2);
+			uint8_t tileIndex = gb.ReadFromMemoryMap(addr + 2);
+			oamEntries[i].tileIndex = objSize ? tileIndex & 0xFE : tileIndex;
+			if (oamEntries[i].yFlip && oamEntries[i].isTall)
+			{
+				oamEntries[i].tileIndex++;
+			}
 
 			// the fourth oam byte is for the attributes
 			oamEntries[i].paletteOneSelected = gb.ReadFromMemoryMapRegister(addr + 3, OAM_PALETTE);
 			oamEntries[i].xFlip = gb.ReadFromMemoryMapRegister(addr + 3, OAM_FLIP_X);
 			oamEntries[i].yFlip = gb.ReadFromMemoryMapRegister(addr + 3, OAM_FLIP_Y);
-			oamEntries[i].priority = gb.ReadFromMemoryMapRegister(addr + 3, OAM_PRIORITY);
+			oamEntries[i].bgPriority = gb.ReadFromMemoryMapRegister(addr + 3, OAM_PRIORITY);
+			oamEntries[i].isTall = objSize;
 
 			i++;
 		}

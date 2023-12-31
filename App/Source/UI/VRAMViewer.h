@@ -21,11 +21,11 @@ namespace App
 		void RenderTilesView();
 		void RenderBGMapsView();
 		void RenderOAMView();
+		void updateTexture();
 
 	private:
 		Core::GameBoy* gameboy;
 		SDL_Texture* tilesTexture;
-		SDL_Texture* oamTexture;
 		uint8_t tilesTexturePixels[128 * 192 * 4] {};
 
 		enum class WindowState
