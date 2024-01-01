@@ -134,7 +134,12 @@ namespace Core
 
 	#define LCD_WIDTH  160
 	#define LCD_HEIGHT 144
-	#define FIFO_SIZE  8
+	#define TILEMAP_WIDTH 32
+	#define TILEMAP_HEIGHT 32
+	#define TILEMAP_WIDTH_PIXELS 256
+	#define TILEMAP_HEIGHT_PIXELS 256
+	#define TILE_WIDTH 8
+	#define TILE_HEIGHT 8
 
 	#define OAM_CYCLES     80
 	#define VBLANK_CYCLES  456

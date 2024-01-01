@@ -12,10 +12,10 @@ namespace Core
 
 	void Ppu::Clock()
 	{
-		/*if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_Flags::LCDC_LCD_PPU_ENABLE))
+		if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_Flags::LCDC_LCD_PPU_ENABLE))
 		{
 			return;
-		}*/
+		}
 
 		LCD_Mode currentMode = readLCDMode();
 		m_CycleCount++;
@@ -90,7 +90,7 @@ namespace Core
 			// render graphics
 			drawBGToBuffer();
 			drawWindowToBuffer();
-			drawSpritesToBuffer();
+			drawOAMToBuffer();
 
 			uint8_t ly = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
 			if (ly == 143)
@@ -132,79 +132,55 @@ namespace Core
 	// This will draw one line of the background to the buffer 
 	void Ppu::drawBGToBuffer()
 	{
-		if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_WINDOW_ENABLE_PRIORITY))
-		{
-			return;
-		}
+		if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_WINDOW_ENABLE_PRIORITY)) return;
 
 		uint8_t lcdY = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
-		uint8_t scrollY = gb.ReadFromMemoryMap(HW_SCY_VIEWPORT_Y_POS);
 		uint8_t scrollX = gb.ReadFromMemoryMap(HW_SCX_VIEWPORT_X_POS);
+		uint8_t scrollY = gb.ReadFromMemoryMap(HW_SCY_VIEWPORT_Y_POS);
 
-		// Wrap the viewport around Y
-		uint8_t startBackgroundTileY = (scrollY + lcdY) / 8 >= 32
-			? (scrollY + lcdY) / 8 % 32
-			: (scrollY + lcdY) / 8;
-		uint8_t backgroundTileYOffset = (scrollY + lcdY) % 8;
-
-		uint8_t startBackgroundTileX = scrollX / 8;
-		uint8_t backgroundTileXOffset = scrollX % 8;
-
-		// The screen is 20 tiles horizontal (160 pixel / 8 pixel per Tile) but will render 21 tiles to scroll correctly
-		for (int i = 0; i < 21; i++)
+		// iterate through each pixel
+		for (int x = 0; x < 160; x++)
 		{
-			// Wrap the viewport around X
-			uint8_t tileNrX = startBackgroundTileX + i >= 32
-				? (startBackgroundTileX + i) % 32
-				: startBackgroundTileX + i;	
+			// get x and y coordinate from within tile map
+			uint8_t xCoordInTileMap = (scrollX + x) > TILEMAP_WIDTH_PIXELS ? (scrollX + x) % TILEMAP_WIDTH_PIXELS : (scrollX + x);
+			uint8_t yCoordInTileMap = (scrollY + lcdY) > TILEMAP_HEIGHT_PIXELS ? (scrollY + lcdY) % TILEMAP_HEIGHT_PIXELS : (scrollY + lcdY);
 
-			int currentTilePos = startBackgroundTileY * 32 + tileNrX;
+			// get tile coordinates
+			uint8_t tileXCoord = xCoordInTileMap / TILE_WIDTH;
+			uint8_t tileYCoord = yCoordInTileMap / TILE_HEIGHT;
+
+			// get tile x and y offsets
+			uint8_t tileXOffset = xCoordInTileMap % TILE_WIDTH;
+			uint8_t tileYOffset = yCoordInTileMap % TILE_HEIGHT;
+
+			// get tile at x and y coord
+			int tilePosition = tileYCoord * TILEMAP_WIDTH + tileXCoord;
+
+			// get pixel from tile
 
 			// get tile id from current tile map
 			bool bgTileMapArea = gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_TILE_MAP);
-			uint8_t tileId = gb.ReadFromMemoryMap(bgTileMapArea ? BG_MAP_1 + currentTilePos : BG_MAP_0 + currentTilePos);
+			uint8_t tileId = gb.ReadFromMemoryMap(bgTileMapArea ? BG_MAP_1 + tilePosition : BG_MAP_0 + tilePosition);
 
 			// get tile address
-			uint16_t tileAddress;
-			bool bgTileDataArea = gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_AND_WINDOW_TILES);
-			if (bgTileDataArea)
-			{
-				tileAddress = 0x8000 + (tileId * 16);
-			}
-			else
-			{
-				if (tileId >= 128)
-				{
-					tileAddress = 0x8800 + ((tileId - 128) * 16);
-				}
-				else
-				{
-					tileAddress = 0x9000 + (tileId * 16);
-				}
-			}
+			uint16_t tileAddress = GetTileAddressFromTileId(tileId);
 
-			// need to offset the address based on the y position (backgroundTileYOffset) inside the tile
-			uint8_t firstByte = gb.ReadFromMemoryMap(tileAddress + (backgroundTileYOffset * 2));
-			uint8_t secondByte = gb.ReadFromMemoryMap(tileAddress + (backgroundTileYOffset * 2) + 1);
+			// need to offset the address based on the y position (tileYOffset) inside the tile
+			uint8_t firstByte = gb.ReadFromMemoryMap(tileAddress + (tileYOffset * 2));
+			uint8_t secondByte = gb.ReadFromMemoryMap(tileAddress + (tileYOffset * 2) + 1);
 
 			// get the background palette
 			uint8_t bgPalette = gb.ReadFromMemoryMap(HW_BGP_BG_PALETTE_DATA);
 
-			// each tile is 8 pixels wide
-			for (int j = 0; j < 8; j++)
-			{
-				// make sure we are in bounds
-				if (i == 0 && j < backgroundTileXOffset) continue;
-				if (i == 20 && j >= backgroundTileXOffset) continue;
+			// because of the bit order and how we are rendering, we need to flip the tileXOffset
+			// so we get the right pixel
+			int wrappedValue = (7 - tileXOffset) % 8;
 
-				uint8_t firstBit = (firstByte >> j) & 0x01;
-				uint8_t secondBit = (secondByte >> j) & 0x01;
-				int colorIndex = (secondBit << 1) | firstBit;
+			uint8_t firstBit = (firstByte >> wrappedValue) & 0x01;
+			uint8_t secondBit = (secondByte >> wrappedValue) & 0x01;
+			int colorIndex = (secondBit << 1) | firstBit;
 
-				int x = (i * 8) - backgroundTileXOffset - 1;
-				x = x + 8 - j; // fixes reversed pixels
-				writeToBuffer(x, lcdY, bgPalette, colorIndex);
-			}
+			writeToBuffer(x, lcdY, bgPalette, colorIndex);
 		}
 	}
 
@@ -233,26 +209,7 @@ namespace Core
 				uint8_t tileId = gb.ReadFromMemoryMap(windowTileMapArea ? BG_MAP_1 + currentTilePos : BG_MAP_0 + currentTilePos);
 
 				// get tile address
-				uint16_t tileAddress;
-				bool windowTileDataArea = gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_AND_WINDOW_TILES);
-
-				if (windowTileDataArea)
-				{
-					tileAddress = 0x8000 + (tileId * 16);
-				}
-				else
-				{
-					if (tileId >= 128)
-					{
-						tileAddress = 0x8800 + ((tileId - 128) * 16);
-					}
-					else
-					{
-						tileAddress = 0x9000 + (tileId * 16);
-					}
-				}
-
-				//tileAddress = 0x8AA0;
+				uint16_t tileAddress = GetTileAddressFromTileId(tileId);
 
 				// need to offset the address based on the y position (backgroundTileYOffset) inside the tile
 				uint8_t firstByte = gb.ReadFromMemoryMap(tileAddress + (backgroundTileYOffset * 2));
@@ -275,7 +232,7 @@ namespace Core
 		}
 	}
 
-	void Ppu::drawSpritesToBuffer()
+	void Ppu::drawOAMToBuffer()
 	{
 		if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_OBJ_ENABLE))
 		{
@@ -318,7 +275,8 @@ namespace Core
 			uint8_t backgroundTileYOffset;
 			if (oam.yFlip)
 			{
-				backgroundTileYOffset = (lcdY + (oam.yPos - 16));
+				backgroundTileYOffset = (lcdY - (oam.yPos - 16));
+				backgroundTileYOffset =  7 - backgroundTileYOffset;
 			}
 			else
 			{
@@ -359,10 +317,33 @@ namespace Core
 					}
 
 					int y = lcdY;
-					writeToBuffer(x, y, palette, colorIndex);
+
+					if (oam.bgPriority)
+					{
+						int bgColorIndex = ReadFromBuffer(x, y);
+						if (bgColorIndex == 3)
+						{
+							writeToBuffer(x, y, palette, colorIndex);
+						}
+					}
+					else
+					{
+						writeToBuffer(x, y, palette, colorIndex);
+					}
 				}
 			}
 		}
+	}
+
+	uint8_t Ppu::ReadFromBuffer(int x, int y)
+	{
+		if (x >= 160 || y >= 144)
+		{
+			Logger::Instance().LogMessage(LogMessageType::PPU, "Attempted bad read from backbuffer");
+			return 0;
+		}
+
+		return m_backBuffer[y * LCD_WIDTH + x];
 	}
 
 	void Ppu::writeToBuffer(int x, int y, uint8_t bgPalette, int colorIndex)
@@ -460,5 +441,29 @@ namespace Core
 	Ppu::OAM* Ppu::GetOAMEntries()
 	{
 		return oamEntries;
+	}
+
+	uint16_t Ppu::GetTileAddressFromTileId(uint8_t tileId)
+	{
+		uint16_t tileAddress;
+		bool windowTileDataArea = gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_AND_WINDOW_TILES);
+
+		if (windowTileDataArea)
+		{
+			tileAddress = 0x8000 + (tileId * 16);
+		}
+		else
+		{
+			if (tileId >= 128)
+			{
+				tileAddress = 0x8800 + ((tileId - 128) * 16);
+			}
+			else
+			{
+				tileAddress = 0x9000 + (tileId * 16);
+			}
+		}
+
+		return tileAddress;
 	}
 }

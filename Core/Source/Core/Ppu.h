@@ -57,13 +57,15 @@ namespace Core
 		// drawing functions
 		void drawBGToBuffer();
 		void drawWindowToBuffer();
-		void drawSpritesToBuffer();
+		void drawOAMToBuffer();
 
+		uint8_t ReadFromBuffer(int x, int y);
 		void writeToBuffer(int x, int y, uint8_t bgPalette, int colorIndex);
 		void copyBackBufferToLCD();
 		void clearBackBuffer();
 
 		void RefreshOAMEntries();
+		uint16_t GetTileAddressFromTileId(uint8_t tileId);
 
 	private:
 		uint8_t m_backBuffer[160 * 144] = {};
