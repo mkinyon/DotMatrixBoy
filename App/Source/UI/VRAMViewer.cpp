@@ -144,6 +144,8 @@ namespace App
 
 	void VRAMViewer::updateTexture()
 	{
+		uint8_t bgPalette = gameboy->ReadFromMemoryMap(Core::HW_BGP_BG_PALETTE_DATA);
+
 		int x = 8;
 		int y = 0;
 
@@ -160,12 +162,10 @@ namespace App
 
 				int draw_x = x - iBit; // Adjusted x coordinate for drawing
 				int draw_y = y + count; // Adjusted y coordinate for drawing
-
-				// get the background palette
-				uint8_t bgPalette = gameboy->ReadFromMemoryMap(Core::HW_BGP_BG_PALETTE_DATA);
+				
 				uint8_t colorId = bgPalette >> (colorIndex * 2) & 0x03;
 
-				int blockIndex = (draw_y * 128 + draw_x) * 4;
+				int blockIndex = (draw_y * 128 + draw_x - 1) * 4;
 
 				//_ASSERT(blockIndex < 0);
 
