@@ -1,21 +1,31 @@
-#include <vector>
+#include <deque>
 #include <string>
 #include <sstream>
+#include <chrono>
 
 namespace Core
 {
-    enum class LogMessageType
+    enum class Severity
     {
+        Verbose,
         Info,
-        Error,
+        Warning,
+        Error
+    };
+
+    enum class Domain
+    {
+        APPLICATION,
+        APU,
         CPU,
         MMU,
         PPU
     };
 
-    struct LogMessage
+    struct Message
     {
-        LogMessageType type;
+        Severity severity;
+        Domain domain;
         std::string message;
     };
 
@@ -28,36 +38,90 @@ namespace Core
             return instance;
         }
 
-        void LogCPUMessage(std::string message)
+        void Verbose(Domain domain, std::string message)
         {
-            LogMessage(LogMessageType::CPU, message);
+            LogMessage(Severity::Verbose, domain, message);
         }
 
-        void LogMMUMessage(std::string message, uint16_t address, uint8_t value)
+        void Info(Domain domain, std::string message)
+        {
+            LogMessage(Severity::Info, domain, message);
+        }
+
+        void Warning(Domain domain, std::string message)
+        {
+            LogMessage(Severity::Warning, domain, message);
+        }
+
+        void Error(Domain domain, std::string message)
+        {
+            LogMessage(Severity::Error, domain, message);
+        }
+
+        void LogMessage(Severity severity, Domain domain, std::string message)
         {
             std::ostringstream stream;
-            stream << message << " Address: " << std::hex << address << " Value: " << std::dec << value;
 
-            LogMessage(LogMessageType::MMU, stream.str());
-        }
+            // append timestamp
+            auto currentTime = std::chrono::system_clock::now();
+            std::time_t timestamp = std::chrono::system_clock::to_time_t(currentTime);
+            std::tm* timeInfo = std::localtime(&timestamp);
+            stream << std::put_time(timeInfo, "[%Y-%m-%d %H:%M:%S] ");
 
-        void LogMessage(LogMessageType type, std::string message)
-        {
-            logMessages.push_back({ type, message });
+            // append severity
+            switch (severity)
+            {
+            case Core::Severity::Verbose:
+                stream << "[VERBOSE] ";
+                break;
+            case Core::Severity::Info:
+                stream << "[INFO] ";
+                break;
+            case Core::Severity::Warning:
+                stream << "[WARNING] ";
+                break;
+            case Core::Severity::Error:
+                stream << "[ERROR] ";
+                break;
+            }
+
+            // append domain
+            switch (domain)
+            {
+            case Core::Domain::APPLICATION:
+                stream << "[APPLICATION] ";
+                break;
+            case Core::Domain::APU:
+                stream << "[APU] ";
+                break;
+            case Core::Domain::CPU:
+                stream << "[CPU] ";
+                break;
+            case Core::Domain::MMU:
+                stream << "[MMU] ";
+                break;
+            case Core::Domain::PPU:
+                stream << "[PPU] ";
+                break;
+            }
+
+            stream << message;
+
+            //logMessages.push_back({ severity, domain, stream.str()});
 
             if (logMessages.size() >= MAX_MESSAGES)
             {
-                logMessages.erase(logMessages.begin());
+                logMessages.pop_front();
             }
         }
 
-        std::vector<Core::LogMessage> GetMessages()
+        std::deque<Core::Message> GetMessages()
         {
             return logMessages;
         }
 
     private:
-        const int MAX_MESSAGES = 500;
-        std::vector<Core::LogMessage> logMessages;
+        const int MAX_MESSAGES = 50000;
+        std::deque<Core::Message> logMessages;
     };
 }

@@ -1525,14 +1525,14 @@ namespace Core
 			case 0xCBFF: instruction_set_bit_reg(State.A, 7); break;
 
 			default:
-				unimplementedInstruction(State, opcode);
+				unimplementedInstruction(State, static_cast<uint8_t>(opcode));
 				break;
 		}
 	}
 
 	void Cpu::unimplementedInstruction(Cpu::m_CpuState& State, uint8_t opcode)
 	{
-		Logger::Instance().LogMessage(LogMessageType::MMU, "Error: Unimplemented instruction: %02x"/*, opcode */);
+		Logger::Instance().Error(Domain::CPU, "Error: Unimplemented instruction: %02x"/*, opcode */);
 	}
 
 	int Cpu::Disassemble(uint8_t* opcode, int pc)
@@ -2169,7 +2169,7 @@ namespace Core
 		output += "\n";
 
 		currentInstructionName = output;
-		Logger::Instance().LogCPUMessage(output);
+		Logger::Instance().Info(Domain::CPU, output);
 	}
 
 	std::string Cpu::GetCurrentInstruction()
@@ -2711,20 +2711,6 @@ namespace Core
 		uint8_t value = gb.ReadFromMemoryMap(State.HL);
 		instruction_set_bit_reg(value, bit);
 		gb.WriteToMemoryMap(State.HL, value);
-	}
-
-	int Cpu::getClockSelect()
-	{
-		uint8_t clockSelect = gb.ReadFromMemoryMap(HW_TAC_TIMER_CONTROL) & 0x03;
-
-		if (clockSelect == 0x00)
-			return TIMA_CLOCK_SPEED_00;
-		if (clockSelect == 0x01)
-			return TIMA_CLOCK_SPEED_01;
-		if (clockSelect == 0x10)
-			return TIMA_CLOCK_SPEED_10;
-		if (clockSelect == 0x11)
-			return TIMA_CLOCK_SPEED_11;
 	}
 
 	void Cpu::processTimers() 

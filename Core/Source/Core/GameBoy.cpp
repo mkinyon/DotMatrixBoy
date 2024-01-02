@@ -132,7 +132,9 @@ namespace Core
 		}
 		else
 		{
-			Logger::Instance().LogMMUMessage("Bad memory map read!", address, 0);
+			std::ostringstream stream;
+			stream << "Bad Memory Map write! Address: " << std::hex << address;
+			Logger::Instance().Error(Domain::MMU, stream.str());
 		}
 	}
 
@@ -143,12 +145,16 @@ namespace Core
 		{
 			if (address >= 0x2000 && address <= 0x3FFF)
 			{
-				Logger::Instance().LogMMUMessage("Bank Number Write Detected", address, value);
-				cart.CurrentBankNumber = value;
+				std::ostringstream stream;
+				stream << "Bank Number Write Detected. Address: " << std::hex << address << " Value: " << std::dec << value;
+				Logger::Instance().Info(Domain::MMU, stream.str());
+				cart.CurrentBankNumber = value & 0xF;
 			}
 			else
 			{
-				Logger::Instance().LogMMUMessage("Unmapped cart address.", address, value);
+				std::ostringstream stream;
+				stream << "Unmapped cart address! Address: " << std::hex << address << " Value: " << std::dec << value;
+				Logger::Instance().Warning(Domain::MMU, stream.str());
 			}
 		}
 		// $8000-$97FF   Character RAM
@@ -185,7 +191,9 @@ namespace Core
 		else if (address >= 0xE000 && address <= 0xFDFF)
 		{
 			// this should never happen
-			Logger::Instance().LogMMUMessage("Can't write to echo RAM!", address, value);
+			std::ostringstream stream;
+			stream << "Can't write to echo RAM! Address: " << std::hex << address << " Value: " << std::dec << value;
+			Logger::Instance().Info(Domain::MMU, stream.str());
 		}
 		// $FE00-$FE9F   OAM - Object Attribute Memory
 		else if (address >= 0xFE00 && address <= 0xFE9F)
@@ -220,7 +228,9 @@ namespace Core
 					WriteToMemoryMap(copyTo, copyValue);
 				}
 
-				Logger::Instance().LogMMUMessage("DMA write.", address, value);
+				std::ostringstream stream;
+				stream << "DMA write. Address: " << std::hex << address << " Value: " << std::dec << value;
+				Logger::Instance().Info(Domain::MMU, stream.str());
 			}
 			
 			hardwareIO[offset] = value;
@@ -238,8 +248,9 @@ namespace Core
 		}
 		else
 		{
-			Logger::Instance().LogMMUMessage("Bad memory map write!", address, value);
-			//throw std::runtime_error("Bad memory map write!");
+			std::ostringstream stream;
+			stream << "Bad memory map write! Address: " << std::hex << address << " Value: " << std::dec << value;
+			Logger::Instance().Error(Domain::PPU, stream.str());
 		}
 	}
 

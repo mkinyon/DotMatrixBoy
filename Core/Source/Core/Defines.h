@@ -114,19 +114,6 @@ namespace Core
 		TAC_ENABLE = (0x01 << 2)
 	} TimerControl_Flags;
 
-	typedef enum
-	{
-		CLOCK_00 = 0x00,
-		CLOCK_01 = 0x01,
-		CLOCK_10 = 0x02,
-		CLOCK_11 = 0x03
-	} Clock_Select;
-
-	#define TIMA_CLOCK_SPEED_00 1024
-	#define TIMA_CLOCK_SPEED_01 16
-	#define TIMA_CLOCK_SPEED_10 64
-	#define TIMA_CLOCK_SPEED_11 256
-
 
 	/********************************************************************************************
 		PPU Specific

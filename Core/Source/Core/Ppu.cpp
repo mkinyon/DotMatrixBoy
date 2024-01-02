@@ -348,7 +348,7 @@ namespace Core
 	{
 		if (x >= 160 || y >= 144)
 		{
-			Logger::Instance().LogMessage(LogMessageType::PPU, "Attempted bad read from backbuffer");
+			Logger::Instance().Warning(Domain::PPU, "Attempted bad read from backbuffer");
 			return 0;
 		}
 
@@ -361,7 +361,7 @@ namespace Core
 
 		if (x >= 160 || y >= 144)
 		{
-			Logger::Instance().LogMessage(LogMessageType::PPU, "Attempted bad write to backbuffer");
+			Logger::Instance().Warning(Domain::PPU, "Attempted bad write to backbuffer");
 			return;
 		}
 

@@ -1,11 +1,13 @@
 #include "Console.h"
 #include "EventManager.h"
 #include "Core/Logger.h"
+#include <deque>
+#include <set>
 
 
 namespace App
 {
-	Console::Console() : ImguiWidgetBase("Console")
+	Console::Console() : ImguiWidgetBase("Console"), verboseButton(false), infoButton(false)
 	{
 		EventManager::Instance().Subscribe(Event::CONSOLE_ENABLE, this);
 		EventManager::Instance().Subscribe(Event::CONSOLE_DISABLE, this);
@@ -15,11 +17,23 @@ namespace App
 
 	void Console::RenderContent()
 	{
+		ImGui::BeginChild("LeftButtons", ImVec2(ImGui::GetContentRegionMax().x * 0.5f, 20), ImGuiChildFlags_None);
+		verboseButton.Render("Verbose"); ImGui::SameLine();
 		infoButton.Render("Info"); ImGui::SameLine();
-		errorButton.Render("Error"); ImGui::SameLine();
+		warningButton.Render("Warning"); ImGui::SameLine();
+		errorButton.Render("Error");
+		ImGui::EndChild();
+
+		ImGui::SameLine();
+
+		ImGui::BeginChild("RightButtons", ImVec2(ImGui::GetContentRegionMax().x * 0.5f, 20), ImGuiChildFlags_None);
+		appButton.Render("APP"); ImGui::SameLine();
+		apuButton.Render("APU"); ImGui::SameLine();
 		cpuButton.Render("CPU"); ImGui::SameLine();
-		ppuButton.Render("PPU"); ImGui::SameLine();
-		mmuButton.Render("MMU");
+		mmuButton.Render("MMU"); ImGui::SameLine();
+		ppuButton.Render("PPU");
+		
+		ImGui::EndChild();
 
 		ImGui::Separator();
 
@@ -27,36 +41,25 @@ namespace App
         {
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1)); // Tighten spacing
 
-            std::vector<Core::LogMessage> items = Core::Logger::Instance().GetMessages();
-            for (Core::LogMessage item : items)
+			std::set<Core::Severity> filteredSeverities;
+			if (verboseButton.Toggled) filteredSeverities.insert(Core::Severity::Verbose);
+			if (infoButton.Toggled) filteredSeverities.insert(Core::Severity::Info);
+			if (warningButton.Toggled) filteredSeverities.insert(Core::Severity::Warning);
+			if (errorButton.Toggled) filteredSeverities.insert(Core::Severity::Error);
+
+			std::set<Core::Domain> filteredDomains;
+			if (appButton.Toggled) filteredDomains.insert(Core::Domain::APPLICATION);
+			if (apuButton.Toggled) filteredDomains.insert(Core::Domain::APU);
+			if (cpuButton.Toggled) filteredDomains.insert(Core::Domain::CPU);
+			if (mmuButton.Toggled) filteredDomains.insert(Core::Domain::MMU);
+			if (ppuButton.Toggled) filteredDomains.insert(Core::Domain::PPU);
+
+            std::deque<Core::Message> messages = Core::Logger::Instance().GetMessages();
+            for (Core::Message msg : messages)
             {
-				switch (item.type)
+				if (filteredSeverities.count(msg.severity) > 0 && filteredDomains.count(msg.domain) > 0)
 				{
-				case Core::LogMessageType::Info:
-					if (infoButton.Toggled) {
-						ImGui::TextUnformatted("[INFO] "); ImGui::SameLine(); ImGui::TextUnformatted(item.message.c_str());
-					}
-					break;
-				case Core::LogMessageType::Error:
-					if (errorButton.Toggled) {
-						ImGui::TextUnformatted("[ERROR] "); ImGui::SameLine(); ImGui::TextUnformatted(item.message.c_str());
-					}
-					break;
-				case Core::LogMessageType::CPU:
-					if (cpuButton.Toggled) {
-						ImGui::TextUnformatted("[CPU] "); ImGui::SameLine(); ImGui::TextUnformatted(item.message.c_str());
-					}
-					break;
-				case Core::LogMessageType::PPU:
-					if (ppuButton.Toggled) {
-						ImGui::TextUnformatted("[PPU] "); ImGui::SameLine(); ImGui::TextUnformatted(item.message.c_str());
-					}
-					break;
-				case Core::LogMessageType::MMU:
-					if (mmuButton.Toggled) {
-						ImGui::TextUnformatted("[MMU] "); ImGui::SameLine(); ImGui::TextUnformatted(item.message.c_str());
-					}
-					break;
+					ImGui::TextUnformatted(msg.message.c_str());
 				}
             }
 
