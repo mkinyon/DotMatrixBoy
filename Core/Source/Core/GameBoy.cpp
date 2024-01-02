@@ -136,7 +136,7 @@ namespace Core
 		}
 	}
 
-	void GameBoy::WriteToMemoryMap(uint16_t address, uint8_t value)
+	void GameBoy::WriteToMemoryMap(uint16_t address, uint8_t value, bool rawWrite)
 	{
 		// $0000-$7FFF   RES and Interrupts, cart header, cart data
 		if (address >= 0x0000 && address <= 0x7FFF)
@@ -199,7 +199,7 @@ namespace Core
 			uint16_t offset = address - 0xFF00;
 
 			// writing to the DIV register will cause is to reset to zero 
-			if (address == HW_DIV_DIVIDER_REGISTER)
+			if (address == HW_DIV_DIVIDER_REGISTER && !rawWrite)
 			{
 				hardwareIO[offset] = 0;
 				hardwareIO[offset - 1] = 0;

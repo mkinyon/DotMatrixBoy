@@ -28,7 +28,6 @@ namespace App
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1)); // Tighten spacing
 
             std::vector<Core::LogMessage> items = Core::Logger::Instance().GetMessages();
-			reverse(items.begin(), items.end()); // TODO: need to make this faster
             for (Core::LogMessage item : items)
             {
 				switch (item.type)

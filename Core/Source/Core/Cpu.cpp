@@ -2715,20 +2715,15 @@ namespace Core
 
 	int Cpu::getClockSelect()
 	{
-		bool lowBit = gb.ReadFromMemoryMapRegister(HW_TAC_TIMER_CONTROL, TimerControl_Flags::TAC_CLOCK_SELECT_LBIT);
-		bool highBit = gb.ReadFromMemoryMapRegister(HW_TAC_TIMER_CONTROL, TimerControl_Flags::TAC_CLOCK_SELECT_HBIT);
+		uint8_t clockSelect = gb.ReadFromMemoryMap(HW_TAC_TIMER_CONTROL) & 0x03;
 
-		uint8_t value = 0;
-		value |= lowBit ? 0x01 : 0;
-		value |= highBit ? 0x02 : 0;
-
-		if (value == 0x00)
+		if (clockSelect == 0x00)
 			return TIMA_CLOCK_SPEED_00;
-		if (value == 0x01)
+		if (clockSelect == 0x01)
 			return TIMA_CLOCK_SPEED_01;
-		if (value == 0x10)
+		if (clockSelect == 0x10)
 			return TIMA_CLOCK_SPEED_10;
-		if (value == 0x11)
+		if (clockSelect == 0x11)
 			return TIMA_CLOCK_SPEED_11;
 	}
 
@@ -2747,28 +2742,64 @@ namespace Core
 		}
 
 		// write updated DIV register
-		gb.WriteToMemoryMap(HW_DIV_DIVIDER_REGISTER, (internalClock & 0xFF00) >> 8);
-		gb.WriteToMemoryMap(HW_DIV_DIVIDER_REGISTER_LOW, internalClock & 0x00FF);
+		gb.WriteToMemoryMap(HW_DIV_DIVIDER_REGISTER, (internalClock & 0xFF00) >> 8, true);
+		gb.WriteToMemoryMap(HW_DIV_DIVIDER_REGISTER_LOW, internalClock & 0x00FF, true);
 
-		// now increment the TIMA register
-		uint8_t tima = gb.ReadFromMemoryMap(HW_TIMA_TIMER_COUNTER);
 
-		// the TIMA register ticks at a specific clock speed based on the TAC Timer Control register
-		if (internalClock % getClockSelect() == 0)
+		// https://github.com/Hacktix/GBEDG/blob/master/timers/index.md#timer-operation
+		static bool lastBit;
+		bool thisBit = 0;
+
+		// 1. A bit position of the 16 - bit counter is determined based on the lower 2 bits of the TAC register
+		switch (gb.ReadFromMemoryMap(HW_TAC_TIMER_CONTROL) & 0x03)
 		{
+			case 0:
+				thisBit = (internalClock >> 9) & 0x1;
+				break;
+			case 1:
+				thisBit = (internalClock >> 3) & 0x1;
+				break;
+			case 2:
+				thisBit = (internalClock >> 5) & 0x1;
+				break;
+			case 3:
+				thisBit = (internalClock >> 7) & 0x1;
+				break;
+		}
+
+		// 2. The "Timer Enable" bit(Bit 2) is extracted from the value in the TAC register and stored for the next step.
+		bool timerEnabled = gb.ReadFromMemoryMapRegister(HW_TAC_TIMER_CONTROL, TAC_ENABLE);
+
+		// 3. The bit taken from the DIV counter is ANDed with the Timer Enable bit. 
+		//    The result of this operation will be referred to as the "AND Result".
+		thisBit &= timerEnabled;
+
+		static int countdownToInterrupt = 0;
+		if (lastBit == 1 && thisBit == 0)
+		{
+			// now increment the TIMA register
+			uint8_t tima = gb.ReadFromMemoryMap(HW_TIMA_TIMER_COUNTER);
 			tima++;
 			gb.WriteToMemoryMap(HW_TIMA_TIMER_COUNTER, tima);
-		}
 
-		// if the TIMA register rolls over then we need to trigger an interrupt
-		if (tima == 0xFF)
-		{
-			gb.WriteToMemoryMap(HW_TIMA_TIMER_COUNTER, gb.ReadFromMemoryMap(HW_TMA_TIMER_MODULO));
-
-			if (gb.ReadFromMemoryMapRegister(HW_TAC_TIMER_CONTROL, TAC_ENABLE))
+			// if the TIMA register rolls over then we need to trigger an interrupt
+			if (tima == 0x0)
 			{
-				gb.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_TIMER, true);
+				// need to wait four cycles plus this current cycle
+				countdownToInterrupt = 5;
 			}
 		}
+
+		if (countdownToInterrupt > 0)
+		{
+			countdownToInterrupt--;
+			if (countdownToInterrupt == 0)
+			{
+				gb.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_TIMER, true);
+				gb.WriteToMemoryMap(HW_TIMA_TIMER_COUNTER, gb.ReadFromMemoryMap(HW_TMA_TIMER_MODULO));
+			}
+		}
+
+		lastBit = thisBit;
 	}
 }

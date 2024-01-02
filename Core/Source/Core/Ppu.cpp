@@ -326,10 +326,11 @@ namespace Core
 
 					int y = lcdY;
 
-					if (oam.bgPriority)
+					// TODO: It appears we need to look at the color index before the palette is applied
+					if ( false /*oam.bgPriority*/)
 					{
 						int bgColorIndex = ReadFromBuffer(x, y);
-						if (bgColorIndex == 3)
+						if (bgColorIndex == 0)
 						{
 							writeToBuffer(x, y, palette, colorIndex);
 						}

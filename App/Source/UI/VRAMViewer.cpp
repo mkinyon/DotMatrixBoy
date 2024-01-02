@@ -85,7 +85,7 @@ namespace App
 	void VRAMViewer::RenderOAMView()
 	{
 		static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV;
-		ImVec2 outer_size = ImVec2(0.0f, ImGui::GetTextLineHeightWithSpacing() * 40);
+		ImVec2 outer_size = ImVec2(0.0f, ImGui::GetContentRegionAvail().y);
 		if (ImGui::BeginTable("table_scrolly", 10, flags, outer_size))
 		{
 			ImGui::TableSetupScrollFreeze(0, 1); // Make top row always visible
@@ -106,7 +106,6 @@ namespace App
 
 			for (int row = 0; row < 40; row++)
 			{
-				// TODO: Need to fix some rounding issue that is causing the graphics not to line up
 				float startX = (entries[row].tileIndex * 8) % 128;
 				float startY = ((entries[row].tileIndex * 8) / 128) * 8;
 
@@ -117,7 +116,7 @@ namespace App
 				ImGui::TableNextColumn();
 				if (entries[row].yPos > 0 && entries[row].xPos > 0)
 				{
-					ImGui::Image(reinterpret_cast<ImTextureID>(tilesTexture), ImVec2(64, 64), uvStart, uvEnd);
+					ImGui::Image(reinterpret_cast<ImTextureID>(tilesTexture), ImVec2(32, 32), uvStart, uvEnd);
 				}
 				ImGui::TableNextColumn();
 				ImGui::Text("0x%4x", entries[row].address);
@@ -164,10 +163,7 @@ namespace App
 				int draw_y = y + count; // Adjusted y coordinate for drawing
 				
 				uint8_t colorId = bgPalette >> (colorIndex * 2) & 0x03;
-
 				int blockIndex = (draw_y * 128 + draw_x - 1) * 4;
-
-				//_ASSERT(blockIndex < 0);
 
 				if (colorId == 0)
 				{
