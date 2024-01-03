@@ -22,9 +22,8 @@ namespace App
 		{
 			Core::Cartridge* newCart = new Core::Cartridge(fileDialog.GetSelected().string(), false);
 			delete gameboy;
-			gameboy = new Core::GameBoy();
+			gameboy = new Core::GameBoy(*newCart);
 
-			gameboy->InsertCartridge(*newCart);
 			gameboy->Run(false);
 			fileDialog.ClearSelected();
 		}

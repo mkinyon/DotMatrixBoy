@@ -1,5 +1,4 @@
 
-#include "GameBoy.h"
 #include "Ppu.h"
 #include "Logger.h"
 
@@ -7,12 +6,12 @@
 
 namespace Core
 {
-	Ppu::Ppu(GameBoy& gb) : gb(gb) {}
+	Ppu::Ppu(Mmu& mmu) : mmu(mmu) {}
 	Ppu::~Ppu() {}
 
 	void Ppu::Clock()
 	{
-		if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_Flags::LCDC_LCD_PPU_ENABLE))
+		if (!mmu.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_Flags::LCDC_LCD_PPU_ENABLE))
 		{
 			return;
 		}
@@ -46,21 +45,21 @@ namespace Core
 	{
 		if (m_CycleCount >= OAM_CYCLES)
 		{
-			uint8_t lcdy = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
-			uint8_t lcdyc = gb.ReadFromMemoryMap(HW_LYC_LY_COMPARE);
+			uint8_t lcdy = mmu.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
+			uint8_t lcdyc = mmu.ReadFromMemoryMap(HW_LYC_LY_COMPARE);
 
 			if (lcdy == lcdyc)
 			{
-				gb.WriteToMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, true);
+				mmu.WriteToMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, true);
 
-				if (gb.ReadFromMemoryMapRegister(HW_STAT_LCD_STATUS, STATE_LYC_INT_SELECT))
+				if (mmu.ReadFromMemoryMapRegister(HW_STAT_LCD_STATUS, STATE_LYC_INT_SELECT))
 				{
-					gb.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
+					mmu.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
 				}
 			}
 			else
 			{
-				gb.WriteToMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, false);
+				mmu.WriteToMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, false);
 			}
 
 			writeLCDMode(LCD_Mode::MODE_3_DRAWING);
@@ -82,9 +81,9 @@ namespace Core
 		if (m_CycleCount >= HBLANK_CYCLES)
 		{
 			// Check for H-BLANK Interrupt
-			if (gb.ReadFromMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_MODE_0_INT_SELECT))
+			if (mmu.ReadFromMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_MODE_0_INT_SELECT))
 			{
-				gb.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
+				mmu.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
 			}
 
 			// render graphics
@@ -92,13 +91,13 @@ namespace Core
 			drawWindowToBuffer();
 			drawOAMToBuffer();
 
-			uint8_t ly = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
+			uint8_t ly = mmu.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
 			if (ly == 143)
 				writeLCDMode(LCD_Mode::MODE_1_VBLANK);
 			else
 				writeLCDMode(LCD_Mode::MODE_2_OAMSCAN);
 
-			gb.WriteToMemoryMap(HW_LY_LCD_Y_COORD, ly + 1);
+			mmu.WriteToMemoryMap(HW_LY_LCD_Y_COORD, ly + 1);
 			m_CycleCount -= HBLANK_CYCLES;
 		}
 	}
@@ -107,11 +106,11 @@ namespace Core
 	{
 		if (m_CycleCount >= VBLANK_CYCLES)
 		{
-			uint8_t ly = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
+			uint8_t ly = mmu.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
 
 			if (ly == 144)
 			{
-				gb.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_VBLANK, true);
+				mmu.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_VBLANK, true);
 
 				copyBackBufferToLCD();
 				clearBackBuffer();
@@ -120,10 +119,10 @@ namespace Core
 			if (ly == 153)
 			{
 				writeLCDMode(LCD_Mode::MODE_2_OAMSCAN);
-				gb.WriteToMemoryMap(HW_LY_LCD_Y_COORD, 0);
+				mmu.WriteToMemoryMap(HW_LY_LCD_Y_COORD, 0);
 			}
 			else
-				gb.WriteToMemoryMap(HW_LY_LCD_Y_COORD, ly + 1);
+				mmu.WriteToMemoryMap(HW_LY_LCD_Y_COORD, ly + 1);
 
 			m_CycleCount -= VBLANK_CYCLES;
 		}
@@ -132,11 +131,11 @@ namespace Core
 	// This will draw one line of the background to the buffer 
 	void Ppu::drawBGToBuffer()
 	{
-		if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_WINDOW_ENABLE_PRIORITY)) return;
+		if (!mmu.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_WINDOW_ENABLE_PRIORITY)) return;
 
-		uint8_t lcdY = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
-		uint8_t scrollX = gb.ReadFromMemoryMap(HW_SCX_VIEWPORT_X_POS);
-		uint8_t scrollY = gb.ReadFromMemoryMap(HW_SCY_VIEWPORT_Y_POS);
+		uint8_t lcdY = mmu.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
+		uint8_t scrollX = mmu.ReadFromMemoryMap(HW_SCX_VIEWPORT_X_POS);
+		uint8_t scrollY = mmu.ReadFromMemoryMap(HW_SCY_VIEWPORT_Y_POS);
 
 		// iterate through each pixel
 		for (int x = 0; x < 160; x++)
@@ -157,18 +156,18 @@ namespace Core
 			int tilePosition = tileYCoord * TILEMAP_WIDTH + tileXCoord;
 
 			// get tile id from current tile map
-			bool bgTileMapArea = gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_TILE_MAP);
-			uint8_t tileId = gb.ReadFromMemoryMap(bgTileMapArea ? BG_MAP_1 + tilePosition : BG_MAP_0 + tilePosition);
+			bool bgTileMapArea = mmu.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_TILE_MAP);
+			uint8_t tileId = mmu.ReadFromMemoryMap(bgTileMapArea ? BG_MAP_1 + tilePosition : BG_MAP_0 + tilePosition);
 
 			// get tile address
 			uint16_t tileAddress = GetTileAddressFromTileId(tileId);
 
 			// need to offset the address based on the y position (tileYOffset) inside the tile
-			uint8_t firstByte = gb.ReadFromMemoryMap(tileAddress + (tileYOffset * 2));
-			uint8_t secondByte = gb.ReadFromMemoryMap(tileAddress + (tileYOffset * 2) + 1);
+			uint8_t firstByte = mmu.ReadFromMemoryMap(tileAddress + (tileYOffset * 2));
+			uint8_t secondByte = mmu.ReadFromMemoryMap(tileAddress + (tileYOffset * 2) + 1);
 
 			// get the background palette
-			uint8_t bgPalette = gb.ReadFromMemoryMap(HW_BGP_BG_PALETTE_DATA);
+			uint8_t bgPalette = mmu.ReadFromMemoryMap(HW_BGP_BG_PALETTE_DATA);
 
 			// because of the bit order and how we are rendering, we need to flip the tileXOffset
 			// so we get the right pixel
@@ -184,14 +183,14 @@ namespace Core
 
 	void Ppu::drawWindowToBuffer()
 	{
-		if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_WINDOW_ENABLE))
+		if (!mmu.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_WINDOW_ENABLE))
 		{
 			return;
 		}
 
-		uint8_t lcdY = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
-		int16_t windowX = gb.ReadFromMemoryMap(HW_WX_WINDOW_X_POS) - 7;
-		int16_t windowY = gb.ReadFromMemoryMap(HW_WY_WINDOW_Y_POS);
+		uint8_t lcdY = mmu.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
+		int16_t windowX = mmu.ReadFromMemoryMap(HW_WX_WINDOW_X_POS) - 7;
+		int16_t windowY = mmu.ReadFromMemoryMap(HW_WY_WINDOW_Y_POS);
 
 		if (lcdY >= windowY)
 		{
@@ -214,18 +213,18 @@ namespace Core
 				int tilePosition = tileYCoord * TILEMAP_WIDTH + tileXCoord;
 
 				// get tile id from current tile map
-				bool bgTileMapArea = gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_WINDOW_TILE_MAP);
-				uint8_t tileId = gb.ReadFromMemoryMap(bgTileMapArea ? BG_MAP_1 + tilePosition : BG_MAP_0 + tilePosition);
+				bool bgTileMapArea = mmu.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_WINDOW_TILE_MAP);
+				uint8_t tileId = mmu.ReadFromMemoryMap(bgTileMapArea ? BG_MAP_1 + tilePosition : BG_MAP_0 + tilePosition);
 
 				// get tile address
 				uint16_t tileAddress = GetTileAddressFromTileId(tileId);
 
 				// need to offset the address based on the y position (tileYOffset) inside the tile
-				uint8_t firstByte = gb.ReadFromMemoryMap(tileAddress + (tileYOffset * 2));
-				uint8_t secondByte = gb.ReadFromMemoryMap(tileAddress + (tileYOffset * 2) + 1);
+				uint8_t firstByte = mmu.ReadFromMemoryMap(tileAddress + (tileYOffset * 2));
+				uint8_t secondByte = mmu.ReadFromMemoryMap(tileAddress + (tileYOffset * 2) + 1);
 
 				// get the background palette
-				uint8_t bgPalette = gb.ReadFromMemoryMap(HW_BGP_BG_PALETTE_DATA);
+				uint8_t bgPalette = mmu.ReadFromMemoryMap(HW_BGP_BG_PALETTE_DATA);
 
 				// because of the bit order and how we are rendering, we need to flip the tileXOffset
 				// so we get the right pixel
@@ -242,12 +241,12 @@ namespace Core
 
 	void Ppu::drawOAMToBuffer()
 	{
-		if (!gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_OBJ_ENABLE))
+		if (!mmu.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_OBJ_ENABLE))
 		{
 			return;
 		}
 
-		uint8_t lcdY = gb.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
+		uint8_t lcdY = mmu.ReadFromMemoryMap(HW_LY_LCD_Y_COORD);
 
 		RefreshOAMEntries();
 
@@ -291,18 +290,18 @@ namespace Core
 				backgroundTileYOffset = (lcdY - (oam.yPos - 16));
 			}
 
-			uint8_t firstByte = gb.ReadFromMemoryMap(tileAddress + (backgroundTileYOffset * 2));
-			uint8_t secondByte = gb.ReadFromMemoryMap(tileAddress + (backgroundTileYOffset * 2) + 1);
+			uint8_t firstByte = mmu.ReadFromMemoryMap(tileAddress + (backgroundTileYOffset * 2));
+			uint8_t secondByte = mmu.ReadFromMemoryMap(tileAddress + (backgroundTileYOffset * 2) + 1);
 
 			// get the obj palette
 			uint8_t palette;
 			if (oam.paletteOneSelected)
 			{
-				palette = gb.ReadFromMemoryMap(HW_OBP1_OBJ_PALETTE_1_DATA);
+				palette = mmu.ReadFromMemoryMap(HW_OBP1_OBJ_PALETTE_1_DATA);
 			}
 			else
 			{
-				palette = gb.ReadFromMemoryMap(HW_OBP0_OBJ_PALETTE_0_DATA);
+				palette = mmu.ReadFromMemoryMap(HW_OBP0_OBJ_PALETTE_0_DATA);
 			}
 
 			for (int p = 0; p < 8; p++)
@@ -395,8 +394,8 @@ namespace Core
 	//  function exists just to simply the process of retreiving this value
 	LCD_Mode Ppu::readLCDMode()
 	{
-		bool lowBit = gb.ReadFromMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT);
-		bool highBit = gb.ReadFromMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT);
+		bool lowBit = mmu.ReadFromMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT);
+		bool highBit = mmu.ReadFromMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT);
 
 		uint8_t value = 0;
 		value |= lowBit ? 0x01 : 0;
@@ -408,13 +407,13 @@ namespace Core
 	void Ppu::writeLCDMode(LCD_Mode mode)
 	{
 		uint8_t value = static_cast<uint8_t>(mode);
-		gb.WriteToMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT, (value >> 1) & 0x1);
-		gb.WriteToMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT, value & 0x1);
+		mmu.WriteToMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT, (value >> 1) & 0x1);
+		mmu.WriteToMemoryMapRegister(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT, value & 0x1);
 	}
 
 	void Ppu::RefreshOAMEntries()
 	{
-		bool objSize = gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_OBJ_SIZE);
+		bool objSize = mmu.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_OBJ_SIZE);
 
 		int i = 0;
 		int oamSizeInBytes = 4;
@@ -423,13 +422,13 @@ namespace Core
 			oamEntries[i].address = addr;
 
 			// the first oam byte if the Y Pos
-			oamEntries[i].yPos = gb.ReadFromMemoryMap(addr);
+			oamEntries[i].yPos = mmu.ReadFromMemoryMap(addr);
 
 			// the second oam byte is the X Pos
-			oamEntries[i].xPos = gb.ReadFromMemoryMap(addr + 1);
+			oamEntries[i].xPos = mmu.ReadFromMemoryMap(addr + 1);
 
 			// the third oam byte is the tile index
-			uint8_t tileIndex = gb.ReadFromMemoryMap(addr + 2);
+			uint8_t tileIndex = mmu.ReadFromMemoryMap(addr + 2);
 			oamEntries[i].tileIndex = objSize ? tileIndex & 0xFE : tileIndex;
 			if (oamEntries[i].yFlip && oamEntries[i].isTall)
 			{
@@ -437,10 +436,10 @@ namespace Core
 			}
 
 			// the fourth oam byte is for the attributes
-			oamEntries[i].paletteOneSelected = gb.ReadFromMemoryMapRegister(addr + 3, OAM_PALETTE);
-			oamEntries[i].xFlip = gb.ReadFromMemoryMapRegister(addr + 3, OAM_FLIP_X);
-			oamEntries[i].yFlip = gb.ReadFromMemoryMapRegister(addr + 3, OAM_FLIP_Y);
-			oamEntries[i].bgPriority = gb.ReadFromMemoryMapRegister(addr + 3, OAM_PRIORITY);
+			oamEntries[i].paletteOneSelected = mmu.ReadFromMemoryMapRegister(addr + 3, OAM_PALETTE);
+			oamEntries[i].xFlip = mmu.ReadFromMemoryMapRegister(addr + 3, OAM_FLIP_X);
+			oamEntries[i].yFlip = mmu.ReadFromMemoryMapRegister(addr + 3, OAM_FLIP_Y);
+			oamEntries[i].bgPriority = mmu.ReadFromMemoryMapRegister(addr + 3, OAM_PRIORITY);
 			oamEntries[i].isTall = objSize;
 
 			i++;
@@ -455,7 +454,7 @@ namespace Core
 	uint16_t Ppu::GetTileAddressFromTileId(uint8_t tileId)
 	{
 		uint16_t tileAddress;
-		bool windowTileDataArea = gb.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_AND_WINDOW_TILES);
+		bool windowTileDataArea = mmu.ReadFromMemoryMapRegister(HW_LCDC_LCD_CONTROL, LCDC_BG_AND_WINDOW_TILES);
 
 		if (windowTileDataArea)
 		{

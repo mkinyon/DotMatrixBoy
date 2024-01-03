@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Mmu.h"
+
 #include <stdint.h>
 #include <iostream>
 #include <vector>
@@ -7,13 +9,10 @@
 
 namespace Core
 {
-	// forward decl
-	class GameBoy;
-
 	class Cpu
 	{
 	public:
-		Cpu(GameBoy& gb);
+		Cpu(Mmu& mmu);
 		~Cpu();
 
 	public:
@@ -72,7 +71,7 @@ namespace Core
 		bool m_InstructionCompleted = false;
 
 	private:
-		GameBoy& gb;
+		Mmu& mmu;
 		int m_cycles = 0; // how many cycles remain before the cpu can fetch another instruction
 		std::string currentInstructionName;
 		bool m_interruptMasterFlag = false;

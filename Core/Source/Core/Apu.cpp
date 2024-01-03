@@ -1,11 +1,11 @@
-#include "GameBoy.h"
+
 #include "Apu.h"
 
 #include <stdint.h>
 
 namespace Core
 {
-	Apu::Apu(GameBoy& gb) : gameboy(gb) {}
+	Apu::Apu(Mmu& mmu) : mmu(mmu) {}
 	Apu::~Apu() {}
 
 	void Apu::Clock()

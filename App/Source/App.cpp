@@ -25,13 +25,11 @@ const char* romName = "../Roms/metroid2.gb";
 // Main code
 int main(int argv, char** args)
 {
-    gb = new Core::GameBoy();
+    cart = new Core::Cartridge(romName, enableBootRom);
+    gb = new Core::GameBoy(*cart);
     window = new App::Window(1280, 720, "DotMatrixBoy", gb);
     window->Initialize();
 
-    
-    cart = new Core::Cartridge(romName, enableBootRom);
-    gb->InsertCartridge(*cart);
     gb->Run(enableBootRom);
     
     // Widgets

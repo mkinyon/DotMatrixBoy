@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 
+#include "Mmu.h"
 #include "Defines.h"
 
 namespace Core
@@ -8,7 +9,7 @@ namespace Core
 	class Ppu
 	{
 	public:
-		Ppu(GameBoy& gb);
+		Ppu(Mmu& mmu);
 		~Ppu();
 
 	public:
@@ -36,7 +37,7 @@ namespace Core
 		OAM* GetOAMEntries();
 
 	public:
-		GameBoy& gb;
+		Mmu& mmu;
 		unsigned int m_CycleCount = 0; // each cycle equates to one dot (pixel)
 		unsigned int m_TotalFrames = 0;
 		unsigned int m_CurrentScanLine = 0;

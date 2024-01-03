@@ -1,17 +1,19 @@
 #pragma once
 
+#include "Mmu.h"
+
 namespace Core
 {
 	class Apu
 	{
 	public:
-		Apu(GameBoy& gb);
+		Apu(Mmu& mmu);
 		~Apu();
 
 		void Clock();
 		void FeedAudioBuffer(uint8_t* stream, int len);
 
 	private:
-		GameBoy& gameboy;
+		Mmu& mmu;
 	};
 }

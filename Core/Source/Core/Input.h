@@ -1,17 +1,16 @@
 #pragma once
 
 #include <stdint.h>
+
+#include "Mmu.h"
 #include "Defines.h"
 
 namespace Core
 {
-	// forward decl
-	class GameBoy;
-
 	class Input
 	{
 	public:
-		Input(GameBoy& gb);
+		Input(Mmu& mmu);
 		~Input();
 
 		void Clock();
@@ -19,7 +18,7 @@ namespace Core
 		void SetButtonState(const Joypad_Button, const bool isPressed);
 
 	private:
-		GameBoy& gameboy;
+		Mmu& mmu;
 		uint8_t dpadState = 0xFF;
 		uint8_t buttonState = 0xFF;
 	};
