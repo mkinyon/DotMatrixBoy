@@ -43,7 +43,7 @@ namespace Core
 		linecount++;
 
 		// read opcode from memory
-		uint8_t* opcode = &mmu.ReadFromMemoryMap(State.PC);
+		uint8_t* opcode = &mmu.Read(State.PC);
 
 		//Disassemble(opcode, State.PC);
 
@@ -557,7 +557,7 @@ namespace Core
 					// "LD A [HL-]" B:1 C:8 FLAGS: - - - -
 				case 0x3A:
 				{
-					State.A = mmu.ReadFromMemoryMap(State.HL);
+					State.A = mmu.Read(State.HL);
 					State.HL--;
 
 					m_cycles = 8;
@@ -567,7 +567,7 @@ namespace Core
 				// "LD [HL+] A" B:1 C:8 FLAGS: - - - -
 				case 0x22:
 				{
-					mmu.WriteToMemoryMap(State.HL, State.A);
+					mmu.Write(State.HL, State.A);
 					State.HL++;
 
 					m_cycles = 8;
@@ -577,7 +577,7 @@ namespace Core
 				// "LD A [HL+]" B:1 C:8 FLAGS: - - - -
 				case 0x2A:
 				{
-					State.A = mmu.ReadFromMemoryMap(State.HL);
+					State.A = mmu.Read(State.HL);
 					State.HL++;
 
 					m_cycles = 8;
@@ -587,7 +587,7 @@ namespace Core
 				// "LD [HL-] A" B:1 C:8 FLAGS: - - - -
 				case 0x32:
 				{
-					mmu.WriteToMemoryMap(State.HL, State.A);
+					mmu.Write(State.HL, State.A);
 					State.HL--;
 
 					m_cycles = 8;
@@ -597,7 +597,7 @@ namespace Core
 				// "LD [HL] n8" B:2 C:12 FLAGS: - - - -
 				case 0x36:
 				{
-					mmu.WriteToMemoryMap(State.HL, opcode[1]);
+					mmu.Write(State.HL, opcode[1]);
 					State.PC++;
 
 					m_cycles = 12;
@@ -686,7 +686,7 @@ namespace Core
 				case 0xE0:
 				{
 					uint8_t offset = opcode[1];
-					mmu.WriteToMemoryMap(0xFF00 + offset, State.A);
+					mmu.Write(0xFF00 + offset, State.A);
 					State.PC++;
 
 					m_cycles = 12;
@@ -696,7 +696,7 @@ namespace Core
 				// "LD [C] A" B:1 C:8 FLAGS: - - - -
 				case 0xE2:
 				{
-					mmu.WriteToMemoryMap(0xFF00 + State.C, State.A);
+					mmu.Write(0xFF00 + State.C, State.A);
 
 					m_cycles = 8;
 					break;
@@ -705,7 +705,7 @@ namespace Core
 				// "LD [a16] A" B:3 C:16 FLAGS: - - - -
 				case 0xEA:
 				{
-					mmu.WriteToMemoryMap((opcode[2] << 8) | (opcode[1]), State.A);
+					mmu.Write((opcode[2] << 8) | (opcode[1]), State.A);
 					State.PC += 2;
 
 					m_cycles = 16;
@@ -720,7 +720,7 @@ namespace Core
 					//if (opcode[1] == 0x44)
 					//	State.A = 0x90;
 					//else
-						State.A = mmu.ReadFromMemoryMap(0xFF00 + opcode[1]);
+						State.A = mmu.Read(0xFF00 + opcode[1]);
 
 					State.PC++;
 
@@ -731,7 +731,7 @@ namespace Core
 				// "LD A [C]" B:1 C:8 FLAGS: - - - -
 				case 0xF2:
 				{
-					State.A = mmu.ReadFromMemoryMap(0xFF00 + State.C);
+					State.A = mmu.Read(0xFF00 + State.C);
 
 					m_cycles = 8;
 					break;
@@ -740,7 +740,7 @@ namespace Core
 				// "LD A [a16]" B:3 C:16 FLAGS: - - - -
 				case 0xFA:
 				{
-					State.A = mmu.ReadFromMemoryMap((opcode[2] << 8) | (opcode[1]));
+					State.A = mmu.Read((opcode[2] << 8) | (opcode[1]));
 					State.PC += 2;
 
 					m_cycles = 16;
@@ -762,8 +762,8 @@ namespace Core
 				case 0x08:
 				{
 					uint16_t addr = (opcode[2] << 8) | (opcode[1]);
-					mmu.WriteToMemoryMap(addr, State.SP & 0x00FF);
-					mmu.WriteToMemoryMap(addr + 1, (State.SP & 0xFF00) >> 8);
+					mmu.Write(addr, State.SP & 0x00FF);
+					mmu.Write(addr + 1, (State.SP & 0xFF00) >> 8);
 					State.PC += 2;
 
 					m_cycles = 20;
@@ -1189,40 +1189,40 @@ namespace Core
 		uint16_t destinationAddress = 0;
 		uint8_t interruptFlag = 0;
 
-		if (mmu.ReadFromMemoryMapRegister(HW_INTERRUPT_ENABLE, IE_VBLANK) &&
-			mmu.ReadFromMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_VBLANK))
+		if (mmu.ReadRegisterBit(HW_INTERRUPT_ENABLE, IE_VBLANK) &&
+			mmu.ReadRegisterBit(HW_IF_INTERRUPT_FLAG, IF_VBLANK))
 		{
 			destinationAddress = DEST_ADDRESS_VBLANK;
 			interruptFlag = IF_VBLANK;
 			m_isHalted = false;
 		}
 
-		if (mmu.ReadFromMemoryMapRegister(HW_INTERRUPT_ENABLE, IE_LCD) &&
-			mmu.ReadFromMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_LCD))
+		if (mmu.ReadRegisterBit(HW_INTERRUPT_ENABLE, IE_LCD) &&
+			mmu.ReadRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD))
 		{
 			destinationAddress = DEST_ADDRESS_LCD_STAT;
 			interruptFlag = IF_LCD;
 			m_isHalted = false;
 		}
 
-		if (mmu.ReadFromMemoryMapRegister(HW_INTERRUPT_ENABLE, IE_TIMER) &&
-			mmu.ReadFromMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_TIMER))
+		if (mmu.ReadRegisterBit(HW_INTERRUPT_ENABLE, IE_TIMER) &&
+			mmu.ReadRegisterBit(HW_IF_INTERRUPT_FLAG, IF_TIMER))
 		{
 			destinationAddress = DEST_ADDRESS_TIMER;
 			interruptFlag = IF_TIMER;
 			m_isHalted = false;
 		}
 
-		if (mmu.ReadFromMemoryMapRegister(HW_INTERRUPT_ENABLE, IE_SERIAL) &&
-			mmu.ReadFromMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_SERIAL))
+		if (mmu.ReadRegisterBit(HW_INTERRUPT_ENABLE, IE_SERIAL) &&
+			mmu.ReadRegisterBit(HW_IF_INTERRUPT_FLAG, IF_SERIAL))
 		{
 			destinationAddress = DEST_ADDRESS_SERIAL;
 			interruptFlag = IF_SERIAL;
 			m_isHalted = false;
 		}
 
-		if (mmu.ReadFromMemoryMapRegister(HW_INTERRUPT_ENABLE, IE_JOYPAD) &&
-			mmu.ReadFromMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_JOYPAD))
+		if (mmu.ReadRegisterBit(HW_INTERRUPT_ENABLE, IE_JOYPAD) &&
+			mmu.ReadRegisterBit(HW_IF_INTERRUPT_FLAG, IF_JOYPAD))
 		{
 			destinationAddress = DEST_ADDRESS_JOYPAD;
 			interruptFlag = IF_JOYPAD;
@@ -1232,7 +1232,7 @@ namespace Core
 		if (destinationAddress != 0 && m_interruptMasterFlag)
 		{
 			m_interruptMasterFlag = false;;
-			mmu.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, interruptFlag, false);
+			mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, interruptFlag, false);
 
 			pushSP(State.PC);
 			State.PC = destinationAddress;
@@ -1835,7 +1835,7 @@ namespace Core
 
 		while (pc < 0x7FFF)
 		{
-			uint8_t* opcode = &mmu.ReadFromMemoryMap(pc);
+			uint8_t* opcode = &mmu.Read(pc);
 			int nextPC = Disassemble(opcode, pc);
 			mapLines[pc] = GetCurrentInstruction();
 			pc += nextPC;
@@ -2198,77 +2198,77 @@ namespace Core
 		// randomize memory to mimick real gameboy
 		for (uint16_t address = 0x8000; address <= 0x97FF; address++)
 		{
-			mmu.WriteToMemoryMap(address, generateRandomNumber(0, 255));
+			mmu.Write(address, generateRandomNumber(0, 255));
 		}
 
 		// hardware registers
-		mmu.WriteToMemoryMap(0xFF00, 0xCF);
-		mmu.WriteToMemoryMap(0xFF01, 0x00);
-		mmu.WriteToMemoryMap(0xFF02, 0x7E);
-		mmu.WriteToMemoryMap(0xFF04, 0xAB);
-		mmu.WriteToMemoryMap(0xFF05, 0x00);
-		mmu.WriteToMemoryMap(0xFF06, 0x00);
-		mmu.WriteToMemoryMap(0xFF07, 0xF8);
-		mmu.WriteToMemoryMap(0xFF0F, 0xE1);
-		mmu.WriteToMemoryMap(0xFF10, 0x80);
-		mmu.WriteToMemoryMap(0xFF11, 0xBF);
-		mmu.WriteToMemoryMap(0xFF12, 0xF3);
-		mmu.WriteToMemoryMap(0xFF13, 0xFF);
-		mmu.WriteToMemoryMap(0xFF14, 0xBF);
-		mmu.WriteToMemoryMap(0xFF16, 0x3F);
-		mmu.WriteToMemoryMap(0xFF17, 0x00);
-		mmu.WriteToMemoryMap(0xFF18, 0xFF);
-		mmu.WriteToMemoryMap(0xFF19, 0xBF);
-		mmu.WriteToMemoryMap(0xFF1A, 0x7F);
-		mmu.WriteToMemoryMap(0xFF1B, 0xFF);
-		mmu.WriteToMemoryMap(0xFF1C, 0x9F);
-		mmu.WriteToMemoryMap(0xFF1D, 0xFF);
-		mmu.WriteToMemoryMap(0xFF1E, 0xBF);
-		mmu.WriteToMemoryMap(0xFF20, 0xFF);
-		mmu.WriteToMemoryMap(0xFF21, 0x00);
-		mmu.WriteToMemoryMap(0xFF22, 0x00);
-		mmu.WriteToMemoryMap(0xFF23, 0xBF);
-		mmu.WriteToMemoryMap(0xFF24, 0x77);
-		mmu.WriteToMemoryMap(0xFF25, 0xF3);
-		mmu.WriteToMemoryMap(0xFF26, 0xF1);
-		mmu.WriteToMemoryMap(0xFF40, 0x91);
-		mmu.WriteToMemoryMap(0xFF41, 0x85);
-		mmu.WriteToMemoryMap(0xFF42, 0x00);
-		mmu.WriteToMemoryMap(0xFF43, 0x00);
-		mmu.WriteToMemoryMap(0xFF44, 0x00);
-		mmu.WriteToMemoryMap(0xFF45, 0x00);
-		mmu.WriteToMemoryMap(0xFF46, 0xFF);
-		mmu.WriteToMemoryMap(0xFF47, 0xFC);
-		mmu.WriteToMemoryMap(0xFF48, 0x00);
-		mmu.WriteToMemoryMap(0xFF49, 0x00);
-		mmu.WriteToMemoryMap(0xFF4A, 0x00);
-		mmu.WriteToMemoryMap(0xFF4B, 0x00);
-		mmu.WriteToMemoryMap(0xFF4D, 0xFF);
-		mmu.WriteToMemoryMap(0xFF4F, 0xFF);
-		mmu.WriteToMemoryMap(0xFF51, 0xFF);
-		mmu.WriteToMemoryMap(0xFF52, 0xFF);
-		mmu.WriteToMemoryMap(0xFF53, 0xFF);
-		mmu.WriteToMemoryMap(0xFF54, 0xFF);
-		mmu.WriteToMemoryMap(0xFF55, 0xFF);
-		mmu.WriteToMemoryMap(0xFF56, 0xFF);
-		mmu.WriteToMemoryMap(0xFF68, 0xFF);
-		mmu.WriteToMemoryMap(0xFF69, 0xFF);
-		mmu.WriteToMemoryMap(0xFF6A, 0xFF);
-		mmu.WriteToMemoryMap(0xFF6B, 0xFF);
-		mmu.WriteToMemoryMap(0xFF70, 0xFF);
-		mmu.WriteToMemoryMap(HW_INTERRUPT_ENABLE, 0x00);
+		mmu.Write(0xFF00, 0xCF);
+		mmu.Write(0xFF01, 0x00);
+		mmu.Write(0xFF02, 0x7E);
+		mmu.Write(0xFF04, 0xAB);
+		mmu.Write(0xFF05, 0x00);
+		mmu.Write(0xFF06, 0x00);
+		mmu.Write(0xFF07, 0xF8);
+		mmu.Write(0xFF0F, 0xE1);
+		mmu.Write(0xFF10, 0x80);
+		mmu.Write(0xFF11, 0xBF);
+		mmu.Write(0xFF12, 0xF3);
+		mmu.Write(0xFF13, 0xFF);
+		mmu.Write(0xFF14, 0xBF);
+		mmu.Write(0xFF16, 0x3F);
+		mmu.Write(0xFF17, 0x00);
+		mmu.Write(0xFF18, 0xFF);
+		mmu.Write(0xFF19, 0xBF);
+		mmu.Write(0xFF1A, 0x7F);
+		mmu.Write(0xFF1B, 0xFF);
+		mmu.Write(0xFF1C, 0x9F);
+		mmu.Write(0xFF1D, 0xFF);
+		mmu.Write(0xFF1E, 0xBF);
+		mmu.Write(0xFF20, 0xFF);
+		mmu.Write(0xFF21, 0x00);
+		mmu.Write(0xFF22, 0x00);
+		mmu.Write(0xFF23, 0xBF);
+		mmu.Write(0xFF24, 0x77);
+		mmu.Write(0xFF25, 0xF3);
+		mmu.Write(0xFF26, 0xF1);
+		mmu.Write(0xFF40, 0x91);
+		mmu.Write(0xFF41, 0x85);
+		mmu.Write(0xFF42, 0x00);
+		mmu.Write(0xFF43, 0x00);
+		mmu.Write(0xFF44, 0x00);
+		mmu.Write(0xFF45, 0x00);
+		mmu.Write(0xFF46, 0xFF);
+		mmu.Write(0xFF47, 0xFC);
+		mmu.Write(0xFF48, 0x00);
+		mmu.Write(0xFF49, 0x00);
+		mmu.Write(0xFF4A, 0x00);
+		mmu.Write(0xFF4B, 0x00);
+		mmu.Write(0xFF4D, 0xFF);
+		mmu.Write(0xFF4F, 0xFF);
+		mmu.Write(0xFF51, 0xFF);
+		mmu.Write(0xFF52, 0xFF);
+		mmu.Write(0xFF53, 0xFF);
+		mmu.Write(0xFF54, 0xFF);
+		mmu.Write(0xFF55, 0xFF);
+		mmu.Write(0xFF56, 0xFF);
+		mmu.Write(0xFF68, 0xFF);
+		mmu.Write(0xFF69, 0xFF);
+		mmu.Write(0xFF6A, 0xFF);
+		mmu.Write(0xFF6B, 0xFF);
+		mmu.Write(0xFF70, 0xFF);
+		mmu.Write(HW_INTERRUPT_ENABLE, 0x00);
 	}
 
 	void Cpu::pushSP(uint16_t value)
 	{
-		mmu.WriteToMemoryMap(--State.SP, (value >> 8) & 0xFF);
-		mmu.WriteToMemoryMap(--State.SP, value & 0xFF);
+		mmu.Write(--State.SP, (value >> 8) & 0xFF);
+		mmu.Write(--State.SP, value & 0xFF);
 	}
 
 	uint16_t Cpu::popSP()
 	{
-		uint8_t firstByte = mmu.ReadFromMemoryMap(State.SP++);
-		uint8_t secondByte = mmu.ReadFromMemoryMap(State.SP++);
+		uint8_t firstByte = mmu.Read(State.SP++);
+		uint8_t secondByte = mmu.Read(State.SP++);
 		return (secondByte << 8) | (firstByte);
 	}
 
@@ -2292,12 +2292,12 @@ namespace Core
 
 	void Cpu::instruction_ld_addr_reg(uint16_t& address, uint8_t& reg)
 	{
-		mmu.WriteToMemoryMap(address, reg);
+		mmu.Write(address, reg);
 	}
 
 	void Cpu::instruction_ld_reg_addr(uint8_t& reg, uint16_t& address)
 	{
-		reg = mmu.ReadFromMemoryMap(address);
+		reg = mmu.Read(address);
 	}
 
 	void Cpu::instruction_ld16_reg_value(uint16_t& reg, uint16_t value)
@@ -2316,9 +2316,9 @@ namespace Core
 
 	void Cpu::instruction_inc_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_inc_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_dec_reg(uint8_t& reg)
@@ -2332,9 +2332,9 @@ namespace Core
 
 	void Cpu::instruction_dec_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_dec_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_add_reg(uint8_t& reg)
@@ -2353,9 +2353,9 @@ namespace Core
 
 	void Cpu::instruction_add_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_add_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_adc_reg(uint8_t& reg)
@@ -2375,9 +2375,9 @@ namespace Core
 
 	void Cpu::instruction_adc_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_adc_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_sub_reg(uint8_t& reg)
@@ -2395,9 +2395,9 @@ namespace Core
 
 	void Cpu::instruction_sub_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_sub_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_sbc_reg(uint8_t& reg)
@@ -2416,9 +2416,9 @@ namespace Core
 
 	void Cpu::instruction_sbc_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_sbc_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_and_reg(uint8_t& reg)
@@ -2433,9 +2433,9 @@ namespace Core
 
 	void Cpu::instruction_and_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_and_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_xor_reg(uint8_t& reg)
@@ -2450,9 +2450,9 @@ namespace Core
 
 	void Cpu::instruction_xor_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_xor_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_or_reg(uint8_t& reg)
@@ -2467,9 +2467,9 @@ namespace Core
 
 	void Cpu::instruction_or_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_or_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_cp_reg(uint8_t& reg)
@@ -2482,9 +2482,9 @@ namespace Core
 
 	void Cpu::instruction_cp_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_cp_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_inc_reg16(uint16_t& reg)
@@ -2538,9 +2538,9 @@ namespace Core
 
 	void Cpu::instruction_rlc_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_rlc_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_rrc_reg(uint8_t& reg)
@@ -2556,9 +2556,9 @@ namespace Core
 
 	void Cpu::instruction_rrc_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_rrc_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_rl_reg(uint8_t& reg)
@@ -2578,9 +2578,9 @@ namespace Core
 
 	void Cpu::instruction_rl_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_rl_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_rr_reg(uint8_t& reg)
@@ -2598,9 +2598,9 @@ namespace Core
 
 	void Cpu::instruction_rr_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_rr_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_sla_reg(uint8_t& reg)
@@ -2616,9 +2616,9 @@ namespace Core
 
 	void Cpu::instruction_sla_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_sla_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_sra_reg(uint8_t& reg)
@@ -2635,9 +2635,9 @@ namespace Core
 
 	void Cpu::instruction_sra_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_sra_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_swap_reg(uint8_t& reg)
@@ -2652,9 +2652,9 @@ namespace Core
 
 	void Cpu::instruction_swap_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_swap_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_srl_reg(uint8_t& reg)
@@ -2670,9 +2670,9 @@ namespace Core
 
 	void Cpu::instruction_srl_hl()
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_srl_reg(value);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_bit_bit_reg(uint8_t& reg, uint8_t bit)
@@ -2684,9 +2684,9 @@ namespace Core
 
 	void Cpu::instruction_bit_bit_hl(uint8_t bit)
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_bit_bit_reg(value, bit);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_res_bit_reg(uint8_t& reg, uint8_t bit)
@@ -2696,9 +2696,9 @@ namespace Core
 
 	void Cpu::instruction_res_bit_hl(uint8_t bit)
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_res_bit_reg(value, bit);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::instruction_set_bit_reg(uint8_t& reg, uint8_t bit)
@@ -2708,28 +2708,28 @@ namespace Core
 
 	void Cpu::instruction_set_bit_hl(uint8_t bit)
 	{
-		uint8_t value = mmu.ReadFromMemoryMap(State.HL);
+		uint8_t value = mmu.Read(State.HL);
 		instruction_set_bit_reg(value, bit);
-		mmu.WriteToMemoryMap(State.HL, value);
+		mmu.Write(State.HL, value);
 	}
 
 	void Cpu::processTimers() 
 	{
 		// increment DIV register
-		uint16_t internalClock = (mmu.ReadFromMemoryMap(HW_DIV_DIVIDER_REGISTER) << 8)
-			| mmu.ReadFromMemoryMap(HW_DIV_DIVIDER_REGISTER_LOW);
+		uint16_t internalClock = (mmu.Read(HW_DIV_DIVIDER_REGISTER) << 8)
+			| mmu.Read(HW_DIV_DIVIDER_REGISTER_LOW);
 
 		internalClock++;
 
 		// if the div clock rolls over then we need to copy the value of TIMA to TMA
 		if (internalClock == 0xFFFF)
 		{
-			mmu.WriteToMemoryMap(HW_TMA_TIMER_MODULO, mmu.ReadFromMemoryMap(HW_TIMA_TIMER_COUNTER));
+			mmu.Write(HW_TMA_TIMER_MODULO, mmu.Read(HW_TIMA_TIMER_COUNTER));
 		}
 
 		// write updated DIV register
-		mmu.WriteToMemoryMap(HW_DIV_DIVIDER_REGISTER, (internalClock & 0xFF00) >> 8, true);
-		mmu.WriteToMemoryMap(HW_DIV_DIVIDER_REGISTER_LOW, internalClock & 0x00FF, true);
+		mmu.Write(HW_DIV_DIVIDER_REGISTER, (internalClock & 0xFF00) >> 8, true);
+		mmu.Write(HW_DIV_DIVIDER_REGISTER_LOW, internalClock & 0x00FF, true);
 
 
 		// https://github.com/Hacktix/GBEDG/blob/master/timers/index.md#timer-operation
@@ -2737,7 +2737,7 @@ namespace Core
 		bool thisBit = 0;
 
 		// 1. A bit position of the 16 - bit counter is determined based on the lower 2 bits of the TAC register
-		switch (mmu.ReadFromMemoryMap(HW_TAC_TIMER_CONTROL) & 0x03)
+		switch (mmu.Read(HW_TAC_TIMER_CONTROL) & 0x03)
 		{
 			case 0:
 				thisBit = (internalClock >> 9) & 0x1;
@@ -2754,7 +2754,7 @@ namespace Core
 		}
 
 		// 2. The "Timer Enable" bit(Bit 2) is extracted from the value in the TAC register and stored for the next step.
-		bool timerEnabled = mmu.ReadFromMemoryMapRegister(HW_TAC_TIMER_CONTROL, TAC_ENABLE);
+		bool timerEnabled = mmu.ReadRegisterBit(HW_TAC_TIMER_CONTROL, TAC_ENABLE);
 
 		// 3. The bit taken from the DIV counter is ANDed with the Timer Enable bit. 
 		//    The result of this operation will be referred to as the "AND Result".
@@ -2764,9 +2764,9 @@ namespace Core
 		if (lastBit == 1 && thisBit == 0)
 		{
 			// now increment the TIMA register
-			uint8_t tima = mmu.ReadFromMemoryMap(HW_TIMA_TIMER_COUNTER);
+			uint8_t tima = mmu.Read(HW_TIMA_TIMER_COUNTER);
 			tima++;
-			mmu.WriteToMemoryMap(HW_TIMA_TIMER_COUNTER, tima);
+			mmu.Write(HW_TIMA_TIMER_COUNTER, tima);
 
 			// if the TIMA register rolls over then we need to trigger an interrupt
 			if (tima == 0x0)
@@ -2781,8 +2781,8 @@ namespace Core
 			countdownToInterrupt--;
 			if (countdownToInterrupt == 0)
 			{
-				mmu.WriteToMemoryMapRegister(HW_IF_INTERRUPT_FLAG, IF_TIMER, true);
-				mmu.WriteToMemoryMap(HW_TIMA_TIMER_COUNTER, mmu.ReadFromMemoryMap(HW_TMA_TIMER_MODULO));
+				mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_TIMER, true);
+				mmu.Write(HW_TIMA_TIMER_COUNTER, mmu.Read(HW_TMA_TIMER_MODULO));
 			}
 		}
 

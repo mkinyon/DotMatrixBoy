@@ -143,7 +143,7 @@ namespace App
 
 	void VRAMViewer::updateTexture()
 	{
-		uint8_t bgPalette = gameboy->mmu.ReadFromMemoryMap(Core::HW_BGP_BG_PALETTE_DATA);
+		uint8_t bgPalette = gameboy->mmu.Read(Core::HW_BGP_BG_PALETTE_DATA);
 
 		int x = 8;
 		int y = 0;
@@ -151,8 +151,8 @@ namespace App
 		int count = 0;
 		for (uint16_t byte = 0x8000; byte <= 0x97FF; byte += 2)
 		{
-			uint8_t firstByte = gameboy->mmu.ReadFromMemoryMap(byte);
-			uint8_t secondByte = gameboy->mmu.ReadFromMemoryMap(byte + 1);
+			uint8_t firstByte = gameboy->mmu.Read(byte);
+			uint8_t secondByte = gameboy->mmu.Read(byte + 1);
 			for (int iBit = 0; iBit < 8; iBit++)
 			{
 				uint8_t firstBit = (firstByte >> iBit) & 0x01;

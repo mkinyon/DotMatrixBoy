@@ -26,7 +26,7 @@ namespace App
 		ImGui::Text("BC: $%04x", gameboy->cpu.State.BC);
 		ImGui::Text("DE: $%04x", gameboy->cpu.State.DE);
 		ImGui::Text("HL: $%04x", gameboy->cpu.State.HL);
-		ImGui::Text("IE: %01d", gameboy->mmu.ReadFromMemoryMap(Core::HW_INTERRUPT_ENABLE));
+		ImGui::Text("IE: %01d", gameboy->mmu.Read(Core::HW_INTERRUPT_ENABLE));
 		ImGui::EndChild();
 
 		ImGui::SameLine();
@@ -50,31 +50,31 @@ namespace App
 		if (gameboy->ppu.GetMode() == Core::MODE_2_OAMSCAN) ImGui::Text("Mode: MODE_2_OAMSCAN");
 		if (gameboy->ppu.GetMode() == Core::MODE_3_DRAWING) ImGui::Text("Mode: MODE_3_DRAWING");
 		
-		ImGui::Text("LCDC: %1d", gameboy->mmu.ReadFromMemoryMap(Core::HW_LCDC_LCD_CONTROL));
-		ImGui::Text("STAT: %1d", gameboy->mmu.ReadFromMemoryMap(Core::HW_STAT_LCD_STATUS));
+		ImGui::Text("LCDC: %1d", gameboy->mmu.Read(Core::HW_LCDC_LCD_CONTROL));
+		ImGui::Text("STAT: %1d", gameboy->mmu.Read(Core::HW_STAT_LCD_STATUS));
 		
-		ImGui::Text("SCX: %1d", gameboy->mmu.ReadFromMemoryMap(Core::HW_SCX_VIEWPORT_X_POS));
-		ImGui::Text("SCY: %1d", gameboy->mmu.ReadFromMemoryMap(Core::HW_SCY_VIEWPORT_Y_POS));
+		ImGui::Text("SCX: %1d", gameboy->mmu.Read(Core::HW_SCX_VIEWPORT_X_POS));
+		ImGui::Text("SCY: %1d", gameboy->mmu.Read(Core::HW_SCY_VIEWPORT_Y_POS));
 
-		ImGui::Text("DIV: %02x", gameboy->mmu.ReadFromMemoryMap(Core::HW_DIV_DIVIDER_REGISTER));
-		ImGui::Text("TIMA: %02x", gameboy->mmu.ReadFromMemoryMap(Core::HW_TIMA_TIMER_COUNTER));
-		ImGui::Text("TMA: %02x", gameboy->mmu.ReadFromMemoryMap(Core::HW_TMA_TIMER_MODULO));
-		ImGui::Text("TAC: %02x", gameboy->mmu.ReadFromMemoryMap(Core::HW_TAC_TIMER_CONTROL));
+		ImGui::Text("DIV: %02x", gameboy->mmu.Read(Core::HW_DIV_DIVIDER_REGISTER));
+		ImGui::Text("TIMA: %02x", gameboy->mmu.Read(Core::HW_TIMA_TIMER_COUNTER));
+		ImGui::Text("TMA: %02x", gameboy->mmu.Read(Core::HW_TMA_TIMER_MODULO));
+		ImGui::Text("TAC: %02x", gameboy->mmu.Read(Core::HW_TAC_TIMER_CONTROL));
 		ImGui::EndChild();
 
 		ImGui::SameLine();
 
 		ImGui::BeginChild("R", ImVec2(ImGui::GetContentRegionAvail().x, 150), ImGuiChildFlags_None);
-		ImGui::Text("LY (Scanline): %1d", gameboy->mmu.ReadFromMemoryMap(Core::HW_LY_LCD_Y_COORD));
-		ImGui::Text("LYC: %1d", gameboy->mmu.ReadFromMemoryMap(Core::HW_LYC_LY_COMPARE));
+		ImGui::Text("LY (Scanline): %1d", gameboy->mmu.Read(Core::HW_LY_LCD_Y_COORD));
+		ImGui::Text("LYC: %1d", gameboy->mmu.Read(Core::HW_LYC_LY_COMPARE));
 		
-		ImGui::Text("WX: %1d", gameboy->mmu.ReadFromMemoryMap(Core::HW_WX_WINDOW_X_POS));
-		ImGui::Text("WY: %1d", gameboy->mmu.ReadFromMemoryMap(Core::HW_WY_WINDOW_Y_POS));
+		ImGui::Text("WX: %1d", gameboy->mmu.Read(Core::HW_WX_WINDOW_X_POS));
+		ImGui::Text("WY: %1d", gameboy->mmu.Read(Core::HW_WY_WINDOW_Y_POS));
 		
 		ImGui::Text("Dots This Frame: %1d", gameboy->ppu.m_TotalDotsThisFrame);
 		ImGui::Text("Total Frames: %1d", gameboy->ppu.m_TotalFrames);
 
-		ImGui::Text("JOY: %2d", gameboy->mmu.ReadFromMemoryMap(Core::HW_P1JOYP_JOYPAD));
+		ImGui::Text("JOY: %2d", gameboy->mmu.Read(Core::HW_P1JOYP_JOYPAD));
 		ImGui::EndChild();
 
 		ImGui::SeparatorText("Rom Instructions");

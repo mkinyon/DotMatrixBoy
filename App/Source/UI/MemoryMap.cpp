@@ -22,7 +22,7 @@ namespace App
 			ImGui::Text("$%04x", addr); ImGui::SameLine();
 			for (int col = 0; col < nColumns; col++)
 			{
-				ImGui::Text(" %02x", gameboy->mmu.ReadFromMemoryMap(addr)); ImGui::SameLine();
+				ImGui::Text(" %02x", gameboy->mmu.Read(addr)); ImGui::SameLine();
 				addr += 1;
 			}
 			
@@ -31,7 +31,7 @@ namespace App
 			ImGui::Text(" "); ImGui::SameLine();
 			for (int col = 0; col < nColumns; col++)
 			{
-				ImGui::Text("%c", gameboy->mmu.ReadFromMemoryMap(addr));
+				ImGui::Text("%c", gameboy->mmu.Read(addr));
 				if (col != 15) ImGui::SameLine();
 				addr += 1;
 			}
