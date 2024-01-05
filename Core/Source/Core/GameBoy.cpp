@@ -26,6 +26,7 @@ namespace Core
 					ppu.Clock();
 				}
 
+				apu.Clock();
 				input.Clock();
 			}
 		}

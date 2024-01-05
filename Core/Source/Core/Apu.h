@@ -14,6 +14,9 @@ namespace Core
 		void FeedAudioBuffer(uint8_t* stream, int len);
 
 	private:
+		void triggerChannel();
+
+	private:
 		Mmu& mmu;
 	};
 }

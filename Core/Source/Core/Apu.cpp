@@ -1,6 +1,6 @@
 
 #include "Apu.h"
-
+#include "Defines.h"
 #include <stdint.h>
 
 namespace Core
@@ -10,7 +10,10 @@ namespace Core
 
 	void Apu::Clock()
 	{
-
+		if (!mmu.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_AUDIO_ON))
+		{
+			return;
+		}
 	}
 
 	void Apu::FeedAudioBuffer(uint8_t * stream, int len)
@@ -36,5 +39,10 @@ namespace Core
 				time -= 1.0 / freq;
 			}
 		}
+	}
+
+	void Apu::triggerChannel()
+	{
+
 	}
 }
