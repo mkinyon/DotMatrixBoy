@@ -73,6 +73,25 @@ namespace Core
 	} HardwareAddresses;
 
 	/********************************************************************************************
+		MMU Specific
+	*********************************************************************************************/
+
+	inline const uint16_t CART_ADDR_RANGE_START = 0x0000;
+	inline const uint16_t CART_ADDR_RANGE_END = 0x7FFF;
+
+	// MBC 1
+	inline const uint16_t MBC1_RAMG_START = 0x0000;
+	inline const uint16_t MBC1_RAMG_END = 0x1FFF;
+	inline const uint16_t MBC1_BANKREG1_START = 0x2000;
+	inline const uint16_t MBC1_BANKREG1_END = 0x3FFF;
+	inline const uint16_t MBC1_BANKREG2_START = 0x4000;
+	inline const uint16_t MBC1_BANKREG2_END = 0x5FFF;
+	inline const uint16_t MBC1_MODE_START = 0x6000;
+	inline const uint16_t MBC1_MODE_END = 0x7FFF;
+	inline const uint16_t ROM_BANK_SIZE = 0x4000;
+
+
+	/********************************************************************************************
 		CPU Specific
 	*********************************************************************************************/
 	#define DEST_ADDRESS_VBLANK 0x0040 

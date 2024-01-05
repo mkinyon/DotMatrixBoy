@@ -28,12 +28,9 @@ namespace Core
 			return;
 		}
 
-		if (address >= 0x2000 && address <= 0x3FFF)
+		if (address >= CART_ADDR_RANGE_START && address <= CART_ADDR_RANGE_END)
 		{
-			std::ostringstream stream;
-			stream << "Bank Number Write Detected. Address: " << std::hex << address << " Value: " << std::dec << value;
-			Logger::Instance().Info(Domain::MMU, stream.str());
-			cart.CurrentBankNumber = value;// &0xF;
+			cart.Write(address, value);
 		}
 		// $E000-$FDFF   Echo RAM (Not used) (This shouldn't be written to??)
 		else if (address >= 0xE000 && address <= 0xFDFF)

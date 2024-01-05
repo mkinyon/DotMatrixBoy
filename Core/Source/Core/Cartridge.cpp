@@ -1,4 +1,7 @@
 #include "Cartridge.h"
+#include "Defines.h"
+#include "Logger.h"
+#include <ostream>
 
 namespace Core
 {
@@ -15,7 +18,7 @@ namespace Core
 			file.read((char*)&Header, sizeof(sHeader));
 
 			file.seekg(0, file.end);
-			cartSize = (unsigned long)file.tellg();
+			int cartSize = (unsigned long)file.tellg();
 
 			file.seekg(0); // reset to beginning
 			romData = new std::vector<uint8_t>(cartSize);
@@ -44,12 +47,57 @@ namespace Core
 	{
 		if (address >= 0x4000 && address <= 0x7FFF)
 		{
-			// offset address based on current rombank
-			return romData->at(address + ((CurrentBankNumber - 1) * 0x4000));
+			//// offset address based on current rombank
+			//uint8_t romBank = register_mbc1_bank1;// getRomBank();
+			//uint16_t romAddress = address + (romBank * ROM_BANK_SIZE);
+			//return romData->at(romAddress);
+
+			return romData->at(address + ((getRomBank() - 1) * 0x4000));
 		}
 		else
 		{
 			return romData->at(address);
 		}
+	}
+
+	void Cartridge::Write(uint16_t address, uint8_t value)
+	{
+		std::ostringstream stream;
+		stream << "Cartridge write detected. Address: " << std::hex << address << " Value: " << std::dec << value;
+		Logger::Instance().Info(Domain::MMU, stream.str());
+
+		if (address >= MBC1_RAMG_START && address <= MBC1_RAMG_END)
+		{
+			register_mbc1_ramg = value;
+		}
+		if (address >= MBC1_BANKREG1_START && address <= MBC1_BANKREG1_END)
+		{
+			register_mbc1_bank1 = value;
+		}
+		if (address >= MBC1_BANKREG2_START && address <= MBC1_BANKREG2_END)
+		{
+			register_mbc1_bank2 = value;
+		}
+		if (address >= MBC1_MODE_START && address <= MBC1_MODE_END)
+		{
+			register_mbc1_mode = value;
+		}
+	}
+
+	uint8_t Cartridge::getRomBank()
+	{
+		uint8_t bank = register_mbc1_bank1 & 0b11111;
+		
+		if (bank == 0)
+		{
+			bank++;
+		}
+
+		if (register_mbc1_mode == 0)
+		{
+			bank |= (register_mbc1_bank2 & 0b11) << 5;
+		}
+
+		return bank;
 	}
 }

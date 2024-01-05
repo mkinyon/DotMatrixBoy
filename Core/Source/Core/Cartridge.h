@@ -15,6 +15,7 @@ namespace Core
 
 	public:
 		uint8_t& Read(uint16_t address);
+		void Write(uint16_t address, uint8_t value);
 
 	public:
 		struct sHeader
@@ -35,11 +36,16 @@ namespace Core
 			uint8_t globalChecksum[2];
 		} Header;
 
-		uint8_t CurrentBankNumber = 1;
 		std::vector<uint8_t>* romData;
 
 	private:
-		int cartSize = 0;
+		uint8_t getRomBank();
+
+	private:
+		uint8_t register_mbc1_ramg = 0;
+		uint8_t register_mbc1_bank1 = 0;
+		uint8_t register_mbc1_bank2 = 0;
+		uint8_t register_mbc1_mode = 0;
 	};
 }
 
