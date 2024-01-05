@@ -1,8 +1,6 @@
 #include "LCD.h"
 #include "EventManager.h"
 
-#include <algorithm>
-
 
 namespace App
 {

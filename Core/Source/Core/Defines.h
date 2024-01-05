@@ -79,6 +79,12 @@ namespace Core
 	inline const uint16_t CART_ADDR_RANGE_START = 0x0000;
 	inline const uint16_t CART_ADDR_RANGE_END = 0x7FFF;
 
+	inline const uint16_t CARTBANK_ADDR_RANGE_START = 0x4000;
+	inline const uint16_t CARTBANK_ADDR_RANGE_END = 0x7FFF;
+
+	inline const uint16_t CARTRAM_ADDR_RANGE_START = 0xA000;
+	inline const uint16_t CARTRAM_ADDR_RANGE_END = 0xBFFF;
+
 	// MBC 1
 	inline const uint16_t MBC1_RAMG_START = 0x0000;
 	inline const uint16_t MBC1_RAMG_END = 0x1FFF;
@@ -88,17 +94,19 @@ namespace Core
 	inline const uint16_t MBC1_BANKREG2_END = 0x5FFF;
 	inline const uint16_t MBC1_MODE_START = 0x6000;
 	inline const uint16_t MBC1_MODE_END = 0x7FFF;
+
 	inline const uint16_t ROM_BANK_SIZE = 0x4000;
+	inline const uint16_t RAM_BANK_SIZE = 0x2000;
 
 
 	/********************************************************************************************
 		CPU Specific
 	*********************************************************************************************/
-	#define DEST_ADDRESS_VBLANK 0x0040 
-	#define DEST_ADDRESS_LCD_STAT 0x0048
-	#define DEST_ADDRESS_TIMER 0x0050
-	#define DEST_ADDRESS_SERIAL 0x0058
-	#define DEST_ADDRESS_JOYPAD 0x0060
+	inline const uint8_t DEST_ADDRESS_VBLANK = 0x0040;
+	inline const uint8_t DEST_ADDRESS_LCD_STAT = 0x0048;
+	inline const uint8_t DEST_ADDRESS_TIMER = 0x0050;
+	inline const uint8_t DEST_ADDRESS_SERIAL = 0x0058;
+	inline const uint8_t DEST_ADDRESS_JOYPAD = 0x0060;
 
 	typedef enum
 	{
@@ -138,22 +146,22 @@ namespace Core
 		PPU Specific
 	*********************************************************************************************/
 
-	#define LCD_WIDTH  160
-	#define LCD_HEIGHT 144
-	#define TILEMAP_WIDTH 32
-	#define TILEMAP_HEIGHT 32
-	#define TILEMAP_WIDTH_PIXELS 256
-	#define TILEMAP_HEIGHT_PIXELS 256
-	#define TILE_WIDTH 8
-	#define TILE_HEIGHT 8
+	inline const int LCD_WIDTH = 160;
+	inline const int LCD_HEIGHT = 144;
+	inline const int TILEMAP_WIDTH = 32;
+	inline const int TILEMAP_HEIGHT = 32;
+	inline const int TILEMAP_WIDTH_PIXELS = 256;
+	inline const int TILEMAP_HEIGHT_PIXELS = 256;
+	inline const int TILE_WIDTH = 8;
+	inline const int TILE_HEIGHT = 8;
 
-	#define OAM_CYCLES     80
-	#define VBLANK_CYCLES  456
-	#define HBLANK_CYCLES  204
-	#define DRAWING_CYCLES 173
+	inline const int OAM_CYCLES = 80;
+	inline const int VBLANK_CYCLES = 456;
+	inline const int HBLANK_CYCLES = 204;
+	inline const int DRAWING_CYCLES = 173;
 
-	#define BG_MAP_0 0x9800
-	#define BG_MAP_1 0x9C00
+	inline const uint16_t BG_MAP_0 = 0x9800;
+	inline const uint16_t BG_MAP_1 = 0x9C00;
 
 	typedef enum
 	{

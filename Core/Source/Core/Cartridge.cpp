@@ -45,14 +45,20 @@ namespace Core
 
 	uint8_t& Cartridge::Read(uint16_t address)
 	{
-		if (address >= 0x4000 && address <= 0x7FFF)
+		if (address >= CARTBANK_ADDR_RANGE_START && address <= CARTBANK_ADDR_RANGE_END)
 		{
-			//// offset address based on current rombank
-			//uint8_t romBank = register_mbc1_bank1;// getRomBank();
-			//uint16_t romAddress = address + (romBank * ROM_BANK_SIZE);
+			// offset address based on current rombank
+			uint8_t romBank = getRomBank();
+			uint16_t romAddress = address + (romBank * ROM_BANK_SIZE);
 			//return romData->at(romAddress);
 
 			return romData->at(address + ((getRomBank() - 1) * 0x4000));
+		}
+		else if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
+		{
+			uint8_t ramBank = getRamBank();
+			uint16_t ramAddress = address + (ramBank * RAM_BANK_SIZE);
+			return ram[ramAddress];
 		}
 		else
 		{
@@ -63,7 +69,7 @@ namespace Core
 	void Cartridge::Write(uint16_t address, uint8_t value)
 	{
 		std::ostringstream stream;
-		stream << "Cartridge write detected. Address: " << std::hex << address << " Value: " << std::dec << value;
+		stream << "Cartridge write detected. Address: " << std::hex << address << " Value: " << std::setw(2) << std::setfill('0') << static_cast<int>(value);
 		Logger::Instance().Info(Domain::MMU, stream.str());
 
 		if (address >= MBC1_RAMG_START && address <= MBC1_RAMG_END)
@@ -80,14 +86,23 @@ namespace Core
 		}
 		if (address >= MBC1_MODE_START && address <= MBC1_MODE_END)
 		{
-			register_mbc1_mode = value;
+			register_mbc1_mode = value & 0x1;
+		}
+		if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
+		{
+			if (register_mbc1_mode == 1)
+			{
+				ram[address] = value;
+			}
 		}
 	}
 
 	uint8_t Cartridge::getRomBank()
 	{
+		// only the lower 5 bits count
 		uint8_t bank = register_mbc1_bank1 & 0b11111;
 		
+		// the lower five bits can't be all zero, it has to be at least 1
 		if (bank == 0)
 		{
 			bank++;
@@ -95,9 +110,29 @@ namespace Core
 
 		if (register_mbc1_mode == 0)
 		{
+			// we only care about the lower 2 bits of the bank 2 register
+			// they get appended to bits 5 and 6
 			bank |= (register_mbc1_bank2 & 0b11) << 5;
 		}
 
-		return bank;
+		// if the rom is larger than 256KiB than we want to keep the 5th bit
+		if (Header.romSize > 0x03)
+		{
+			return bank & 0b11111;
+		}
+		else
+		{
+			return bank & 0b1111;
+		}
+	}
+
+	uint8_t Cartridge::getRamBank()
+	{
+		if (register_mbc1_mode == 1)
+		{
+			return register_mbc1_bank2 & 0b11;
+		}
+
+		return 0;
 	}
 }

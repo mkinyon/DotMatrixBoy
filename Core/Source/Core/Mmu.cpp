@@ -32,6 +32,10 @@ namespace Core
 		{
 			cart.Write(address, value);
 		}
+		else if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
+		{
+			cart.Write(address, value);
+		}
 		// $E000-$FDFF   Echo RAM (Not used) (This shouldn't be written to??)
 		else if (address >= 0xE000 && address <= 0xFDFF)
 		{

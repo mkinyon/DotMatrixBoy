@@ -3,6 +3,7 @@
 #include "Logger.h"
 
 #include <vector>
+#include <algorithm>
 
 namespace Core
 {
