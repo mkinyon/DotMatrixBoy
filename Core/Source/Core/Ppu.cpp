@@ -46,6 +46,12 @@ namespace Core
 	{
 		if (m_CycleCount >= OAM_CYCLES)
 		{
+			// Check for OAM interrupt
+			if (mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_MODE_2_INT_SELECT))
+			{
+				mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
+			}
+
 			uint8_t lcdy = mmu.Read(HW_LY_LCD_Y_COORD);
 			uint8_t lcdyc = mmu.Read(HW_LYC_LY_COMPARE);
 
@@ -81,7 +87,7 @@ namespace Core
 	{
 		if (m_CycleCount >= HBLANK_CYCLES)
 		{
-			// Check for H-BLANK Interrupt
+			// Check for H-BLANK interrupt
 			if (mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_MODE_0_INT_SELECT))
 			{
 				mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);

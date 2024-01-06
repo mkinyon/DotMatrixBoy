@@ -108,6 +108,13 @@ namespace Core
 			bank++;
 		}
 
+		// 32KiB roms do not use rom banking so hardcode it to one
+		if (Header.cartridgeType == 0x0)
+		{
+			bank = 1;
+			return bank;
+		}
+
 		if (register_mbc1_mode == 0)
 		{
 			// we only care about the lower 2 bits of the bank 2 register
