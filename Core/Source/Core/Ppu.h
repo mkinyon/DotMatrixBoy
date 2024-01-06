@@ -68,6 +68,8 @@ namespace Core
 		void RefreshOAMEntries();
 		uint16_t GetTileAddressFromTileId(uint8_t tileId);
 
+		void processLYC();
+
 	private:
 		uint8_t m_backBuffer[160 * 144] = {};
 		OAM oamEntries[40] = {};

@@ -52,22 +52,7 @@ namespace Core
 				mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
 			}
 
-			uint8_t lcdy = mmu.Read(HW_LY_LCD_Y_COORD);
-			uint8_t lcdyc = mmu.Read(HW_LYC_LY_COMPARE);
-
-			if (lcdy == lcdyc)
-			{
-				mmu.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, true);
-
-				if (mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STATE_LYC_INT_SELECT))
-				{
-					mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
-				}
-			}
-			else
-			{
-				mmu.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, false);
-			}
+			processLYC();
 
 			writeLCDMode(LCD_Mode::MODE_3_DRAWING);
 			m_CycleCount -= OAM_CYCLES;
@@ -87,6 +72,8 @@ namespace Core
 	{
 		if (m_CycleCount >= HBLANK_CYCLES)
 		{
+			processLYC();
+
 			// Check for H-BLANK interrupt
 			if (mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_MODE_0_INT_SELECT))
 			{
@@ -113,6 +100,8 @@ namespace Core
 	{
 		if (m_CycleCount >= VBLANK_CYCLES)
 		{
+			processLYC();
+
 			uint8_t ly = mmu.Read(HW_LY_LCD_Y_COORD);
 
 			if (ly == 144)
@@ -127,6 +116,7 @@ namespace Core
 			{
 				writeLCDMode(LCD_Mode::MODE_2_OAMSCAN);
 				mmu.Write(HW_LY_LCD_Y_COORD, 0);
+				processLYC();
 			}
 			else
 				mmu.Write(HW_LY_LCD_Y_COORD, ly + 1);
@@ -480,5 +470,26 @@ namespace Core
 		}
 
 		return tileAddress;
+	}
+
+	void Ppu::processLYC()
+	{
+		uint8_t lcdy = mmu.Read(HW_LY_LCD_Y_COORD);
+		uint8_t lcdyc = mmu.Read(HW_LYC_LY_COMPARE);
+
+		if (lcdy == lcdyc)
+		{
+			mmu.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, true);
+		}
+		else
+		{
+			mmu.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, false);
+		}
+
+		if (mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STATE_LYC_INT_SELECT) &&
+			mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY))
+		{
+			mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
+		}
 	}
 }

@@ -1,6 +1,6 @@
 #include "VRAMViewer.h"
 #include "EventManager.h"
-
+#include "Core\Defines.h"
 #include <algorithm>
 
 
@@ -79,7 +79,60 @@ namespace App
 
 	void VRAMViewer::RenderBGMapsView()
 	{
+		bool bgTileMapArea = gameboy->mmu.ReadRegisterBit(Core::HW_LCDC_LCD_CONTROL, Core::LCDC_BG_TILE_MAP);
+		bool windowTileDataArea = gameboy->mmu.ReadRegisterBit(Core::HW_LCDC_LCD_CONTROL, Core::LCDC_BG_AND_WINDOW_TILES);
+		ImGui::Text("Current BG Map 1?: %2d", bgTileMapArea);
 
+		// set custom item spacing for this section
+		ImGuiStyle& style = ImGui::GetStyle();
+		ImVec2 originalSpacing = style.ItemSpacing;
+		style.ItemSpacing = ImVec2(1.0f, 1.0f);
+
+		for (int y = 0; y < 32; y++)
+		{
+			for (int x = 0; x < 32; x++)
+			{
+				// get tile at x and y coord
+				int tilePosition = y * Core::TILEMAP_WIDTH + x;
+
+				// get tile id from current tile map
+				uint8_t tileId = gameboy->mmu.Read(bgTileMapArea ? Core::BG_MAP_1 + tilePosition : Core::BG_MAP_0 + tilePosition);
+
+				int yOffset = 0;
+				if (!windowTileDataArea)
+				{
+					if (tileId >= 128)
+					{
+						yOffset = 0;
+
+					}
+					else
+					{
+						yOffset = 16;
+					}
+				}
+
+				int texCoordX = (tileId % 16) * 8;
+				int texCoordY = ((tileId / 16) + yOffset) * 8;
+
+				ImVec2 uvStart = ImVec2(texCoordX / 128.0f, texCoordY / 192.0f);
+				ImVec2 uvEnd = ImVec2((texCoordX + 8) / 128.0f, (texCoordY + 8) / 192.0f);
+
+				if (ImGui::IsItemHovered()) {
+					ImGui::BeginTooltip();
+					ImGui::Text("X: %2d Y: %2d", x, y);
+					ImGui::EndTooltip();
+				}
+				ImGui::Image(reinterpret_cast<ImTextureID>(tilesTexture), ImVec2(16, 16), uvStart, uvEnd);
+				if (x < 31) 
+				{
+					ImGui::SameLine();
+				}
+			}
+		}
+
+		// restore the original spacing
+		style.ItemSpacing = originalSpacing;
 	}
 
 	void VRAMViewer::RenderOAMView()
