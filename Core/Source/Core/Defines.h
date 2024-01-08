@@ -98,6 +98,9 @@ namespace Core
 	inline const uint16_t ROM_BANK_SIZE = 0x4000;
 	inline const uint16_t RAM_BANK_SIZE = 0x2000;
 
+	inline const uint16_t APU_RANGE_START = 0xFF10;
+	inline const uint16_t APU_RANGE_END = 0xFF3F;
+
 
 	/********************************************************************************************
 		CPU Specific

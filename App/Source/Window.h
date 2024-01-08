@@ -2,6 +2,7 @@
 
 #include "SDL.h"
 #include "Core/GameBoy.h"
+#include <mutex>
 
 namespace App
 {
@@ -10,6 +11,8 @@ namespace App
 	public:
 		Window(int screenWidth, int screenHeight, const char* windowTitle, Core::GameBoy* gb);
 		~Window();
+
+		std::mutex mutex;
 
 	public:
 		bool Initialize();
@@ -21,7 +24,6 @@ namespace App
 		Uint32 GetElapsedTime();
 
 		static void StaticAudioCallback(void* userdata, Uint8* stream, int len);
-		void AudioCallback(Uint8* stream, int len);
 
 	private:
 		SDL_Window* sdlWindow;

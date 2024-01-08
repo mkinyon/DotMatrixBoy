@@ -59,4 +59,9 @@ namespace Core
 			}
 		} while (!cpu.m_InstructionCompleted);
 	}
+
+	void GameBoy::FeedAudioBuffer(uint8_t* stream, int len)
+	{
+		apu.FeedAudioBuffer(stream, len);
+	}
 }

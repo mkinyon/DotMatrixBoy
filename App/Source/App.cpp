@@ -18,7 +18,7 @@ Core::GameBoy* gb;
 Core::Cartridge* cart;
 bool isPaused = true;
 bool enableBootRom = false;
-const char* romName = "../Roms/metroid2.gb";
+const char* romName = "../Roms/kirby.gb";
 
 
 

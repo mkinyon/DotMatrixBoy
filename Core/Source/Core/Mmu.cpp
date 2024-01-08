@@ -70,7 +70,13 @@ namespace Core
 			Logger::Instance().Info(Domain::MMU, stream.str());
 		}
 
+
 		memory[address] = value;
+
+		for (BaseDevice* device : registeredDevices)
+		{
+			device->OnWrite(address, value);
+		}
 	}
 
 	bool Mmu::ReadRegisterBit(uint16_t address, int flag)
@@ -89,5 +95,10 @@ namespace Core
 			clearFlag(value, flag);
 
 		Write(address, value);
+	}
+
+	void Mmu::RegisterOnWrite(BaseDevice* device)
+	{
+		registeredDevices.push_back(device);
 	}
 }

@@ -5,7 +5,7 @@
 #include "Mmu.h"
 #include "Cpu.h"
 #include "Ppu.h"
-#include "Apu.h"
+#include "Audio/Apu.h"
 #include "Input.h"
 #include "Cartridge.h"
 #include "Utils.h"
@@ -25,6 +25,7 @@ namespace Core
 		void Unpause();
 		bool IsPaused();
 		void StepCPU();
+		void FeedAudioBuffer(uint8_t* stream, int len);
 
 	public:
 		Cartridge& cart;
