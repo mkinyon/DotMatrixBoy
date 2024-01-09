@@ -2,6 +2,7 @@
 
 #include "..\Mmu.h"
 #include "SquareChannel.h"
+#include "AudioFile.h"
 
 namespace Core
 {
@@ -28,5 +29,13 @@ namespace Core
 		float audioBuffer[1024] = { 0 };
 		uint8_t frameSequencer = 0;
 		int frameSequenceCountDown = 8192;
+
+		AudioFile<float> file;
+
+		const std::string filename = "output.wav";
+		const int sampleRate = 44100; // Adjust as needed
+		const int numChannels = 1;    // Adjust as needed (1 for mono, 2 for stereo, etc.)
+
+
 	};
 }

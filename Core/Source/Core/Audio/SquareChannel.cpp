@@ -1,10 +1,14 @@
 
 #include "SquareChannel.h"
-#include "..\Defines.h"
+
 
 namespace Core
 {
-	SquareChannel::SquareChannel(Mmu& mmu) : mmu(mmu) {}
+	SquareChannel::SquareChannel(Mmu& mmu, bool isChannel1) : mmu(mmu)
+	{
+		this->isChannel1 = isChannel1;
+	}
+
 	SquareChannel::~SquareChannel() {}
 
 	void SquareChannel::Clock()
@@ -25,8 +29,8 @@ namespace Core
 
 	void SquareChannel::LengthClock()
 	{
-		uint8_t lengthCounter = mmu.Read(HW_NR11_SOUND_CHANNEL_1_LEN_TIMER) & 0b111111;
-		bool lengthEnable = mmu.ReadRegisterBit(HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH, NR14_LEN_ENABLE);
+		uint8_t lengthCounter = mmu.Read(lengthDutyAddr) & 0b111111;
+		bool lengthEnable = mmu.ReadRegisterBit(dataAddr, NR14_LEN_ENABLE);
 
 		if (lengthCounter > 0 && lengthEnable)
 		{
@@ -34,7 +38,7 @@ namespace Core
 			if (lengthCounter == 0)
 			{
 				isActive = 0;
-				mmu.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH1_ON, false);
+				mmu.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, soundControlFlag, false);
 			}
 		}
 	}
@@ -52,9 +56,9 @@ namespace Core
 	void SquareChannel::Trigger()
 	{
 		isActive = 1;
-		mmu.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH1_ON, true);
+		mmu.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, soundControlFlag, true);
 
-		selectedDuty = (mmu.Read(HW_NR11_SOUND_CHANNEL_1_LEN_TIMER) & 0b11000000) >> 6;
+		selectedDuty = (mmu.Read(lengthDutyAddr) & 0b11000000) >> 6;
 
 		// https://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware#Square_Wave
 		// a square channel's frequency timer period is set to (2048-frequency)*4
@@ -66,8 +70,8 @@ namespace Core
 
 	uint16_t SquareChannel::getFrequency()
 	{
-		uint8_t frequencyData = mmu.Read(HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH);
-		uint16_t frequency = mmu.Read(HW_NR13_SOUND_CHANNEL_1_PERIOD_LOW);
+		uint8_t frequencyData = mmu.Read(dataAddr);
+		uint16_t frequency = mmu.Read(freqLowAddr);
 		frequency |= (frequencyData & 0b111) << 8;
 		return frequency;
 	}

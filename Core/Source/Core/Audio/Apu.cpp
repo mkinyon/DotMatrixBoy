@@ -3,11 +3,15 @@
 #include "..\Defines.h"
 #include <stdint.h>
 
+
 namespace Core
 {
-	Apu::Apu(Mmu& mmu) : mmu(mmu), ch1_square(mmu), ch2_square(mmu)
+	Apu::Apu(Mmu& mmu) : mmu(mmu), ch1_square(mmu, true), ch2_square(mmu, false)
 	{
 		mmu.RegisterOnWrite(this);
+
+		file.setSampleRate(sampleRate);
+		file.setAudioBufferSize(numChannels, 100000);
 	}
 
 	Apu::~Apu() {}
@@ -65,9 +69,16 @@ namespace Core
 		}
 
 		ch1_square.Clock();
+		ch2_square.Clock();
+
 		if (cycleCount >= 95)
 		{
-			audioBuffer[sampleCounter] = ch1_square.CurrentSample;
+			audioBuffer[sampleCounter] = static_cast<float>(ch1_square.CurrentSample + ch2_square.CurrentSample) / 2;
+			/*file.samples[0].push_back(ch1_square.CurrentSample);
+			if (file.samples[0].size() == 100000)
+			{
+				file.save(filename);
+			}*/
 
 			sampleCounter++;
 			if (sampleCounter == 1024)
@@ -85,6 +96,13 @@ namespace Core
 			if (mmu.ReadRegisterBit(HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH, NR14_TRIGGER))
 			{
 				ch1_square.Trigger();
+			}
+		}
+		if (address == HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH)
+		{
+			if (mmu.ReadRegisterBit(HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH, NR14_TRIGGER))
+			{
+				ch2_square.Trigger();
 			}
 		}
 	}
