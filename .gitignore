@@ -55,5 +55,6 @@ Roms/
 Tools/
 *.gb
 *.sav
+*.wav
 dmg_boot.bin
 imgui.ini

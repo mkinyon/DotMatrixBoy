@@ -29,17 +29,12 @@ namespace Core
 
 	void SquareChannel::LengthClock()
 	{
-		uint8_t lengthCounter = mmu.Read(lengthDutyAddr) & 0b111111;
-		bool lengthEnable = mmu.ReadRegisterBit(dataAddr, NR14_LEN_ENABLE);
+		length -= length != 0 ? 1 : 0;
+		isActive = !lengthStop || (length != 0 && lengthStop);
 
-		if (lengthCounter > 0 && lengthEnable)
+		if (!isActive)
 		{
-			lengthCounter--;
-			if (lengthCounter == 0)
-			{
-				isActive = 0;
-				mmu.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, soundControlFlag, false);
-			}
+			mmu.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, soundControlFlag, false);
 		}
 	}
 
@@ -50,7 +45,7 @@ namespace Core
 
 	void SquareChannel::EnvelopeClock()
 	{
-
+		
 	}
 
 	void SquareChannel::Trigger()
@@ -66,6 +61,11 @@ namespace Core
 		cycleSampleUpdate = (2048 - currentFrequency) * 4;
 		cycleCount = 0;
 		sampleIndex = 0;
+
+		// setup length
+		uint16_t initLength = APU_DEFAULT_LENGTH - (mmu.Read(lengthDutyAddr) & 0b111111);
+		length = length == 0 ? initLength : length;
+		lengthStop = mmu.ReadRegisterBit(dataAddr, NR14_LEN_ENABLE);
 	}
 
 	uint16_t SquareChannel::getFrequency()

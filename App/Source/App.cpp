@@ -18,7 +18,7 @@ Core::GameBoy* gb;
 Core::Cartridge* cart;
 bool isPaused = true;
 bool enableBootRom = false;
-const char* romName = "../Roms/kirby.gb";
+const char* romName = "../Roms/dmg-acid2.gb";
 
 
 

@@ -40,6 +40,10 @@ namespace Core
 		uint16_t currentFrequency = 0;
 		uint16_t cycleCount = 0;
 
+		bool lengthStop = false;
+		uint16_t length = 0;
+
+		// channel 1 & 2 parameters
 		bool isChannel1;
 		bool hasSweep = isChannel1;
 		uint8_t  soundControlFlag = isChannel1 ?  NR52_CH1_ON: NR52_CH2_ON;

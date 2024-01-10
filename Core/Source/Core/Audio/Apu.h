@@ -3,6 +3,7 @@
 #include "..\Mmu.h"
 #include "SquareChannel.h"
 #include "AudioFile.h"
+#include "RingBuffer.h"
 
 namespace Core
 {
@@ -25,8 +26,7 @@ namespace Core
 		SquareChannel ch2_square;
 
 		int cycleCount = 0;
-		uint16_t sampleCounter = 0;
-		float audioBuffer[1024] = { 0 };
+		RingBuffer audioBuffer;
 		uint8_t frameSequencer = 0;
 		int frameSequenceCountDown = 8192;
 

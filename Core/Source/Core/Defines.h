@@ -210,6 +210,8 @@ namespace Core
 		APU Specific
 	*********************************************************************************************/
 
+	inline const uint8_t APU_DEFAULT_LENGTH = 0;
+
 	// NR10: Channel 1 sweep
 	typedef enum
 	{

@@ -6,7 +6,7 @@
 
 namespace Core
 {
-	Apu::Apu(Mmu& mmu) : mmu(mmu), ch1_square(mmu, true), ch2_square(mmu, false)
+	Apu::Apu(Mmu& mmu) : mmu(mmu), ch1_square(mmu, true), ch2_square(mmu, false), audioBuffer()
 	{
 		mmu.RegisterOnWrite(this);
 
@@ -71,21 +71,17 @@ namespace Core
 		ch1_square.Clock();
 		ch2_square.Clock();
 
+		// only read the sample every (cpu frequency / 44100)
 		if (cycleCount >= 95)
 		{
-			audioBuffer[sampleCounter] = static_cast<float>(ch1_square.CurrentSample + ch2_square.CurrentSample) / 2;
-			/*file.samples[0].push_back(ch1_square.CurrentSample);
-			if (file.samples[0].size() == 100000)
-			{
-				file.save(filename);
-			}*/
+			//file.samples[0].push_back(static_cast<int16_t>(ch1_square.CurrentSample * 32767.0));
+			//if (file.samples[0].size() == 100000)
+			//{
+			//	file.save(filename);
+			//}
+			audioBuffer.Write(static_cast<float>(ch1_square.CurrentSample + ch2_square.CurrentSample) / 2);
 
-			sampleCounter++;
-			if (sampleCounter == 1024)
-			{
-				sampleCounter = 0;
-			}
-			cycleCount -= 95;
+			cycleCount = 0;
 		}
 	}
 
@@ -143,13 +139,15 @@ namespace Core
 
 	void Apu::FeedAudioBuffer(uint8_t * stream, int len)
 	{
-		squareWaveTest(stream, len);
+		//squareWaveTest(stream, len);
 
-		for (int i = 0; i < len; ++i)
+		for (int i = 0; i < len; i += 1)
 		{
-			int16_t intSample = static_cast<int16_t>((audioBuffer[i] * 10) * 32767.0);
+			int16_t intSample = static_cast<int16_t>((audioBuffer.Read() * 10) * 32767.0);
+
 			stream[i] = static_cast<uint8_t>(intSample & 0xFF);
 			stream[i + 1] = static_cast<uint8_t>((intSample >> 8) & 0xFF);  // High byte 
+
 		}
 	}
 }

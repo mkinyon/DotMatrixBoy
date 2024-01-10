@@ -38,9 +38,9 @@ namespace App
         SDL_AudioSpec want, have;
         SDL_memset(&want, 0, sizeof(want));
         want.freq = 44100;
-        want.format = AUDIO_S16SYS;   // Signed 16-bit samples in little-endian byte order
+        want.format = AUDIO_S16SYS;
         want.channels = 1;
-        want.samples = 512;          // Buffer size (adjust as needed)
+        want.samples = 1024;
         want.callback = StaticAudioCallback;
         want.userdata = this;
 
@@ -254,7 +254,7 @@ namespace App
     void Window::StaticAudioCallback(void* userdata, Uint8* stream, int len)
     {
         Window* window = static_cast<Window*>(userdata);
-        std::lock_guard<std::mutex> lock(window->mutex);  // Ensure proper synchronization
+        //std::lock_guard<std::mutex> lock(window->mutex);  // Ensure proper synchronization
         if (window && window->gameboy) {
             window->gameboy->FeedAudioBuffer(stream, len);
         }
