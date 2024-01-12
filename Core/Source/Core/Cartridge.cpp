@@ -56,9 +56,17 @@ namespace Core
 		}
 		else if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
 		{
-			uint8_t ramBank = getRamBank();
-			uint16_t ramAddress = address + (ramBank * RAM_BANK_SIZE);
-			return ram[ramAddress];
+			if (ramEnabled)
+			{
+				uint8_t ramBank = getRamBank();
+				uint16_t ramAddress = address + (ramBank * RAM_BANK_SIZE);
+				uint16_t addrOffset = ramAddress - 0xA000;
+				return ram[addrOffset];
+			}
+			else
+			{
+				return badRamRead;
+			}
 		}
 		else
 		{
@@ -74,7 +82,16 @@ namespace Core
 
 		if (address >= MBC1_RAMG_START && address <= MBC1_RAMG_END)
 		{
-			register_mbc1_ramg = value;
+			// writing 0xA (0b1010) to this address range will enable ram
+			if (value == 0xA)
+			{
+				ramEnabled = true;
+			}
+			// all other writes will disable it
+			else
+			{
+				ramEnabled = false;
+			}
 		}
 		if (address >= MBC1_BANKREG1_START && address <= MBC1_BANKREG1_END)
 		{
@@ -90,9 +107,12 @@ namespace Core
 		}
 		if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
 		{
-			if (register_mbc1_mode == 1)
+			if (/*register_mbc1_mode == 1 &&*/ ramEnabled)
 			{
-				ram[address] = value;
+				uint8_t ramBank = getRamBank();
+				uint16_t ramAddress = address + (ramBank * RAM_BANK_SIZE);
+				uint16_t addrOffset = ramAddress - 0xA000;
+				ram[addrOffset] = value;
 			}
 		}
 	}
@@ -101,7 +121,7 @@ namespace Core
 	{
 		// only the lower 5 bits count
 		uint8_t bank = register_mbc1_bank1 & 0b11111;
-		
+
 		// the lower five bits can't be all zero, it has to be at least 1
 		if (bank == 0)
 		{
@@ -135,11 +155,13 @@ namespace Core
 
 	uint8_t Cartridge::getRamBank()
 	{
+		// during mode 1, the ram bank is selected from the 2 lowest address bits
 		if (register_mbc1_mode == 1)
 		{
 			return register_mbc1_bank2 & 0b11;
 		}
 
+		// during mode 0, only the first ram bank is used
 		return 0;
 	}
 }

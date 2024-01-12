@@ -43,11 +43,13 @@ namespace Core
 		uint8_t getRamBank();
 
 	private:
-		uint8_t register_mbc1_ramg = 0;
+		bool ramEnabled = false;
 		uint8_t register_mbc1_bank1 = 0;
 		uint8_t register_mbc1_bank2 = 0;
 		uint8_t register_mbc1_mode = 0;
-		uint8_t ram[32768];
+		uint8_t ram[32768] = { 0 };
+		
+		uint8_t badRamRead = 0xFF;
 	};
 }
 

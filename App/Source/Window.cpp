@@ -28,23 +28,23 @@ namespace App
             SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
         #endif
 
-        // Setup audio
-        if (SDL_Init(SDL_INIT_AUDIO) < 0)
-        {
-            // Handle SDL initialization failure
-            return;
-        }
+        //// Setup audio
+        //if (SDL_Init(SDL_INIT_AUDIO) < 0)
+        //{
+        //    // Handle SDL initialization failure
+        //    return;
+        //}
 
-        SDL_AudioSpec want, have;
-        SDL_memset(&want, 0, sizeof(want));
-        want.freq = 44100;
-        want.format = AUDIO_S16SYS;
-        want.channels = 1;
-        want.samples = 1024;
-        want.callback = StaticAudioCallback;
-        want.userdata = this;
+        //SDL_AudioSpec want, have;
+        //SDL_memset(&want, 0, sizeof(want));
+        //want.freq = 44100;
+        //want.format = AUDIO_S16SYS;
+        //want.channels = 1;
+        //want.samples = 1024;
+        //want.callback = StaticAudioCallback;
+        //want.userdata = this;
 
-        sdlAudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+        //sdlAudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
 
         // Create window with SDL_Renderer graphics context
         SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
@@ -93,7 +93,7 @@ namespace App
     bool Window::Initialize()
     {
         // Check if SDL initialization was successful
-        SDL_PauseAudioDevice(sdlAudioDevice, 0);  // Start audio playback
+        //SDL_PauseAudioDevice(sdlAudioDevice, 0);  // Start audio playback
         return sdlWindow != nullptr && sdlRenderer != nullptr;
         
     }

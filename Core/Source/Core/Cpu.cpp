@@ -32,11 +32,10 @@ namespace Core
 		// Each instruction takes a certain amount of cycles to complete so
 		// if there are still cycles remaining then we shoud just decrement 
 		// the cycles and return;
+		m_cycles--;
 		if (m_cycles > 0)
 		{
 			m_InstructionCompleted = false;
-
-			m_cycles--;
 			return;
 		}
 
@@ -47,24 +46,25 @@ namespace Core
 
 		//Disassemble(opcode, State.PC);
 
-		if (false)
+		if (true)
 		{
 			logBuffer << std::hex << std::setfill('0') << std::uppercase <<
-				"A: " << std::setw(2) << static_cast<int>(State.A) <<
-				" F: " << std::setw(2) << static_cast<int>(State.F) <<
-				" B: " << std::setw(2) << static_cast<int>(State.B) <<
-				" C: " << std::setw(2) << static_cast<int>(State.C) <<
-				" D: " << std::setw(2) << static_cast<int>(State.D) <<
-				" E: " << std::setw(2) << static_cast<int>(State.E) <<
-				" H: " << std::setw(2) << static_cast<int>(State.H) <<
-				" L: " << std::setw(2) << static_cast<int>(State.L) <<
-				" SP: " << std::setw(4) << static_cast<int>(State.SP) <<
-				" PC: 00:" << std::setw(4) << static_cast<int>(State.PC) <<
-				" ("
-				<< std::setw(2) << static_cast<int>(opcode[0]) << " "
+				"A:" << std::setw(2) << static_cast<int>(State.A) <<
+				" F:" << (GetCPUFlag(FLAG_ZERO) ? "Z" : "-") <<
+					     (GetCPUFlag(FLAG_SUBTRACT) ? "N" : "-") << 
+					     (GetCPUFlag(FLAG_HALF_CARRY) ? "H" : "-") <<
+					     (GetCPUFlag(FLAG_CARRY) ? "C" : "-") <<
+				" BC:" << std::setw(4) << static_cast<int>(State.BC) << std::nouppercase <<
+				" DE:" << std::setw(4) << static_cast<int>(State.DE) <<
+				" HL:" << std::setw(4) << static_cast<int>(State.HL) <<
+				" SP:" << std::setw(4) << static_cast<int>(State.SP) <<
+				" PC:" << std::setw(4) << static_cast<int>(State.PC) <<
+				" (cy: " << std::dec << static_cast<int>(m_TotalCycles) - 1 << ")" << std::hex <<
+				" ppu:+" << static_cast<int>(mmu.Read(HW_STAT_LCD_STATUS) & 0b11) <<
+				" |[00]0x" << std::setw(4) << static_cast<int>(State.PC) << ":" <<
+				std::setw(2) << static_cast<int>(opcode[0]) << " "
 				<< std::setw(2) << static_cast<int>(opcode[1]) << " "
-				<< std::setw(2) << static_cast<int>(opcode[2]) << " "
-				<< std::setw(2) << static_cast<int>(opcode[3]) << ")" << std::endl;
+				<< std::setw(2) << static_cast<int>(opcode[2]) << "" << std::endl;
 
 			if (linecount >= 10000)
 			{

@@ -4,6 +4,7 @@
 #include "SquareChannel.h"
 #include "AudioFile.h"
 #include "RingBuffer.h"
+#include "../../../../ThirdParty/SDL2/include/SDL_audio.h"
 
 namespace Core
 {
@@ -26,7 +27,7 @@ namespace Core
 		SquareChannel ch2_square;
 
 		int cycleCount = 0;
-		RingBuffer audioBuffer;
+		//RingBuffer audioBuffer;
 		uint8_t frameSequencer = 0;
 		int frameSequenceCountDown = 8192;
 
@@ -36,6 +37,9 @@ namespace Core
 		const int sampleRate = 44100; // Adjust as needed
 		const int numChannels = 1;    // Adjust as needed (1 for mono, 2 for stereo, etc.)
 
-
+		SDL_AudioDeviceID sdlAudioDevice;
+		float buffer[4096] = { 0 };
+		int sampleCounter = 0;
+		const int SAMPLE_SIZE = 4096;
 	};
 }

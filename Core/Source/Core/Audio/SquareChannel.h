@@ -40,8 +40,9 @@ namespace Core
 		uint16_t currentFrequency = 0;
 		uint16_t cycleCount = 0;
 
-		bool lengthStop = false;
-		uint16_t length = 0;
+		bool lengthEnable = false;
+		uint8_t lengthLoad = 0;
+		uint8_t lengthCounter = 0;
 
 		// channel 1 & 2 parameters
 		bool isChannel1;

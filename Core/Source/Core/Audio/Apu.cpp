@@ -2,16 +2,39 @@
 #include "Apu.h"
 #include "..\Defines.h"
 #include <stdint.h>
+#include "../../../../ThirdParty/SDL2/include/SDL_audio.h"
+#include "../../../../ThirdParty/SDL2/include/SDL.h"
+#include "..\Logger.h"
 
 
 namespace Core
 {
-	Apu::Apu(Mmu& mmu) : mmu(mmu), ch1_square(mmu, true), ch2_square(mmu, false), audioBuffer()
+	Apu::Apu(Mmu& mmu) : mmu(mmu), ch1_square(mmu, true), ch2_square(mmu, false), buffer()
 	{
 		mmu.RegisterOnWrite(this);
 
 		file.setSampleRate(sampleRate);
 		file.setAudioBufferSize(numChannels, 100000);
+
+		// Setup audio
+		if (SDL_Init(SDL_INIT_AUDIO) < 0)
+		{
+			// Handle SDL initialization failure
+			return;
+		}
+
+		SDL_AudioSpec want, have;
+		SDL_memset(&want, 0, sizeof(want));
+		want.freq = 44100;
+		want.format = AUDIO_F32SYS;
+		want.channels = 1;
+		want.samples = SAMPLE_SIZE;
+		want.callback = NULL;
+		want.userdata = this;
+
+		sdlAudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+		SDL_PauseAudioDevice(sdlAudioDevice, 0);  // Start audio playback
+
 	}
 
 	Apu::~Apu() {}
@@ -74,13 +97,31 @@ namespace Core
 		// only read the sample every (cpu frequency / 44100)
 		if (cycleCount >= 95)
 		{
-			//file.samples[0].push_back(static_cast<int16_t>(ch1_square.CurrentSample * 32767.0));
-			//if (file.samples[0].size() == 100000)
-			//{
-			//	file.save(filename);
-			//}
-			audioBuffer.Write(static_cast<float>(ch1_square.CurrentSample + ch2_square.CurrentSample) / 2);
+			file.samples[0].push_back(static_cast<float>(ch1_square.CurrentSample * 10));
+			if (file.samples[0].size() == 100000)
+			{
+				file.save(filename);
+			}
 
+
+			buffer[sampleCounter++] = (static_cast<float>(ch1_square.CurrentSample * 10));
+
+			if (sampleCounter == SAMPLE_SIZE)
+			{
+				sampleCounter = 0;
+
+				//SDL_QueueAudio(sdlAudioDevice, buffer, sizeof(float) * SAMPLE_SIZE);
+				Uint32 queuedBytes = SDL_GetQueuedAudioSize(sdlAudioDevice);
+				if (queuedBytes == 0) {
+					// The audio queue is empty
+					// You may want to enqueue more audio samples
+					Logger::Instance().Warning(Core::Domain::APU, "Queue is empty!");
+				}
+				else
+				{
+					Logger::Instance().Warning(Core::Domain::APU, "Queue is not empty!");
+				}
+			}
 			cycleCount = 0;
 		}
 	}
@@ -101,6 +142,10 @@ namespace Core
 				ch2_square.Trigger();
 			}
 		}
+		/*if (address == HW_NR11_SOUND_CHANNEL_1_LEN_TIMER)
+		{
+			ch1_square.lengthLoad =
+		}*/
 	}
 
 	void Apu::squareWaveTest(uint8_t* stream, int len)
@@ -143,10 +188,10 @@ namespace Core
 
 		for (int i = 0; i < len; i += 1)
 		{
-			int16_t intSample = static_cast<int16_t>((audioBuffer.Read() * 10) * 32767.0);
+			//int16_t intSample = static_cast<int16_t>((audioBuffer.Read() * 10) * 32767.0);
 
-			stream[i] = static_cast<uint8_t>(intSample & 0xFF);
-			stream[i + 1] = static_cast<uint8_t>((intSample >> 8) & 0xFF);  // High byte 
+			//stream[i] = static_cast<uint8_t>(intSample & 0xFF);
+			//stream[i + 1] = static_cast<uint8_t>((intSample >> 8) & 0xFF);  // High byte 
 
 		}
 	}
