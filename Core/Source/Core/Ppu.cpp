@@ -249,7 +249,7 @@ namespace Core
 
 		// get oam entries for this scanline
 		std::vector<OAM> oamEntriesThisScanLine;
-		for (int i = 0; i <= 40; i++)
+		for (int i = 0; i < 40; i++)
 		{
 			if (lcdY >= oamEntries[i].yPos - 16 && 
 				((oamEntries[i].isTall && lcdY < oamEntries[i].yPos) || (!oamEntries[i].isTall && lcdY < oamEntries[i].yPos - 8)))
