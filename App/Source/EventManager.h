@@ -11,20 +11,20 @@ namespace App
     public:
         static EventManager& Instance()
         {
-            static EventManager instance;
-            return instance;
+            static EventManager s_Instance;
+            return s_Instance;
         }
 
         void Subscribe(Event event, ImguiWidgetBase* observer)
         {
-            observers[event].push_back(observer);
+            m_Observers[event].push_back(observer);
         }
 
         void Emit(Event event)
         {
-            if (observers.find(event) != observers.end())
+            if (m_Observers.find(event) != m_Observers.end())
             {
-                for (ImguiWidgetBase* observer : observers[event])
+                for (ImguiWidgetBase* observer : m_Observers[event])
                 {
                     observer->OnEvent(event);
                 }
@@ -32,6 +32,6 @@ namespace App
         }
 
     private:
-        std::unordered_map<Event, std::vector<ImguiWidgetBase*>> observers;
+        std::unordered_map<Event, std::vector<ImguiWidgetBase*>> m_Observers;
     };
 }

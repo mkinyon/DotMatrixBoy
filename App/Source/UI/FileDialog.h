@@ -17,7 +17,7 @@ namespace App
 		void OnEvent(Event event);
 
 	private:
-		ImGui::FileBrowser fileDialog;
-		Core::GameBoy* gameboy;
+		ImGui::FileBrowser m_FileDialog;
+		Core::GameBoy* m_GameBoy;
 	};
 }

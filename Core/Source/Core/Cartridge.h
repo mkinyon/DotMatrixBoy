@@ -36,20 +36,20 @@ namespace Core
 			uint8_t globalChecksum[2];
 		} Header;
 
-		std::vector<uint8_t>* romData;
+		std::vector<uint8_t>* m_RomData;
 
 	private:
-		uint8_t getRomBank();
-		uint8_t getRamBank();
+		uint8_t GetRomBank();
+		uint8_t GetRamBank();
 
 	private:
-		bool ramEnabled = false;
-		uint8_t register_mbc1_bank1 = 0;
-		uint8_t register_mbc1_bank2 = 0;
-		uint8_t register_mbc1_mode = 0;
-		uint8_t ram[32768] = { 0 };
+		bool m_RamEnabled = false;
+		uint8_t m_Register_MBC1_Bank1 = 0;
+		uint8_t m_Register_MBC1_Bank2 = 0;
+		uint8_t m_Register_MBC1_Mode = 0;
+		uint8_t m_RAM[32768] = { 0 };
 		
-		uint8_t badRamRead = 0xFF;
+		uint8_t m_BadRamRead = 0xFF;
 	};
 }
 

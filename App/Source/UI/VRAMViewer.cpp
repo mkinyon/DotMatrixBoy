@@ -6,17 +6,17 @@
 
 namespace App
 {
-	VRAMViewer::VRAMViewer(Core::GameBoy* gb, SDL_Renderer* renderer) : ImguiWidgetBase("VRAM Viewer"), gameboy(gb)
+	VRAMViewer::VRAMViewer(Core::GameBoy* gb, SDL_Renderer* renderer) : ImguiWidgetBase("VRAM Viewer"), m_GameBoy(gb)
 	{
 		EventManager::Instance().Subscribe(Event::VRAM_VIEWER_ENABLE, this);
 		EventManager::Instance().Subscribe(Event::VRAM_VIEWER_DISABLE, this);
 
-		tilesTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 128, 192);
+		m_TilesTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 128, 192);
 	}
 
 	VRAMViewer::~VRAMViewer()
 	{
-		SDL_DestroyTexture(tilesTexture);
+		SDL_DestroyTexture(m_TilesTexture);
 	}
 
 	void VRAMViewer::RenderContent()
@@ -74,13 +74,13 @@ namespace App
 
 		ImVec2 imageSize(originalWidth * minScale, originalHeight * minScale);
 
-		ImGui::Image(reinterpret_cast<ImTextureID>(tilesTexture), imageSize);
+		ImGui::Image(reinterpret_cast<ImTextureID>(m_TilesTexture), imageSize);
 	}
 
 	void VRAMViewer::RenderBGMapsView()
 	{
-		bool bgTileMapArea = gameboy->mmu.ReadRegisterBit(Core::HW_LCDC_LCD_CONTROL, Core::LCDC_BG_TILE_MAP);
-		bool windowTileDataArea = gameboy->mmu.ReadRegisterBit(Core::HW_LCDC_LCD_CONTROL, Core::LCDC_BG_AND_WINDOW_TILES);
+		bool bgTileMapArea = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_LCDC_LCD_CONTROL, Core::LCDC_BG_TILE_MAP);
+		bool windowTileDataArea = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_LCDC_LCD_CONTROL, Core::LCDC_BG_AND_WINDOW_TILES);
 		ImGui::Text("Current BG Map 1?: %2d", bgTileMapArea);
 
 		// set custom item spacing for this section
@@ -96,7 +96,7 @@ namespace App
 				int tilePosition = y * Core::TILEMAP_WIDTH + x;
 
 				// get tile id from current tile map
-				uint8_t tileId = gameboy->mmu.Read(bgTileMapArea ? Core::BG_MAP_1 + tilePosition : Core::BG_MAP_0 + tilePosition);
+				uint8_t tileId = m_GameBoy->m_MMU.Read(bgTileMapArea ? Core::BG_MAP_1 + tilePosition : Core::BG_MAP_0 + tilePosition);
 
 				int yOffset = 0;
 				if (!windowTileDataArea)
@@ -123,7 +123,7 @@ namespace App
 					ImGui::Text("X: %2d Y: %2d", x, y);
 					ImGui::EndTooltip();
 				}
-				ImGui::Image(reinterpret_cast<ImTextureID>(tilesTexture), ImVec2(16, 16), uvStart, uvEnd);
+				ImGui::Image(reinterpret_cast<ImTextureID>(m_TilesTexture), ImVec2(16, 16), uvStart, uvEnd);
 				if (x < 31) 
 				{
 					ImGui::SameLine();
@@ -155,7 +155,7 @@ namespace App
 
 			ImGui::TableHeadersRow();
 
-			Core::Ppu::OAM* entries = gameboy->ppu.GetOAMEntries();
+			Core::Ppu::OAM* entries = m_GameBoy->m_PPU.GetOAMEntries();
 
 			for (int row = 0; row < 40; row++)
 			{
@@ -169,7 +169,7 @@ namespace App
 				ImGui::TableNextColumn();
 				if (entries[row].yPos > 0 && entries[row].xPos > 0)
 				{
-					ImGui::Image(reinterpret_cast<ImTextureID>(tilesTexture), ImVec2(32, 32), uvStart, uvEnd);
+					ImGui::Image(reinterpret_cast<ImTextureID>(m_TilesTexture), ImVec2(32, 32), uvStart, uvEnd);
 				}
 				ImGui::TableNextColumn();
 				ImGui::Text("0x%4x", entries[row].address);
@@ -196,7 +196,7 @@ namespace App
 
 	void VRAMViewer::updateTexture()
 	{
-		uint8_t bgPalette = gameboy->mmu.Read(Core::HW_BGP_BG_PALETTE_DATA);
+		uint8_t bgPalette = m_GameBoy->m_MMU.Read(Core::HW_BGP_BG_PALETTE_DATA);
 
 		int x = 8;
 		int y = 0;
@@ -204,8 +204,8 @@ namespace App
 		int count = 0;
 		for (uint16_t byte = 0x8000; byte <= 0x97FF; byte += 2)
 		{
-			uint8_t firstByte = gameboy->mmu.Read(byte);
-			uint8_t secondByte = gameboy->mmu.Read(byte + 1);
+			uint8_t firstByte = m_GameBoy->m_MMU.Read(byte);
+			uint8_t secondByte = m_GameBoy->m_MMU.Read(byte + 1);
 			for (int iBit = 0; iBit < 8; iBit++)
 			{
 				uint8_t firstBit = (firstByte >> iBit) & 0x01;
@@ -220,31 +220,31 @@ namespace App
 
 				if (colorId == 0)
 				{
-					tilesTexturePixels[blockIndex] = 255;     // a
-					tilesTexturePixels[blockIndex + 1] = 15;  // b
-					tilesTexturePixels[blockIndex + 2] = 188; // g
-					tilesTexturePixels[blockIndex + 3] = 155; // r
+					m_TilesTexturePixels[blockIndex] = 255;     // a
+					m_TilesTexturePixels[blockIndex + 1] = 15;  // b
+					m_TilesTexturePixels[blockIndex + 2] = 188; // g
+					m_TilesTexturePixels[blockIndex + 3] = 155; // r
 				}
 				if (colorId == 1)
 				{
-					tilesTexturePixels[blockIndex] = 255;
-					tilesTexturePixels[blockIndex + 1] = 15;
-					tilesTexturePixels[blockIndex + 2] = 172;
-					tilesTexturePixels[blockIndex + 3] = 139;
+					m_TilesTexturePixels[blockIndex] = 255;
+					m_TilesTexturePixels[blockIndex + 1] = 15;
+					m_TilesTexturePixels[blockIndex + 2] = 172;
+					m_TilesTexturePixels[blockIndex + 3] = 139;
 				}
 				if (colorId == 2)
 				{
-					tilesTexturePixels[blockIndex] = 255;
-					tilesTexturePixels[blockIndex + 1] = 48;
-					tilesTexturePixels[blockIndex + 2] = 98;
-					tilesTexturePixels[blockIndex + 3] = 48;
+					m_TilesTexturePixels[blockIndex] = 255;
+					m_TilesTexturePixels[blockIndex + 1] = 48;
+					m_TilesTexturePixels[blockIndex + 2] = 98;
+					m_TilesTexturePixels[blockIndex + 3] = 48;
 				}
 				if (colorId == 3)
 				{
-					tilesTexturePixels[blockIndex] = 255;
-					tilesTexturePixels[blockIndex + 1] = 15;
-					tilesTexturePixels[blockIndex + 2] = 56;
-					tilesTexturePixels[blockIndex + 3] = 15;
+					m_TilesTexturePixels[blockIndex] = 255;
+					m_TilesTexturePixels[blockIndex + 1] = 15;
+					m_TilesTexturePixels[blockIndex + 2] = 56;
+					m_TilesTexturePixels[blockIndex + 3] = 15;
 				}
 			}
 			count++;
@@ -260,18 +260,18 @@ namespace App
 			}
 		}
 
-		SDL_UpdateTexture(tilesTexture, NULL, tilesTexturePixels, 128 * 4);
+		SDL_UpdateTexture(m_TilesTexture, NULL, m_TilesTexturePixels, 128 * 4);
 	}
 
 	void VRAMViewer::OnEvent(Event event)
 	{
 		if (event == Event::VRAM_VIEWER_ENABLE)
 		{
-			ShowWindow = true;
+			m_ShowWindow = true;
 		}
 		if (event == Event::VRAM_VIEWER_DISABLE)
 		{
-			ShowWindow = false;
+			m_ShowWindow = false;
 		}
 	}
 }

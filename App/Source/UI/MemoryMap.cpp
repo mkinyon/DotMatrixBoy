@@ -3,7 +3,7 @@
 
 namespace App
 {
-	MemoryMap::MemoryMap(Core::GameBoy* gb) : ImguiWidgetBase("Memory Map"), gameboy(gb)
+	MemoryMap::MemoryMap(Core::GameBoy* gb) : ImguiWidgetBase("Memory Map"), m_GameBoy(gb)
 	{
 		EventManager::Instance().Subscribe(Event::MEMORY_MAP_ENABLE, this);
 		EventManager::Instance().Subscribe(Event::MEMORY_MAP_DISABLE, this);
@@ -22,7 +22,7 @@ namespace App
 			ImGui::Text("$%04x", addr); ImGui::SameLine();
 			for (int col = 0; col < nColumns; col++)
 			{
-				ImGui::Text(" %02x", gameboy->mmu.Read(addr)); ImGui::SameLine();
+				ImGui::Text(" %02x", m_GameBoy->m_MMU.Read(addr)); ImGui::SameLine();
 				addr += 1;
 			}
 			
@@ -31,7 +31,7 @@ namespace App
 			ImGui::Text(" "); ImGui::SameLine();
 			for (int col = 0; col < nColumns; col++)
 			{
-				ImGui::Text("%c", gameboy->mmu.Read(addr));
+				ImGui::Text("%c", m_GameBoy->m_MMU.Read(addr));
 				if (col != 15) ImGui::SameLine();
 				addr += 1;
 			}
@@ -42,11 +42,11 @@ namespace App
 	{
 		if (event == Event::MEMORY_MAP_ENABLE)
 		{
-			ShowWindow = true;
+			m_ShowWindow = true;
 		}
 		if (event == Event::MEMORY_MAP_DISABLE)
 		{
-			ShowWindow = false;
+			m_ShowWindow = false;
 		}
 	}
 }

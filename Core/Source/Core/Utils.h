@@ -5,11 +5,11 @@
 
 namespace Core
 {
-	bool getFlag(uint8_t& variable, int flag);
-	void setFlag(uint8_t& variable, int flag);
-	void clearFlag(uint8_t& variable, int flag);
+	bool GetFlag(uint8_t& variable, int flag);
+	void SetFlag(uint8_t& variable, int flag);
+	void ClearFlag(uint8_t& variable, int flag);
 
-	int generateRandomNumber(int start, int end);
+	int GenerateRandomNumber(int start, int end);
 
 	std::string FormatInt(uint32_t n, uint8_t d);
 	std::string FormatHex(uint32_t n, uint8_t d);

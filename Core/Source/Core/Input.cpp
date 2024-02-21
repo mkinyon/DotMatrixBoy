@@ -14,13 +14,13 @@ namespace Core
 		// if the dpad flag is not currently being read then its ok to update the dpad states
 		if (!mmu.ReadRegisterBit(HW_P1JOYP_JOYPAD, JOYP_SELECT_DPAD))
 		{
-			newState = dpadState & 0x0F;
+			newState = m_DPADState & 0x0F;
 			stateChanged = (mmu.Read(HW_P1JOYP_JOYPAD) & 0x0F) ^ newState;
 		}
 		// if the buttons flag is not currently being read then its ok to update the button states
 		else if (!mmu.ReadRegisterBit(HW_P1JOYP_JOYPAD, JOYP_SELECT_BUTTONS))
 		{
-			newState = buttonState & 0x0F;
+			newState = m_ButtonState & 0x0F;
 			stateChanged = (mmu.Read(HW_P1JOYP_JOYPAD) & 0x0F) ^ newState;
 		}
 
@@ -39,11 +39,11 @@ namespace Core
 	{
 		if (isPressed)
 		{
-			dpadState &= ~button;
+			m_DPADState &= ~button;
 		}
 		else
 		{
-			dpadState |= button;
+			m_DPADState |= button;
 		}
 	}
 
@@ -51,11 +51,11 @@ namespace Core
 	{
 		if (isPressed)
 		{
-			buttonState &= ~button;
+			m_ButtonState &= ~button;
 		}
 		else
 		{
-			buttonState |= button;
+			m_ButtonState |= button;
 		}
 	}
 }

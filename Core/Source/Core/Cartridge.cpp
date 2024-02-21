@@ -21,8 +21,8 @@ namespace Core
 			int cartSize = (unsigned long)file.tellg();
 
 			file.seekg(0); // reset to beginning
-			romData = new std::vector<uint8_t>(cartSize);
-			file.read((char*)romData->data(), cartSize);
+			m_RomData = new std::vector<uint8_t>(cartSize);
+			file.read((char*)m_RomData->data(), cartSize);
 
 		}
 
@@ -36,7 +36,7 @@ namespace Core
 			if (bootrom.is_open())
 			{
 				bootrom.seekg(0);
-				bootrom.read((char*)romData->data(), 256);
+				bootrom.read((char*)m_RomData->data(), 256);
 			}
 		}
 	}
@@ -48,29 +48,29 @@ namespace Core
 		if (address >= CARTBANK_ADDR_RANGE_START && address <= CARTBANK_ADDR_RANGE_END)
 		{
 			// offset address based on current rombank
-			uint8_t romBank = getRomBank();
+			uint8_t romBank = GetRomBank();
 			uint16_t romAddress = address + (romBank * ROM_BANK_SIZE);
 			//return romData->at(romAddress);
 
-			return romData->at(address + ((getRomBank() - 1) * 0x4000));
+			return m_RomData->at(address + ((GetRomBank() - 1) * 0x4000));
 		}
 		else if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
 		{
-			if (ramEnabled)
+			if (m_RamEnabled)
 			{
-				uint8_t ramBank = getRamBank();
+				uint8_t ramBank = GetRamBank();
 				uint16_t ramAddress = address + (ramBank * RAM_BANK_SIZE);
 				uint16_t addrOffset = ramAddress - 0xA000;
-				return ram[addrOffset];
+				return m_RAM[addrOffset];
 			}
 			else
 			{
-				return badRamRead;
+				return m_BadRamRead;
 			}
 		}
 		else
 		{
-			return romData->at(address);
+			return m_RomData->at(address);
 		}
 	}
 
@@ -85,42 +85,42 @@ namespace Core
 			// writing 0xA (0b1010) to this address range will enable ram
 			if (value == 0xA)
 			{
-				ramEnabled = true;
+				m_RamEnabled = true;
 			}
 			// all other writes will disable it
 			else
 			{
-				ramEnabled = false;
+				m_RamEnabled = false;
 			}
 		}
 		if (address >= MBC1_BANKREG1_START && address <= MBC1_BANKREG1_END)
 		{
-			register_mbc1_bank1 = value;
+			m_Register_MBC1_Bank1 = value;
 		}
 		if (address >= MBC1_BANKREG2_START && address <= MBC1_BANKREG2_END)
 		{
-			register_mbc1_bank2 = value;
+			m_Register_MBC1_Bank2 = value;
 		}
 		if (address >= MBC1_MODE_START && address <= MBC1_MODE_END)
 		{
-			register_mbc1_mode = value & 0x1;
+			m_Register_MBC1_Mode = value & 0x1;
 		}
 		if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
 		{
-			if (/*register_mbc1_mode == 1 &&*/ ramEnabled)
+			if (/*register_mbc1_mode == 1 &&*/ m_RamEnabled)
 			{
-				uint8_t ramBank = getRamBank();
+				uint8_t ramBank = GetRamBank();
 				uint16_t ramAddress = address + (ramBank * RAM_BANK_SIZE);
 				uint16_t addrOffset = ramAddress - 0xA000;
-				ram[addrOffset] = value;
+				m_RAM[addrOffset] = value;
 			}
 		}
 	}
 
-	uint8_t Cartridge::getRomBank()
+	uint8_t Cartridge::GetRomBank()
 	{
 		// only the lower 5 bits count
-		uint8_t bank = register_mbc1_bank1 & 0b11111;
+		uint8_t bank = m_Register_MBC1_Bank1 & 0b11111;
 
 		// the lower five bits can't be all zero, it has to be at least 1
 		if (bank == 0)
@@ -135,11 +135,11 @@ namespace Core
 			return bank;
 		}
 
-		if (register_mbc1_mode == 0)
+		if (m_Register_MBC1_Mode == 0)
 		{
 			// we only care about the lower 2 bits of the bank 2 register
 			// they get appended to bits 5 and 6
-			bank |= (register_mbc1_bank2 & 0b11) << 5;
+			bank |= (m_Register_MBC1_Bank2 & 0b11) << 5;
 		}
 
 		// if the rom is larger than 256KiB than we want to keep the 5th bit
@@ -153,12 +153,12 @@ namespace Core
 		}
 	}
 
-	uint8_t Cartridge::getRamBank()
+	uint8_t Cartridge::GetRamBank()
 	{
 		// during mode 1, the ram bank is selected from the 2 lowest address bits
-		if (register_mbc1_mode == 1)
+		if (m_Register_MBC1_Mode == 1)
 		{
-			return register_mbc1_bank2 & 0b11;
+			return m_Register_MBC1_Bank2 & 0b11;
 		}
 
 		// during mode 0, only the first ram bank is used

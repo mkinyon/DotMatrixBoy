@@ -9,12 +9,12 @@
 
 namespace Core
 {
-	Apu::Apu(Mmu& mmu) : mmu(mmu), ch1_square(mmu, true), ch2_square(mmu, false), buffer()
+	Apu::Apu(Mmu& mmu) : m_MMU(mmu), m_CH1_Square(mmu, true), m_CH2_Square(mmu, false), m_Buffer()
 	{
 		mmu.RegisterOnWrite(this);
 
-		file.setSampleRate(sampleRate);
-		file.setAudioBufferSize(numChannels, 100000);
+		m_File.setSampleRate(m_SampleRate);
+		m_File.setAudioBufferSize(m_NumChannels, 100000);
 
 		// Setup audio
 		if (SDL_Init(SDL_INIT_AUDIO) < 0)
@@ -32,8 +32,8 @@ namespace Core
 		want.callback = NULL;
 		want.userdata = this;
 
-		sdlAudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
-		SDL_PauseAudioDevice(sdlAudioDevice, 0);  // Start audio playback
+		m_SDLAudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+		SDL_PauseAudioDevice(m_SDLAudioDevice, 0);  // Start audio playback
 
 	}
 
@@ -41,77 +41,77 @@ namespace Core
 
 	void Apu::Clock()
 	{
-		cycleCount++;
+		m_CycleCount++;
 
-		if (!mmu.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_AUDIO_ON))
+		if (!m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_AUDIO_ON))
 		{
 			return;
 		}
 
-		frameSequenceCountDown--;
-		if (frameSequenceCountDown <= 0)
+		m_FrameSequenceCountDown--;
+		if (m_FrameSequenceCountDown <= 0)
 		{
-			frameSequenceCountDown = 8192;
-			switch (frameSequencer)
+			m_FrameSequenceCountDown = 8192;
+			switch (m_FrameSequencer)
 			{
 				case 0:
-					ch1_square.LengthClock();
-					ch2_square.LengthClock();
+					m_CH1_Square.LengthClock();
+					m_CH2_Square.LengthClock();
 					break;
 				case 1:
 					break;
 				case 2:
-					ch1_square.SweepClock();
-					ch1_square.LengthClock();
-					ch2_square.LengthClock();
+					m_CH1_Square.SweepClock();
+					m_CH1_Square.LengthClock();
+					m_CH2_Square.LengthClock();
 					break;
 				case 3:
 					break;
 				case 4:
-					ch1_square.LengthClock();
-					ch2_square.LengthClock();
+					m_CH1_Square.LengthClock();
+					m_CH2_Square.LengthClock();
 					break;
 				case 5:
 					break;
 				case 6:
-					ch1_square.SweepClock();
-					ch1_square.LengthClock();
-					ch2_square.LengthClock();
+					m_CH1_Square.SweepClock();
+					m_CH1_Square.LengthClock();
+					m_CH2_Square.LengthClock();
 					break;
 				case 7: 
-					ch1_square.EnvelopeClock();
-					ch2_square.EnvelopeClock();
+					m_CH1_Square.EnvelopeClock();
+					m_CH2_Square.EnvelopeClock();
 					break;
 			}
 
-			frameSequencer++;
-			if (frameSequencer >= 8)
+			m_FrameSequencer++;
+			if (m_FrameSequencer >= 8)
 			{
-				frameSequencer = 0;
+				m_FrameSequencer = 0;
 			}
 		}
 
-		ch1_square.Clock();
-		ch2_square.Clock();
+		m_CH1_Square.Clock();
+		m_CH2_Square.Clock();
 
 		// only read the sample every (cpu frequency / 44100)
-		if (cycleCount >= 95)
+		if (m_CycleCount >= 95)
 		{
-			file.samples[0].push_back(static_cast<float>(ch1_square.CurrentSample * 10));
-			if (file.samples[0].size() == 100000)
+			m_File.samples[0].push_back(static_cast<float>(m_CH1_Square.m_CurrentSample * 10));
+			if (m_File.samples[0].size() == 100000)
 			{
-				file.save(filename);
+				m_File.save(m_Filename);
 			}
 
 
-			buffer[sampleCounter++] = (static_cast<float>(ch1_square.CurrentSample * 10));
+			m_Buffer[m_SampleCounter++] = (static_cast<float>(m_CH1_Square.m_CurrentSample * 10));
 
-			if (sampleCounter == SAMPLE_SIZE)
+			if (m_SampleCounter == SAMPLE_SIZE)
 			{
-				sampleCounter = 0;
+				m_SampleCounter = 0;
 
 				//SDL_QueueAudio(sdlAudioDevice, buffer, sizeof(float) * SAMPLE_SIZE);
-				Uint32 queuedBytes = SDL_GetQueuedAudioSize(sdlAudioDevice);
+				Uint32 queuedBytes = SDL_GetQueuedAudioSize(m_SDLAudioDevice);
 				if (queuedBytes == 0) {
 					// The audio queue is empty
 					// You may want to enqueue more audio samples
@@ -122,7 +122,7 @@ namespace Core
 					Logger::Instance().Warning(Core::Domain::APU, "Queue is not empty!");
 				}
 			}
-			cycleCount = 0;
+			m_CycleCount = 0;
 		}
 	}
 
@@ -130,25 +130,25 @@ namespace Core
 	{
 		if (address == HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH)
 		{
-			if (mmu.ReadRegisterBit(HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH, NR14_TRIGGER))
+			if (m_MMU.ReadRegisterBit(HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH, NR14_TRIGGER))
 			{
-				ch1_square.Trigger();
+				m_CH1_Square.Trigger();
 			}
 		}
 		if (address == HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH)
 		{
-			if (mmu.ReadRegisterBit(HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH, NR14_TRIGGER))
+			if (m_MMU.ReadRegisterBit(HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH, NR14_TRIGGER))
 			{
-				ch2_square.Trigger();
+				m_CH2_Square.Trigger();
 			}
 		}
 		/*if (address == HW_NR11_SOUND_CHANNEL_1_LEN_TIMER)
 		{
-			ch1_square.lengthLoad =
+			m_CH1_Square.lengthLoad =
 		}*/
 	}
 
-	void Apu::squareWaveTest(uint8_t* stream, int len)
+	void Apu::SquareWaveTest(uint8_t* stream, int len)
 	{
 		// generating a square wave
 		const int sampleRate = 44100;

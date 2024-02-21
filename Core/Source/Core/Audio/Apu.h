@@ -19,27 +19,27 @@ namespace Core
 
 	private:
 		void OnWrite(uint16_t address, uint8_t value);
-		void squareWaveTest(uint8_t* stream, int len);
+		void SquareWaveTest(uint8_t* stream, int len);
 
 	private:
-		Mmu& mmu;
-		SquareChannel ch1_square;
-		SquareChannel ch2_square;
+		Mmu& m_MMU;
+		SquareChannel m_CH1_Square;
+		SquareChannel m_CH2_Square;
 
-		int cycleCount = 0;
+		int m_CycleCount = 0;
 		//RingBuffer audioBuffer;
-		uint8_t frameSequencer = 0;
-		int frameSequenceCountDown = 8192;
+		uint8_t m_FrameSequencer = 0;
+		int m_FrameSequenceCountDown = 8192;
 
-		AudioFile<float> file;
+		AudioFile<float> m_File;
 
-		const std::string filename = "output.wav";
-		const int sampleRate = 44100; // Adjust as needed
-		const int numChannels = 1;    // Adjust as needed (1 for mono, 2 for stereo, etc.)
+		const std::string m_Filename = "output.wav";
+		const int m_SampleRate = 44100; // Adjust as needed
+		const int m_NumChannels = 1;    // Adjust as needed (1 for mono, 2 for stereo, etc.)
 
-		SDL_AudioDeviceID sdlAudioDevice;
-		float buffer[4096] = { 0 };
-		int sampleCounter = 0;
+		SDL_AudioDeviceID m_SDLAudioDevice;
+		float m_Buffer[4096] = { 0 };
+		int m_SampleCounter = 0;
 		const int SAMPLE_SIZE = 4096;
 	};
 }

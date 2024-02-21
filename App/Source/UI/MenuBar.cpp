@@ -5,7 +5,7 @@ namespace App
 {
 	MenuBar::MenuBar() : ImguiWidgetBase("MenuBar")
 	{
-        disableTitleWrapper = true;
+        m_DisableTitleWrapper = true;
 	}
 
 	MenuBar::~MenuBar() {}
@@ -28,7 +28,7 @@ namespace App
 
                 if (ImGui::MenuItem("Exit", "CTRL+Q"))
                 {
-                    ExitPressed = true;
+                    m_ExitPressed = true;
                 }
 
                 ImGui::EndMenu();
@@ -46,49 +46,49 @@ namespace App
 
             if (ImGui::BeginMenu("Tools"))
             {
-                if (ImGui::MenuItem("Debugger", "F5", &showDebugger))
+                if (ImGui::MenuItem("Debugger", "F5", &m_ShowDebugger))
                 {
-                    if (showDebugger)
+                    if (m_ShowDebugger)
                         EventManager::Instance().Emit(Event::DEBUGGER_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::DEBUGGER_DISABLE);
                 }
 
-                if (ImGui::MenuItem("VRAM Viewer", "F6", &showVRAMViewer))
+                if (ImGui::MenuItem("VRAM Viewer", "F6", &m_ShowVRAMViewer))
                 {
-                    if (showVRAMViewer)
+                    if (m_ShowVRAMViewer)
                         EventManager::Instance().Emit(Event::VRAM_VIEWER_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::VRAM_VIEWER_DISABLE);
                 }
 
-                if (ImGui::MenuItem("LCD", "F7", &showLCD))
+                if (ImGui::MenuItem("LCD", "F7", &m_ShowLCD))
                 {
-                    if (showLCD)
+                    if (m_ShowLCD)
                         EventManager::Instance().Emit(Event::LCD_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::LCD_DISABLE);
                 }
 
-                if (ImGui::MenuItem("Memory Map", "F8", &showMemoryMap))
+                if (ImGui::MenuItem("Memory Map", "F8", &m_ShowMemoryMap))
                 {
-                    if (showMemoryMap)
+                    if (m_ShowMemoryMap)
                         EventManager::Instance().Emit(Event::MEMORY_MAP_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::MEMORY_MAP_DISABLE);
                 }
 
-                if (ImGui::MenuItem("Audio Debugger", "F9", &showAudioDebugger))
+                if (ImGui::MenuItem("Audio Debugger", "F9", &m_ShowAudioDebugger))
                 {
-                    if (showAudioDebugger)
+                    if (m_ShowAudioDebugger)
                         EventManager::Instance().Emit(Event::AUDIO_DEBUGGER_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::AUDIO_DEBUGGER_DISABLE);
                 }
 
-                if (ImGui::MenuItem("Console", "F10", &showConsole))
+                if (ImGui::MenuItem("Console", "F10", &m_ShowConsole))
                 {
-                    if (showConsole)
+                    if (m_ShowConsole)
                         EventManager::Instance().Emit(Event::CONSOLE_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::CONSOLE_DISABLE);

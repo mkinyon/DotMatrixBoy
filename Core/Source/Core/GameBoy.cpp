@@ -3,65 +3,65 @@
 
 namespace Core
 {
-	GameBoy::GameBoy(Cartridge& cart) : cart(cart), mmu(cart), cpu(mmu), ppu(mmu), apu(mmu), input(mmu) {}
+	GameBoy::GameBoy(Cartridge& cart) : m_Cart(cart), m_MMU(cart), m_CPU(m_MMU), m_PPU(m_MMU), m_APU(m_MMU), m_Input(m_MMU) {}
 	GameBoy::~GameBoy() {}
 
 	void GameBoy::Run(bool enableBootRom)
 	{
-		cpu.Reset(enableBootRom);
+		m_CPU.Reset(enableBootRom);
 	}
 
 	void GameBoy::Clock(float elapsedTimeMS)
 	{
-		if (!m_isPaused)
+		if (!m_IsPaused)
 		{
 			float cyclesToRun = elapsedTimeMS * Core::CYCLES_PER_MS;
 
 			for (int i = 0; i < cyclesToRun; i++)
 			{
-				cpu.Clock();
+				m_CPU.Clock();
 
 				for (int i = 0; i < 4; i++)
 				{
-					ppu.Clock();
+					m_PPU.Clock();
 				}
 
-				apu.Clock();
-				input.Clock();
+				m_APU.Clock();
+				m_Input.Clock();
 			}
 		}
 	}
 
 	void GameBoy::Pause()
 	{
-		m_isPaused = true;
+		m_IsPaused = true;
 	}
 
 	void GameBoy::Unpause()
 	{
-		m_isPaused = false;
+		m_IsPaused = false;
 	}
 
 	bool GameBoy::IsPaused()
 	{
-		return m_isPaused;
+		return m_IsPaused;
 	}
 
 	void GameBoy::StepCPU()
 	{
 		do
 		{
-			cpu.Clock();
+			m_CPU.Clock();
 
 			for (int i = 0; i < 4; i++)
 			{
-				ppu.Clock();
+				m_PPU.Clock();
 			}
-		} while (!cpu.m_InstructionCompleted);
+		} while (!m_CPU.m_InstructionCompleted);
 	}
 
 	void GameBoy::FeedAudioBuffer(uint8_t* stream, int len)
 	{
-		apu.FeedAudioBuffer(stream, len);
+		m_APU.FeedAudioBuffer(stream, len);
 	}
 }

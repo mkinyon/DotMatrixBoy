@@ -17,7 +17,7 @@ namespace App
 		void OnEvent(Event event);
 	
 	private:
-		Core::GameBoy* gameboy;
-		std::map<uint16_t, std::string> instructions;
+		Core::GameBoy* m_GameBoy;
+		std::map<uint16_t, std::string> m_Instructions;
 	};
 }

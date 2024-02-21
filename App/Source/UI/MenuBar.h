@@ -12,18 +12,18 @@ namespace App
 		~MenuBar();
 
 	public:
-		bool ExitPressed = false;
+		bool m_ExitPressed = false;
 
 	private:
 		void RenderContent();
 		void OnEvent(Event event);
 
 	private:
-		bool showMemoryMap;
-		bool showDebugger;
-		bool showVRAMViewer;
-		bool showLCD;
-		bool showAudioDebugger;
-		bool showConsole;
+		bool m_ShowMemoryMap;
+		bool m_ShowDebugger;
+		bool m_ShowVRAMViewer;
+		bool m_ShowLCD;
+		bool m_ShowAudioDebugger;
+		bool m_ShowConsole;
 	};
 }

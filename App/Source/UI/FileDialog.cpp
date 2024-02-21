@@ -3,11 +3,11 @@
 
 namespace App
 {
-	FileDialog::FileDialog(Core::GameBoy* gb) : ImguiWidgetBase("File Browser"), gameboy(gb)
+	FileDialog::FileDialog(Core::GameBoy* gb) : ImguiWidgetBase("File Browser"), m_GameBoy(gb)
 	{
-		disableTitleWrapper = true;
-		fileDialog.SetTitle("Open Rom");
-		fileDialog.SetTypeFilters({ ".gb" });
+		m_DisableTitleWrapper = true;
+		m_FileDialog.SetTitle("Open Rom");
+		m_FileDialog.SetTypeFilters({ ".gb" });
 
 		EventManager::Instance().Subscribe(Event::OPEN_FILE_DIALOG, this);
 	}
@@ -16,16 +16,16 @@ namespace App
 
 	void FileDialog::RenderContent()
 	{
-		fileDialog.Display();
+		m_FileDialog.Display();
 
-		if (fileDialog.HasSelected())
+		if (m_FileDialog.HasSelected())
 		{
-			Core::Cartridge* newCart = new Core::Cartridge(fileDialog.GetSelected().string(), false);
-			delete gameboy;
-			gameboy = new Core::GameBoy(*newCart);
+			Core::Cartridge* newCart = new Core::Cartridge(m_FileDialog.GetSelected().string(), false);
+			delete m_GameBoy;
+			m_GameBoy = new Core::GameBoy(*newCart);
 
-			gameboy->Run(false);
-			fileDialog.ClearSelected();
+			m_GameBoy->Run(false);
+			m_FileDialog.ClearSelected();
 		}
 	}
 
@@ -33,8 +33,8 @@ namespace App
 	{
 		if (event == Event::OPEN_FILE_DIALOG)
 		{
-			fileDialog.Open();
-			ShowWindow = true;
+			m_FileDialog.Open();
+			m_ShowWindow = true;
 		}
 	}
 }

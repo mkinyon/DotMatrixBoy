@@ -19,9 +19,9 @@ namespace App
 		void OnEvent(Event event);
 
 	private:
-		SDL_Texture* texture;
-		uint8_t* pixels {};
-		uint8_t texturePixels[160 * 144 * 4] {};
+		SDL_Texture* m_Texture;
+		uint8_t* m_Pixels {};
+		uint8_t m_TexturePixels[160 * 144 * 4] {};
 	};
 }
 

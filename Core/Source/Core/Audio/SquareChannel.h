@@ -18,40 +18,40 @@ namespace Core
 		void Trigger();
 
 	public:
-		uint8_t CurrentSample = 0;
+		uint8_t m_CurrentSample = 0;
 
 	private:
-		void updateSample();
-		uint16_t getFrequency();
+		void UpdateSample();
+		uint16_t GetFrequency();
 
 	private:
-		Mmu& mmu;
-		const bool dutyCycleTable[4][8] = {
+		Mmu& m_MMU;
+		const bool m_DutyCycleTable[4][8] = {
 		{0, 0, 0, 0, 0, 0, 0, 1},
 		{1, 0, 0, 0, 0, 0, 0, 1},
 		{1, 0, 0, 0, 0, 1, 1, 1},
 		{0, 1, 1, 1, 1, 1, 1, 0}
 		};
 
-		bool isActive = 0;
-		uint8_t selectedDuty = 0;
-		uint16_t sampleIndex = 0;
-		uint16_t cycleSampleUpdate = 0;
-		uint16_t currentFrequency = 0;
-		uint16_t cycleCount = 0;
+		bool m_IsActive = 0;
+		uint8_t m_SelectedDuty = 0;
+		uint16_t m_SampleIndex = 0;
+		uint16_t m_CycleSampleUpdate = 0;
+		uint16_t m_CurrentFrequency = 0;
+		uint16_t m_CycleCount = 0;
 
-		bool lengthEnable = false;
-		uint8_t lengthLoad = 0;
-		uint8_t lengthCounter = 0;
+		bool m_LengthEnable = false;
+		uint8_t m_LengthLoad = 0;
+		uint8_t m_LengthCounter = 0;
 
 		// channel 1 & 2 parameters
-		bool isChannel1;
-		bool hasSweep = isChannel1;
-		uint8_t  soundControlFlag = isChannel1 ?  NR52_CH1_ON: NR52_CH2_ON;
-		uint16_t dataAddr = isChannel1 ? HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH : HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH;
-		uint16_t freqLowAddr = isChannel1 ? HW_NR13_SOUND_CHANNEL_1_PERIOD_LOW : HW_NR13_SOUND_CHANNEL_1_PERIOD_LOW;
-		uint16_t lengthDutyAddr = isChannel1 ? HW_NR11_SOUND_CHANNEL_1_LEN_TIMER : HW_NR21_SOUND_CHANNEL_2_LEN_TIMER;
-		uint16_t evenlopeAddr = isChannel1 ? HW_NR12_SOUND_CHANNEL_1_VOL_ENVELOPE : HW_NR22_SOUND_CHANNEL_2_VOL_ENVELOPE;
-		uint16_t sweepAddr = isChannel1 ? HW_NR10_SOUND_CHANNEL_1_SWEEP : 0;
+		bool m_IsChannel1;
+		bool m_HasSweep = m_IsChannel1;
+		uint8_t  m_SoundControlFlag = m_IsChannel1 ?  NR52_CH1_ON: NR52_CH2_ON;
+		uint16_t m_DataAddr = m_IsChannel1 ? HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH : HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH;
+		uint16_t m_FreqLowAddr = m_IsChannel1 ? HW_NR13_SOUND_CHANNEL_1_PERIOD_LOW : HW_NR13_SOUND_CHANNEL_1_PERIOD_LOW;
+		uint16_t m_LengthDutyAddr = m_IsChannel1 ? HW_NR11_SOUND_CHANNEL_1_LEN_TIMER : HW_NR21_SOUND_CHANNEL_2_LEN_TIMER;
+		uint16_t m_EvenlopeAddr = m_IsChannel1 ? HW_NR12_SOUND_CHANNEL_1_VOL_ENVELOPE : HW_NR22_SOUND_CHANNEL_2_VOL_ENVELOPE;
+		uint16_t m_SweepAddr = m_IsChannel1 ? HW_NR10_SOUND_CHANNEL_1_SWEEP : 0;
 	};
 }

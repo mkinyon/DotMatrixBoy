@@ -28,15 +28,15 @@ namespace Core
 		void FeedAudioBuffer(uint8_t* stream, int len);
 
 	public:
-		Cartridge& cart;
-		Mmu mmu;
-		Cpu cpu;
-		Ppu ppu;
-		Apu apu;
-		Input input;
+		Cartridge& m_Cart;
+		Mmu m_MMU;
+		Cpu m_CPU;
+		Ppu m_PPU;
+		Apu m_APU;
+		Input m_Input;
 
 	private:
-		bool m_isPaused = false;
+		bool m_IsPaused = false;
 	};
 }
 

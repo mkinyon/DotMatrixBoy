@@ -7,7 +7,7 @@
 
 namespace App
 {
-	Console::Console() : ImguiWidgetBase("Console"), verboseButton(false), infoButton(false)
+	Console::Console() : ImguiWidgetBase("Console"), m_VerboseButton(false), m_InfoButton(false)
 	{
 		EventManager::Instance().Subscribe(Event::CONSOLE_ENABLE, this);
 		EventManager::Instance().Subscribe(Event::CONSOLE_DISABLE, this);
@@ -18,20 +18,20 @@ namespace App
 	void Console::RenderContent()
 	{
 		ImGui::BeginChild("LeftButtons", ImVec2(ImGui::GetContentRegionMax().x * 0.5f, 20), ImGuiChildFlags_None);
-		verboseButton.Render("Verbose"); ImGui::SameLine();
-		infoButton.Render("Info"); ImGui::SameLine();
-		warningButton.Render("Warning"); ImGui::SameLine();
-		errorButton.Render("Error");
+		m_VerboseButton.Render("Verbose"); ImGui::SameLine();
+		m_InfoButton.Render("Info"); ImGui::SameLine();
+		m_WarningButton.Render("Warning"); ImGui::SameLine();
+		mErrorButton.Render("Error");
 		ImGui::EndChild();
 
 		ImGui::SameLine();
 
 		ImGui::BeginChild("RightButtons", ImVec2(ImGui::GetContentRegionMax().x * 0.5f, 20), ImGuiChildFlags_None);
-		appButton.Render("APP"); ImGui::SameLine();
-		apuButton.Render("APU"); ImGui::SameLine();
-		cpuButton.Render("CPU"); ImGui::SameLine();
-		mmuButton.Render("MMU"); ImGui::SameLine();
-		ppuButton.Render("PPU");
+		m_AppButton.Render("APP"); ImGui::SameLine();
+		m_APUButton.Render("APU"); ImGui::SameLine();
+		m_CPUButton.Render("CPU"); ImGui::SameLine();
+		m_MMUButton.Render("MMU"); ImGui::SameLine();
+		m_PPUButton.Render("PPU");
 		
 		ImGui::EndChild();
 
@@ -42,17 +42,17 @@ namespace App
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1)); // Tighten spacing
 
 			std::set<Core::Severity> filteredSeverities;
-			if (verboseButton.Toggled) filteredSeverities.insert(Core::Severity::Verbose);
-			if (infoButton.Toggled) filteredSeverities.insert(Core::Severity::Info);
-			if (warningButton.Toggled) filteredSeverities.insert(Core::Severity::Warning);
-			if (errorButton.Toggled) filteredSeverities.insert(Core::Severity::Error);
+			if (m_VerboseButton.m_Toggled) filteredSeverities.insert(Core::Severity::Verbose);
+			if (m_InfoButton.m_Toggled) filteredSeverities.insert(Core::Severity::Info);
+			if (m_WarningButton.m_Toggled) filteredSeverities.insert(Core::Severity::Warning);
+			if (mErrorButton.m_Toggled) filteredSeverities.insert(Core::Severity::Error);
 
 			std::set<Core::Domain> filteredDomains;
-			if (appButton.Toggled) filteredDomains.insert(Core::Domain::APPLICATION);
-			if (apuButton.Toggled) filteredDomains.insert(Core::Domain::APU);
-			if (cpuButton.Toggled) filteredDomains.insert(Core::Domain::CPU);
-			if (mmuButton.Toggled) filteredDomains.insert(Core::Domain::MMU);
-			if (ppuButton.Toggled) filteredDomains.insert(Core::Domain::PPU);
+			if (m_AppButton.m_Toggled) filteredDomains.insert(Core::Domain::APPLICATION);
+			if (m_APUButton.m_Toggled) filteredDomains.insert(Core::Domain::APU);
+			if (m_CPUButton.m_Toggled) filteredDomains.insert(Core::Domain::CPU);
+			if (m_MMUButton.m_Toggled) filteredDomains.insert(Core::Domain::MMU);
+			if (m_PPUButton.m_Toggled) filteredDomains.insert(Core::Domain::PPU);
 
             std::deque<Core::Message> messages = Core::Logger::Instance().GetMessages();
             for (Core::Message msg : messages)
@@ -73,11 +73,11 @@ namespace App
 	{
 		if (event == Event::CONSOLE_ENABLE)
 		{
-			ShowWindow = true;
+			m_ShowWindow = true;
 		}
 		if (event == Event::CONSOLE_DISABLE)
 		{
-			ShowWindow = false;
+			m_ShowWindow = false;
 		}
 	}
 }

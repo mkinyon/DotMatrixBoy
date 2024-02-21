@@ -10,7 +10,7 @@ namespace App
 	class ImguiWidgetBase
 	{
 	public:
-		ImguiWidgetBase(const char* title) : title(title) {}
+		ImguiWidgetBase(const char* title) : m_Title(title) {}
 
 		// Function to render the window content
 		virtual void RenderContent() = 0;
@@ -18,26 +18,26 @@ namespace App
 		// Function to render the entire window
 		void Render()
 		{
-			if (!ShowWindow)
+			if (!m_ShowWindow)
 			{
 				return;
 			}
 
-			if (!disableTitleWrapper) ImGui::Begin(title);
+			if (!m_DisableTitleWrapper) ImGui::Begin(m_Title);
 
 			RenderContent();
 
-			if (!disableTitleWrapper) ImGui::End();
+			if (!m_DisableTitleWrapper) ImGui::End();
 		}
 
 		virtual void OnEvent(Event event) {};
 
 	public:
-		bool ShowWindow = true;
-		bool disableTitleWrapper = false;
+		bool m_ShowWindow = true;
+		bool m_DisableTitleWrapper = false;
 
 	private:
-		const char* title;
+		const char* m_Title;
 	};
 }
 

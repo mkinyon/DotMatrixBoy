@@ -7,132 +7,132 @@
 
 namespace Core
 {
-	Ppu::Ppu(Mmu& mmu) : mmu(mmu) {}
+	Ppu::Ppu(Mmu& mmu) : m_MMU(mmu) {}
 	Ppu::~Ppu() {}
 
 	void Ppu::Clock()
 	{
-		if (!mmu.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_Flags::LCDC_LCD_PPU_ENABLE))
+		if (!m_MMU.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_Flags::LCDC_LCD_PPU_ENABLE))
 		{
 			return;
 		}
 
-		LCD_Mode currentMode = readLCDMode();
+		LCD_Mode currentMode = ReadLCDMode();
 		m_CycleCount++;
 
 		switch (currentMode)
 		{
 			case LCD_Mode::MODE_2_OAMSCAN:
-				processOAM();
+				ProcessOAM();
 				break;
 			case LCD_Mode::MODE_3_DRAWING:
-				processDrawing();
+				ProcessDrawing();
 				break;
 			case LCD_Mode::MODE_0_HBLANK:
-				processHBlank();
+				ProcessHBlank();
 				break;
 			case LCD_Mode::MODE_1_VBLANK:
-				processVBlank();
+				ProcessVBlank();
 				break;
 		}
 	}
 
 	LCD_Mode Ppu::GetMode()
 	{
-		return readLCDMode();
+		return ReadLCDMode();
 	}
 
-	void Ppu::processOAM()
+	void Ppu::ProcessOAM()
 	{
 		if (m_CycleCount >= OAM_CYCLES)
 		{
 			// Check for OAM interrupt
-			if (mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_MODE_2_INT_SELECT))
+			if (m_MMU.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_MODE_2_INT_SELECT))
 			{
-				mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
+				m_MMU.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
 			}
 
-			processLYC();
+			ProcessLYC();
 
-			writeLCDMode(LCD_Mode::MODE_3_DRAWING);
+			WriteLCDMode(LCD_Mode::MODE_3_DRAWING);
 			m_CycleCount -= OAM_CYCLES;
 		}
 	}
 
-	void Ppu::processDrawing()
+	void Ppu::ProcessDrawing()
 	{
 		if (m_CycleCount >= DRAWING_CYCLES)
 		{
-			writeLCDMode(LCD_Mode::MODE_0_HBLANK);
+			WriteLCDMode(LCD_Mode::MODE_0_HBLANK);
 			m_CycleCount -= DRAWING_CYCLES;
 		}
 	}
 
-	void Ppu::processHBlank()
+	void Ppu::ProcessHBlank()
 	{
 		if (m_CycleCount >= HBLANK_CYCLES)
 		{
-			processLYC();
+			ProcessLYC();
 
 			// Check for H-BLANK interrupt
-			if (mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_MODE_0_INT_SELECT))
+			if (m_MMU.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_MODE_0_INT_SELECT))
 			{
-				mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
+				m_MMU.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
 			}
 
 			// render graphics
-			drawBGToBuffer();
-			drawWindowToBuffer();
-			drawOAMToBuffer();
+			DrawBGToBuffer();
+			DrawWindowToBuffer();
+			DrawOAMToBuffer();
 
-			uint8_t ly = mmu.Read(HW_LY_LCD_Y_COORD);
+			uint8_t ly = m_MMU.Read(HW_LY_LCD_Y_COORD);
 			if (ly == 143)
-				writeLCDMode(LCD_Mode::MODE_1_VBLANK);
+				WriteLCDMode(LCD_Mode::MODE_1_VBLANK);
 			else
-				writeLCDMode(LCD_Mode::MODE_2_OAMSCAN);
+				WriteLCDMode(LCD_Mode::MODE_2_OAMSCAN);
 
-			mmu.Write(HW_LY_LCD_Y_COORD, ly + 1);
+			m_MMU.Write(HW_LY_LCD_Y_COORD, ly + 1);
 			m_CycleCount -= HBLANK_CYCLES;
 		}
 	}
 
-	void Ppu::processVBlank()
+	void Ppu::ProcessVBlank()
 	{
 		if (m_CycleCount >= VBLANK_CYCLES)
 		{
-			processLYC();
+			ProcessLYC();
 
-			uint8_t ly = mmu.Read(HW_LY_LCD_Y_COORD);
+			uint8_t ly = m_MMU.Read(HW_LY_LCD_Y_COORD);
 
 			if (ly == 144)
 			{
-				mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_VBLANK, true);
+				m_MMU.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_VBLANK, true);
 
-				copyBackBufferToLCD();
-				clearBackBuffer();
+				CopyBackBufferToLCD();
+				ClearBackBuffer();
 			}
 
 			if (ly == 153)
 			{
-				writeLCDMode(LCD_Mode::MODE_2_OAMSCAN);
-				mmu.Write(HW_LY_LCD_Y_COORD, 0);
-				processLYC();
+				WriteLCDMode(LCD_Mode::MODE_2_OAMSCAN);
+				m_MMU.Write(HW_LY_LCD_Y_COORD, 0);
+				ProcessLYC();
 			}
 			else
-				mmu.Write(HW_LY_LCD_Y_COORD, ly + 1);
+				m_MMU.Write(HW_LY_LCD_Y_COORD, ly + 1);
 
 			m_CycleCount -= VBLANK_CYCLES;
 		}
 	}
 
 	// This will draw one line of the background to the buffer 
-	void Ppu::drawBGToBuffer()
+	void Ppu::DrawBGToBuffer()
 	{
-		if (!mmu.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_BG_WINDOW_ENABLE_PRIORITY)) return;
+		if (!m_MMU.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_BG_WINDOW_ENABLE_PRIORITY)) return;
 
-		uint8_t lcdY = mmu.Read(HW_LY_LCD_Y_COORD);
-		uint8_t scrollX = mmu.Read(HW_SCX_VIEWPORT_X_POS);
-		uint8_t scrollY = mmu.Read(HW_SCY_VIEWPORT_Y_POS);
+		uint8_t lcdY = m_MMU.Read(HW_LY_LCD_Y_COORD);
+		uint8_t scrollX = m_MMU.Read(HW_SCX_VIEWPORT_X_POS);
+		uint8_t scrollY = m_MMU.Read(HW_SCY_VIEWPORT_Y_POS);
 
 		// iterate through each pixel
 		for (int x = 0; x < 160; x++)
@@ -153,18 +153,18 @@ namespace Core
 			int tilePosition = tileYCoord * TILEMAP_WIDTH + tileXCoord;
 
 			// get tile id from current tile map
-			bool bgTileMapArea = mmu.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_BG_TILE_MAP);
-			uint8_t tileId = mmu.Read(bgTileMapArea ? BG_MAP_1 + tilePosition : BG_MAP_0 + tilePosition);
+			bool bgTileMapArea = m_MMU.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_BG_TILE_MAP);
+			uint8_t tileId = m_MMU.Read(bgTileMapArea ? BG_MAP_1 + tilePosition : BG_MAP_0 + tilePosition);
 
 			// get tile address
 			uint16_t tileAddress = GetTileAddressFromTileId(tileId);
 
 			// need to offset the address based on the y position (tileYOffset) inside the tile
-			uint8_t firstByte = mmu.Read(tileAddress + (tileYOffset * 2));
-			uint8_t secondByte = mmu.Read(tileAddress + (tileYOffset * 2) + 1);
+			uint8_t firstByte = m_MMU.Read(tileAddress + (tileYOffset * 2));
+			uint8_t secondByte = m_MMU.Read(tileAddress + (tileYOffset * 2) + 1);
 
 			// get the background palette
-			uint8_t bgPalette = mmu.Read(HW_BGP_BG_PALETTE_DATA);
+			uint8_t bgPalette = m_MMU.Read(HW_BGP_BG_PALETTE_DATA);
 
 			// because of the bit order and how we are rendering, we need to flip the tileXOffset
 			// so we get the right pixel
@@ -174,20 +174,20 @@ namespace Core
 			uint8_t secondBit = (secondByte >> wrappedValue) & 0x01;
 			int colorIndex = (secondBit << 1) | firstBit;
 
-			writeToBuffer(x, lcdY, bgPalette, colorIndex);
+			WriteToBuffer(x, lcdY, bgPalette, colorIndex);
 		}
 	}
 
-	void Ppu::drawWindowToBuffer()
+	void Ppu::DrawWindowToBuffer()
 	{
-		if (!mmu.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_WINDOW_ENABLE))
+		if (!m_MMU.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_WINDOW_ENABLE))
 		{
 			return;
 		}
 
-		uint8_t lcdY = mmu.Read(HW_LY_LCD_Y_COORD);
-		int16_t windowX = mmu.Read(HW_WX_WINDOW_X_POS) - 7;
-		int16_t windowY = mmu.Read(HW_WY_WINDOW_Y_POS);
+		uint8_t lcdY = m_MMU.Read(HW_LY_LCD_Y_COORD);
+		int16_t windowX = m_MMU.Read(HW_WX_WINDOW_X_POS) - 7;
+		int16_t windowY = m_MMU.Read(HW_WY_WINDOW_Y_POS);
 
 		if (lcdY >= windowY)
 		{
@@ -210,18 +210,18 @@ namespace Core
 				int tilePosition = tileYCoord * TILEMAP_WIDTH + tileXCoord;
 
 				// get tile id from current tile map
-				bool bgTileMapArea = mmu.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_WINDOW_TILE_MAP);
-				uint8_t tileId = mmu.Read(bgTileMapArea ? BG_MAP_1 + tilePosition : BG_MAP_0 + tilePosition);
+				bool bgTileMapArea = m_MMU.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_WINDOW_TILE_MAP);
+				uint8_t tileId = m_MMU.Read(bgTileMapArea ? BG_MAP_1 + tilePosition : BG_MAP_0 + tilePosition);
 
 				// get tile address
 				uint16_t tileAddress = GetTileAddressFromTileId(tileId);
 
 				// need to offset the address based on the y position (tileYOffset) inside the tile
-				uint8_t firstByte = mmu.Read(tileAddress + (tileYOffset * 2));
-				uint8_t secondByte = mmu.Read(tileAddress + (tileYOffset * 2) + 1);
+				uint8_t firstByte = m_MMU.Read(tileAddress + (tileYOffset * 2));
+				uint8_t secondByte = m_MMU.Read(tileAddress + (tileYOffset * 2) + 1);
 
 				// get the background palette
-				uint8_t bgPalette = mmu.Read(HW_BGP_BG_PALETTE_DATA);
+				uint8_t bgPalette = m_MMU.Read(HW_BGP_BG_PALETTE_DATA);
 
 				// because of the bit order and how we are rendering, we need to flip the tileXOffset
 				// so we get the right pixel
@@ -231,19 +231,19 @@ namespace Core
 				uint8_t secondBit = (secondByte >> wrappedValue) & 0x01;
 				int colorIndex = (secondBit << 1) | firstBit;
 
-				writeToBuffer(x, windowY + (tileYCoord * TILE_HEIGHT) + tileYOffset, bgPalette, colorIndex);
+				WriteToBuffer(x, windowY + (tileYCoord * TILE_HEIGHT) + tileYOffset, bgPalette, colorIndex);
 			}
 		}
 	}
 
-	void Ppu::drawOAMToBuffer()
+	void Ppu::DrawOAMToBuffer()
 	{
-		if (!mmu.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_OBJ_ENABLE))
+		if (!m_MMU.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_OBJ_ENABLE))
 		{
 			return;
 		}
 
-		uint8_t lcdY = mmu.Read(HW_LY_LCD_Y_COORD);
+		uint8_t lcdY = m_MMU.Read(HW_LY_LCD_Y_COORD);
 
 		RefreshOAMEntries();
 
@@ -251,10 +251,10 @@ namespace Core
 		std::vector<OAM> oamEntriesThisScanLine;
 		for (int i = 0; i < 40; i++)
 		{
-			if (lcdY >= oamEntries[i].yPos - 16 && 
-				((oamEntries[i].isTall && lcdY < oamEntries[i].yPos) || (!oamEntries[i].isTall && lcdY < oamEntries[i].yPos - 8)))
+			if (lcdY >= m_OAMEntries[i].yPos - 16 && 
+				((m_OAMEntries[i].isTall && lcdY < m_OAMEntries[i].yPos) || (!m_OAMEntries[i].isTall && lcdY < m_OAMEntries[i].yPos - 8)))
 			{
-				oamEntriesThisScanLine.push_back(oamEntries[i]);
+				oamEntriesThisScanLine.push_back(m_OAMEntries[i]);
 			}
 		}
 
@@ -287,18 +287,18 @@ namespace Core
 				backgroundTileYOffset = (lcdY - (oam.yPos - 16));
 			}
 
-			uint8_t firstByte = mmu.Read(tileAddress + (backgroundTileYOffset * 2));
-			uint8_t secondByte = mmu.Read(tileAddress + (backgroundTileYOffset * 2) + 1);
+			uint8_t firstByte = m_MMU.Read(tileAddress + (backgroundTileYOffset * 2));
+			uint8_t secondByte = m_MMU.Read(tileAddress + (backgroundTileYOffset * 2) + 1);
 
 			// get the obj palette
 			uint8_t palette;
 			if (oam.paletteOneSelected)
 			{
-				palette = mmu.Read(HW_OBP1_OBJ_PALETTE_1_DATA);
+				palette = m_MMU.Read(HW_OBP1_OBJ_PALETTE_1_DATA);
 			}
 			else
 			{
-				palette = mmu.Read(HW_OBP0_OBJ_PALETTE_0_DATA);
+				palette = m_MMU.Read(HW_OBP0_OBJ_PALETTE_0_DATA);
 			}
 
 			for (int p = 0; p < 8; p++)
@@ -328,12 +328,12 @@ namespace Core
 						int bgColorIndex = ReadFromBuffer(x, y);
 						if (bgColorIndex == 0)
 						{
-							writeToBuffer(x, y, palette, colorIndex);
+							WriteToBuffer(x, y, palette, colorIndex);
 						}
 					}
 					else
 					{
-						writeToBuffer(x, y, palette, colorIndex);
+						WriteToBuffer(x, y, palette, colorIndex);
 					}
 				}
 			}
@@ -348,10 +348,10 @@ namespace Core
 			return 0;
 		}
 
-		return m_backBuffer[y * LCD_WIDTH + x];
+		return m_BackBuffer[y * LCD_WIDTH + x];
 	}
 
-	void Ppu::writeToBuffer(int x, int y, uint8_t bgPalette, int colorIndex)
+	void Ppu::WriteToBuffer(int x, int y, uint8_t bgPalette, int colorIndex)
 	{
 		uint8_t color = bgPalette >> (colorIndex * 2) & 0x03;
 
@@ -361,27 +361,27 @@ namespace Core
 			return;
 		}
 
-		m_backBuffer[y * LCD_WIDTH + x] = color;
+		m_BackBuffer[y * LCD_WIDTH + x] = color;
 	}
 
-	void Ppu::copyBackBufferToLCD()
+	void Ppu::CopyBackBufferToLCD()
 	{
 		for (int y = 0; y < LCD_HEIGHT; y++)
 		{
 			for (int x = 0; x < LCD_WIDTH; x++)
 			{
-				m_lcdPixels[y * LCD_WIDTH + x] = m_backBuffer[y * LCD_WIDTH + x];
+				m_LCDPixels[y * LCD_WIDTH + x] = m_BackBuffer[y * LCD_WIDTH + x];
 			}
 		}
 	}
 
-	void Ppu::clearBackBuffer()
+	void Ppu::ClearBackBuffer()
 	{
 		for (int y = 0; y < LCD_HEIGHT; y++)
 		{
 			for (int x = 0; x < LCD_WIDTH; x++)
 			{
-				m_backBuffer[y * LCD_WIDTH + x] = 0;
+				m_BackBuffer[y * LCD_WIDTH + x] = 0;
 			}
 		}
 	}
@@ -389,10 +389,10 @@ namespace Core
 	// The LCD mode is special because it is contained in two bits within the
 	//	STAT register. This seems to be the only place this happens so this 
 	//  function exists just to simply the process of retreiving this value
-	LCD_Mode Ppu::readLCDMode()
+	LCD_Mode Ppu::ReadLCDMode()
 	{
-		bool lowBit = mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT);
-		bool highBit = mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT);
+		bool lowBit = m_MMU.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT);
+		bool highBit = m_MMU.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT);
 
 		uint8_t value = 0;
 		value |= lowBit ? 0x01 : 0;
@@ -401,43 +401,43 @@ namespace Core
 		return static_cast<LCD_Mode>(value);
 	}
 
-	void Ppu::writeLCDMode(LCD_Mode mode)
+	void Ppu::WriteLCDMode(LCD_Mode mode)
 	{
 		uint8_t value = static_cast<uint8_t>(mode);
-		mmu.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT, (value >> 1) & 0x1);
-		mmu.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT, value & 0x1);
+		m_MMU.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT, (value >> 1) & 0x1);
+		m_MMU.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT, value & 0x1);
 	}
 
 	void Ppu::RefreshOAMEntries()
 	{
-		bool objSize = mmu.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_OBJ_SIZE);
+		bool objSize = m_MMU.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_OBJ_SIZE);
 
 		int i = 0;
 		int oamSizeInBytes = 4;
 		for (uint16_t addr = 0xFE00; addr <= 0xFE9C; addr += oamSizeInBytes)
 		{
-			oamEntries[i].address = addr;
+			m_OAMEntries[i].address = addr;
 
 			// the first oam byte if the Y Pos
-			oamEntries[i].yPos = mmu.Read(addr);
+			m_OAMEntries[i].yPos = m_MMU.Read(addr);
 
 			// the second oam byte is the X Pos
-			oamEntries[i].xPos = mmu.Read(addr + 1);
+			m_OAMEntries[i].xPos = m_MMU.Read(addr + 1);
 
 			// the third oam byte is the tile index
-			uint8_t tileIndex = mmu.Read(addr + 2);
-			oamEntries[i].tileIndex = objSize ? tileIndex & 0xFE : tileIndex;
-			if (oamEntries[i].yFlip && oamEntries[i].isTall)
+			uint8_t tileIndex = m_MMU.Read(addr + 2);
+			m_OAMEntries[i].tileIndex = objSize ? tileIndex & 0xFE : tileIndex;
+			if (m_OAMEntries[i].yFlip && m_OAMEntries[i].isTall)
 			{
-				oamEntries[i].tileIndex++;
+				m_OAMEntries[i].tileIndex++;
 			}
 
 			// the fourth oam byte is for the attributes
-			oamEntries[i].paletteOneSelected = mmu.ReadRegisterBit(addr + 3, OAM_PALETTE);
-			oamEntries[i].xFlip = mmu.ReadRegisterBit(addr + 3, OAM_FLIP_X);
-			oamEntries[i].yFlip = mmu.ReadRegisterBit(addr + 3, OAM_FLIP_Y);
-			oamEntries[i].bgPriority = mmu.ReadRegisterBit(addr + 3, OAM_PRIORITY);
-			oamEntries[i].isTall = objSize;
+			m_OAMEntries[i].paletteOneSelected = m_MMU.ReadRegisterBit(addr + 3, OAM_PALETTE);
+			m_OAMEntries[i].xFlip = m_MMU.ReadRegisterBit(addr + 3, OAM_FLIP_X);
+			m_OAMEntries[i].yFlip = m_MMU.ReadRegisterBit(addr + 3, OAM_FLIP_Y);
+			m_OAMEntries[i].bgPriority = m_MMU.ReadRegisterBit(addr + 3, OAM_PRIORITY);
+			m_OAMEntries[i].isTall = objSize;
 
 			i++;
 		}
@@ -445,13 +445,13 @@ namespace Core
 
 	Ppu::OAM* Ppu::GetOAMEntries()
 	{
-		return oamEntries;
+		return m_OAMEntries;
 	}
 
 	uint16_t Ppu::GetTileAddressFromTileId(uint8_t tileId)
 	{
 		uint16_t tileAddress;
-		bool windowTileDataArea = mmu.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_BG_AND_WINDOW_TILES);
+		bool windowTileDataArea = m_MMU.ReadRegisterBit(HW_LCDC_LCD_CONTROL, LCDC_BG_AND_WINDOW_TILES);
 
 		if (windowTileDataArea)
 		{
@@ -472,24 +472,24 @@ namespace Core
 		return tileAddress;
 	}
 
-	void Ppu::processLYC()
+	void Ppu::ProcessLYC()
 	{
-		uint8_t lcdy = mmu.Read(HW_LY_LCD_Y_COORD);
-		uint8_t lcdyc = mmu.Read(HW_LYC_LY_COMPARE);
+		uint8_t lcdy = m_MMU.Read(HW_LY_LCD_Y_COORD);
+		uint8_t lcdyc = m_MMU.Read(HW_LYC_LY_COMPARE);
 
 		if (lcdy == lcdyc)
 		{
-			mmu.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, true);
+			m_MMU.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, true);
 		}
 		else
 		{
-			mmu.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, false);
+			m_MMU.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY, false);
 		}
 
-		if (mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STATE_LYC_INT_SELECT) &&
-			mmu.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY))
+		if (m_MMU.ReadRegisterBit(HW_STAT_LCD_STATUS, STATE_LYC_INT_SELECT) &&
+			m_MMU.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_LYC_EQUAL_LY))
 		{
-			mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
+			m_MMU.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
 		}
 	}
 }

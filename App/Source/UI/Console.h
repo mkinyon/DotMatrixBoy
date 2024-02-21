@@ -16,16 +16,16 @@ namespace App
 		void RenderContent();
 		void OnEvent(Event event);
 
-		UI::ToggleButton verboseButton;
-		UI::ToggleButton infoButton;
-		UI::ToggleButton warningButton;
-		UI::ToggleButton errorButton;
+		UI::ToggleButton m_VerboseButton;
+		UI::ToggleButton m_InfoButton;
+		UI::ToggleButton m_WarningButton;
+		UI::ToggleButton mErrorButton;
 
-		UI::ToggleButton appButton;
-		UI::ToggleButton apuButton;
-		UI::ToggleButton cpuButton;
-		UI::ToggleButton mmuButton;
-		UI::ToggleButton ppuButton;
+		UI::ToggleButton m_AppButton;
+		UI::ToggleButton m_APUButton;
+		UI::ToggleButton m_CPUButton;
+		UI::ToggleButton m_MMUButton;
+		UI::ToggleButton m_PPUButton;
 	};
 }
 

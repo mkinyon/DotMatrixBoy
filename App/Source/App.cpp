@@ -35,7 +35,7 @@ int main(int argv, char** args)
     // Widgets
     App::FileDialog* fileDialog = new App::FileDialog(gb);
     App::MenuBar* menuBar = new App::MenuBar();
-    App::LCD* lcdWindow = new App::LCD(gb->ppu.m_lcdPixels, window->GetRenderer());
+    App::LCD* lcdWindow = new App::LCD(gb->m_PPU.m_LCDPixels, window->GetRenderer());
     App::AudioDebugger* audioDebugger = new App::AudioDebugger(gb);
     App::Debugger* debugger = new App::Debugger(gb);
     App::MemoryMap* memoryMap = new App::MemoryMap(gb);
@@ -70,7 +70,7 @@ int main(int argv, char** args)
 
         window->EndRender();
 
-        if (menuBar->ExitPressed)
+        if (menuBar->m_ExitPressed)
         {
             isRunning = false;
         }

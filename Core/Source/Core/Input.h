@@ -19,7 +19,7 @@ namespace Core
 
 	private:
 		Mmu& mmu;
-		uint8_t dpadState = 0xFF;
-		uint8_t buttonState = 0xFF;
+		uint8_t m_DPADState = 0xFF;
+		uint8_t m_ButtonState = 0xFF;
 	};
 }

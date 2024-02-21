@@ -26,14 +26,14 @@ namespace App
 		static void StaticAudioCallback(void* userdata, Uint8* stream, int len);
 
 	private:
-		SDL_Window* sdlWindow;
-		SDL_Renderer* sdlRenderer;
-		SDL_AudioDeviceID sdlAudioDevice;
+		SDL_Window* m_SDLWindow;
+		SDL_Renderer* m_SDLRenderer;
+		SDL_AudioDeviceID m_SDLAudioDevice;
 
-		Core::GameBoy* gameboy;
+		Core::GameBoy* m_GameBoy;
 
-		Uint32 startTime;
-		Uint32 elapsedTime;
+		Uint32 m_StartTime;
+		Uint32 m_ElapsedTime;
 	};
 }
 

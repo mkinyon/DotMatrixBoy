@@ -15,9 +15,9 @@ namespace Core
 		void Write(float data);
 
 	private:
-		uint32_t size = 1024 * 1024;
-		std::vector<float> buffer;
-		uint32_t readIndex = 0;
-		uint32_t writeIndex = 0;
+		uint32_t m_Size = 1024 * 1024;
+		std::vector<float> m_Buffer;
+		uint32_t m_ReadIndex = 0;
+		uint32_t m_WriteIndex = 0;
 	};
 }

@@ -2,7 +2,7 @@
 
 namespace Core
 {
-	RingBuffer::RingBuffer() : buffer(size)
+	RingBuffer::RingBuffer() : m_Buffer(m_Size)
 	{
 		Reset();
 	}
@@ -11,32 +11,32 @@ namespace Core
 
 	void RingBuffer::Reset()
 	{
-		readIndex = 0;
-		writeIndex = 0;
+		m_ReadIndex = 0;
+		m_WriteIndex = 0;
 	}
 
 	float RingBuffer::Read()
 	{
 		// check if buffer is empty
-		if (readIndex == writeIndex)
+		if (m_ReadIndex == m_WriteIndex)
 		{
 			return 0.0f;
 		}
 
-		float data = buffer[readIndex];
-		readIndex = (readIndex + 1) % size;
+		float data = m_Buffer[m_ReadIndex];
+		m_ReadIndex = (m_ReadIndex + 1) % m_Size;
 		return data;
 	}
 
 	void RingBuffer::Write(float data)
 	{
-		buffer[writeIndex] = data;
-		writeIndex = (writeIndex + 1) % size;
+		m_Buffer[m_WriteIndex] = data;
+		m_WriteIndex = (m_WriteIndex + 1) % m_Size;
 
 		// handle buffer overflow
-		if (writeIndex == readIndex)
+		if (m_WriteIndex == m_ReadIndex)
 		{
-			readIndex = (readIndex + 1) % size;
+			m_ReadIndex = (m_ReadIndex + 1) % m_Size;
 		}
 	}
 }

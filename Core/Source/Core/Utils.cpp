@@ -2,22 +2,22 @@
 
 namespace Core
 {
-	bool getFlag(uint8_t& variable, int flag)
+	bool GetFlag(uint8_t& variable, int flag)
 	{
 		return (variable & flag) != 0;
 	}
 
-	void setFlag(uint8_t& variable, int flag)
+	void SetFlag(uint8_t& variable, int flag)
 	{
 		variable |= flag;
 	}
 
-	void clearFlag(uint8_t& variable, int flag)
+	void ClearFlag(uint8_t& variable, int flag)
 	{
 		variable &= ~flag;
 	}
 
-	int generateRandomNumber(int start, int end)
+	int GenerateRandomNumber(int start, int end)
 	{
 		std::random_device rd;
 		std::mt19937 gen(rd());

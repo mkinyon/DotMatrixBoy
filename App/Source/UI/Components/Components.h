@@ -9,36 +9,36 @@ namespace UI
 	public:
 		ToggleButton()
 		{
-			Toggled = true;
+			m_Toggled = true;
 		}
 
 		ToggleButton(bool defaultToggleState)
 		{
-			Toggled = defaultToggleState;
+			m_Toggled = defaultToggleState;
 		}
 
 		bool Render(const char* label)
 		{
-			bool newState = Toggled;
+			bool newState = m_Toggled;
 
-			if (Toggled)
+			if (m_Toggled)
 			{
 				ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered));
 			}
 
 			if (ImGui::Button(label))
 			{
-				newState = !Toggled;
+				newState = !m_Toggled;
 			}
 
-			if (Toggled)
+			if (m_Toggled)
 			{
 				ImGui::PopStyleColor(1);
 			}
 
-			return Toggled = newState;
+			return m_Toggled = newState;
 		}
 
-		bool Toggled = false;
+		bool m_Toggled = false;
 	};
 }

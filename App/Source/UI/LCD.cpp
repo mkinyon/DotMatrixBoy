@@ -9,13 +9,13 @@ namespace App
 		EventManager::Instance().Subscribe(Event::LCD_ENABLE, this);
 		EventManager::Instance().Subscribe(Event::LCD_DISABLE, this);
 
-		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 160, 144);
-		pixels = lcdPixels;
+		m_Texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 160, 144);
+		m_Pixels = lcdPixels;
 	}
 
 	LCD::~LCD()
 	{
-		SDL_DestroyTexture(texture);
+		SDL_DestroyTexture(m_Texture);
 	}
 
 	void LCD::RenderContent()
@@ -26,42 +26,42 @@ namespace App
 		for (int y = 0; y < 144; ++y) {
 			for (int x = 0; x < 160; ++x) {
 				// Get the color value from lcd_pixels
-				uint8_t colorId = pixels[y * 160 + x];
+				uint8_t colorId = m_Pixels[y * 160 + x];
 
 				// Map the color value to the corresponding block in pixels
 				int blockIndex = (y * 160 + x) * 4;
 				if (colorId == 0)
 				{
-					texturePixels[blockIndex] = 255;     // a
-					texturePixels[blockIndex + 1] = 15;  // b
-					texturePixels[blockIndex + 2] = 188; // g
-					texturePixels[blockIndex + 3] = 155; // r
+					m_TexturePixels[blockIndex] = 255;     // a
+					m_TexturePixels[blockIndex + 1] = 15;  // b
+					m_TexturePixels[blockIndex + 2] = 188; // g
+					m_TexturePixels[blockIndex + 3] = 155; // r
 				}
 				if (colorId == 1)
 				{
-					texturePixels[blockIndex] = 255;
-					texturePixels[blockIndex + 1] = 15;
-					texturePixels[blockIndex + 2] = 172;
-					texturePixels[blockIndex + 3] = 139;
+					m_TexturePixels[blockIndex] = 255;
+					m_TexturePixels[blockIndex + 1] = 15;
+					m_TexturePixels[blockIndex + 2] = 172;
+					m_TexturePixels[blockIndex + 3] = 139;
 				}
 				if (colorId == 2)
 				{
-					texturePixels[blockIndex] = 255;
-					texturePixels[blockIndex + 1] = 48;
-					texturePixels[blockIndex + 2] = 98;
-					texturePixels[blockIndex + 3] = 48;
+					m_TexturePixels[blockIndex] = 255;
+					m_TexturePixels[blockIndex + 1] = 48;
+					m_TexturePixels[blockIndex + 2] = 98;
+					m_TexturePixels[blockIndex + 3] = 48;
 				}
 				if (colorId == 3)
 				{
-					texturePixels[blockIndex] = 255;
-					texturePixels[blockIndex + 1] = 15;
-					texturePixels[blockIndex + 2] = 56;
-					texturePixels[blockIndex + 3] = 15;
+					m_TexturePixels[blockIndex] = 255;
+					m_TexturePixels[blockIndex + 1] = 15;
+					m_TexturePixels[blockIndex + 2] = 56;
+					m_TexturePixels[blockIndex + 3] = 15;
 				}
 			}
 		}
 
-		SDL_UpdateTexture(texture, NULL, texturePixels, 160 * 4);
+		SDL_UpdateTexture(m_Texture, NULL, m_TexturePixels, 160 * 4);
 
 		ImVec2 contentSize = ImGui::GetContentRegionAvail();
 		float originalWidth = 160.0f; 
@@ -74,18 +74,18 @@ namespace App
 
 		ImVec2 imageSize(originalWidth * minScale, originalHeight * minScale);
 
-		ImGui::Image(reinterpret_cast<ImTextureID>(texture), imageSize);
+		ImGui::Image(reinterpret_cast<ImTextureID>(m_Texture), imageSize);
 	}
 
 	void LCD::OnEvent(Event event)
 	{
 		if (event == Event::LCD_ENABLE)
 		{
-			ShowWindow = true;
+			m_ShowWindow = true;
 		}
 		if (event == Event::LCD_DISABLE)
 		{
-			ShowWindow = false;
+			m_ShowWindow = false;
 		}
 	}
 }

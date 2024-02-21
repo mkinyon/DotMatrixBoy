@@ -19,9 +19,9 @@ namespace Core
 		void RegisterOnWrite(BaseDevice* device);
 
 	private:
-		uint8_t memory[0xFFFF + 1] = {};
-		Cartridge cart;
+		uint8_t m_Memory[0xFFFF + 1] = {};
+		Cartridge m_Cart;
 
-		std::vector<BaseDevice*> registeredDevices;
+		std::vector<BaseDevice*> m_RegisteredDevices;
 	};
 }

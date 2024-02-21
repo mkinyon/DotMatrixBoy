@@ -24,9 +24,9 @@ namespace App
 		void updateTexture();
 
 	private:
-		Core::GameBoy* gameboy;
-		SDL_Texture* tilesTexture;
-		uint8_t tilesTexturePixels[128 * 192 * 4] {};
+		Core::GameBoy* m_GameBoy;
+		SDL_Texture* m_TilesTexture;
+		uint8_t m_TilesTexturePixels[128 * 192 * 4] {};
 
 		enum class WindowState
 		{

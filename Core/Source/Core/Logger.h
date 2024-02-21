@@ -34,8 +34,8 @@ namespace Core
     public:
         static Logger& Instance()
         {
-            static Logger instance;
-            return instance;
+            static Logger s_Instance;
+            return s_Instance;
         }
 
         void Verbose(Domain domain, std::string message)
@@ -109,19 +109,19 @@ namespace Core
 
             //logMessages.push_back({ severity, domain, stream.str()});
 
-            if (logMessages.size() >= MAX_MESSAGES)
+            if (m_LogMessages.size() >= MAX_MESSAGES)
             {
-                logMessages.pop_front();
+                m_LogMessages.pop_front();
             }
         }
 
         std::deque<Core::Message> GetMessages()
         {
-            return logMessages;
+            return m_LogMessages;
         }
 
     private:
         const int MAX_MESSAGES = 50000;
-        std::deque<Core::Message> logMessages;
+        std::deque<Core::Message> m_LogMessages;
     };
 }

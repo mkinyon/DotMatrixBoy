@@ -17,6 +17,6 @@ namespace App
 		void OnEvent(Event event);
 	
 	private:
-		Core::GameBoy* gameboy;
+		Core::GameBoy* m_GameBoy;
 	};
 }

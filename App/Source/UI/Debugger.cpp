@@ -3,12 +3,12 @@
 
 namespace App
 {
-	Debugger::Debugger(Core::GameBoy* gb) : ImguiWidgetBase("Debugger"), gameboy(gb)
+	Debugger::Debugger(Core::GameBoy* gb) : ImguiWidgetBase("Debugger"), m_GameBoy(gb)
 	{
 		EventManager::Instance().Subscribe(Event::DEBUGGER_ENABLE, this);
 		EventManager::Instance().Subscribe(Event::DEBUGGER_DISABLE, this);
 
-		//instructions = gameboy->cpu.DisassebleAll();
+		//instructions = m_GameBoy->cpu.DisassebleAll();
 	}
 
 	Debugger::~Debugger() {}
@@ -19,14 +19,14 @@ namespace App
 
 		// CPU Info
 		ImGui::BeginChild("L", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 150), ImGuiChildFlags_None);
-		ImGui::Text("Cycles: %d", gameboy->cpu.m_TotalCycles);
-		ImGui::Text("PC: $%04x", gameboy->cpu.State.PC);
-		ImGui::Text("SP: $%04x", gameboy->cpu.State.SP);
-		ImGui::Text("AF: $%04x", gameboy->cpu.State.AF);
-		ImGui::Text("BC: $%04x", gameboy->cpu.State.BC);
-		ImGui::Text("DE: $%04x", gameboy->cpu.State.DE);
-		ImGui::Text("HL: $%04x", gameboy->cpu.State.HL);
-		ImGui::Text("IE: %01d", gameboy->mmu.Read(Core::HW_INTERRUPT_ENABLE));
+		ImGui::Text("Cycles: %d", m_GameBoy->m_CPU.m_TotalCycles);
+		ImGui::Text("PC: $%04x", m_GameBoy->m_CPU.State.PC);
+		ImGui::Text("SP: $%04x", m_GameBoy->m_CPU.State.SP);
+		ImGui::Text("AF: $%04x", m_GameBoy->m_CPU.State.AF);
+		ImGui::Text("BC: $%04x", m_GameBoy->m_CPU.State.BC);
+		ImGui::Text("DE: $%04x", m_GameBoy->m_CPU.State.DE);
+		ImGui::Text("HL: $%04x", m_GameBoy->m_CPU.State.HL);
+		ImGui::Text("IE: %01d", m_GameBoy->m_MMU.Read(Core::HW_INTERRUPT_ENABLE));
 		ImGui::EndChild();
 
 		ImGui::SameLine();
@@ -35,46 +35,46 @@ namespace App
 		ImGui::BeginChild("LM", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 150), ImGuiChildFlags_None);
 		// Flags
 		// todo: the cpu flags are currently read only but should be read/write
-		bool z = gameboy->cpu.GetCPUFlag(Core::FLAG_ZERO); ImGui::Checkbox("Z", &z);
-		bool n = gameboy->cpu.GetCPUFlag(Core::FLAG_SUBTRACT); ImGui::Checkbox("N", &n);
-		bool h = gameboy->cpu.GetCPUFlag(Core::FLAG_HALF_CARRY); ImGui::Checkbox("H", &h);
-		bool c = gameboy->cpu.GetCPUFlag(Core::FLAG_CARRY); ImGui::Checkbox("C", &c);
+		bool z = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_ZERO); ImGui::Checkbox("Z", &z);
+		bool n = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_SUBTRACT); ImGui::Checkbox("N", &n);
+		bool h = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_HALF_CARRY); ImGui::Checkbox("H", &h);
+		bool c = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_CARRY); ImGui::Checkbox("C", &c);
 		ImGui::EndChild();
 
 		ImGui::SameLine();
 
 		// PPU Info
 		ImGui::BeginChild("RM", ImVec2(ImGui::GetContentRegionAvail().x * 0.50f, 150), ImGuiChildFlags_None);
-		if (gameboy->ppu.GetMode() == Core::MODE_0_HBLANK)  ImGui::Text("Mode: MODE_0_HBLANK");
-		if (gameboy->ppu.GetMode() == Core::MODE_1_VBLANK)  ImGui::Text("Mode: MODE_1_VBLANK");
-		if (gameboy->ppu.GetMode() == Core::MODE_2_OAMSCAN) ImGui::Text("Mode: MODE_2_OAMSCAN");
-		if (gameboy->ppu.GetMode() == Core::MODE_3_DRAWING) ImGui::Text("Mode: MODE_3_DRAWING");
+		if (m_GameBoy->m_PPU.GetMode() == Core::MODE_0_HBLANK)  ImGui::Text("Mode: MODE_0_HBLANK");
+		if (m_GameBoy->m_PPU.GetMode() == Core::MODE_1_VBLANK)  ImGui::Text("Mode: MODE_1_VBLANK");
+		if (m_GameBoy->m_PPU.GetMode() == Core::MODE_2_OAMSCAN) ImGui::Text("Mode: MODE_2_OAMSCAN");
+		if (m_GameBoy->m_PPU.GetMode() == Core::MODE_3_DRAWING) ImGui::Text("Mode: MODE_3_DRAWING");
 		
-		ImGui::Text("LCDC: %1d", gameboy->mmu.Read(Core::HW_LCDC_LCD_CONTROL));
-		ImGui::Text("STAT: %1d", gameboy->mmu.Read(Core::HW_STAT_LCD_STATUS));
+		ImGui::Text("LCDC: %1d", m_GameBoy->m_MMU.Read(Core::HW_LCDC_LCD_CONTROL));
+		ImGui::Text("STAT: %1d", m_GameBoy->m_MMU.Read(Core::HW_STAT_LCD_STATUS));
 		
-		ImGui::Text("SCX: %1d", gameboy->mmu.Read(Core::HW_SCX_VIEWPORT_X_POS));
-		ImGui::Text("SCY: %1d", gameboy->mmu.Read(Core::HW_SCY_VIEWPORT_Y_POS));
+		ImGui::Text("SCX: %1d", m_GameBoy->m_MMU.Read(Core::HW_SCX_VIEWPORT_X_POS));
+		ImGui::Text("SCY: %1d", m_GameBoy->m_MMU.Read(Core::HW_SCY_VIEWPORT_Y_POS));
 
-		ImGui::Text("DIV: %02x", gameboy->mmu.Read(Core::HW_DIV_DIVIDER_REGISTER));
-		ImGui::Text("TIMA: %02x", gameboy->mmu.Read(Core::HW_TIMA_TIMER_COUNTER));
-		ImGui::Text("TMA: %02x", gameboy->mmu.Read(Core::HW_TMA_TIMER_MODULO));
-		ImGui::Text("TAC: %02x", gameboy->mmu.Read(Core::HW_TAC_TIMER_CONTROL));
+		ImGui::Text("DIV: %02x", m_GameBoy->m_MMU.Read(Core::HW_DIV_DIVIDER_REGISTER));
+		ImGui::Text("TIMA: %02x", m_GameBoy->m_MMU.Read(Core::HW_TIMA_TIMER_COUNTER));
+		ImGui::Text("TMA: %02x", m_GameBoy->m_MMU.Read(Core::HW_TMA_TIMER_MODULO));
+		ImGui::Text("TAC: %02x", m_GameBoy->m_MMU.Read(Core::HW_TAC_TIMER_CONTROL));
 		ImGui::EndChild();
 
 		ImGui::SameLine();
 
 		ImGui::BeginChild("R", ImVec2(ImGui::GetContentRegionAvail().x, 150), ImGuiChildFlags_None);
-		ImGui::Text("LY (Scanline): %1d", gameboy->mmu.Read(Core::HW_LY_LCD_Y_COORD));
-		ImGui::Text("LYC: %1d", gameboy->mmu.Read(Core::HW_LYC_LY_COMPARE));
+		ImGui::Text("LY (Scanline): %1d", m_GameBoy->m_MMU.Read(Core::HW_LY_LCD_Y_COORD));
+		ImGui::Text("LYC: %1d", m_GameBoy->m_MMU.Read(Core::HW_LYC_LY_COMPARE));
 		
-		ImGui::Text("WX: %1d", gameboy->mmu.Read(Core::HW_WX_WINDOW_X_POS));
-		ImGui::Text("WY: %1d", gameboy->mmu.Read(Core::HW_WY_WINDOW_Y_POS));
+		ImGui::Text("WX: %1d", m_GameBoy->m_MMU.Read(Core::HW_WX_WINDOW_X_POS));
+		ImGui::Text("WY: %1d", m_GameBoy->m_MMU.Read(Core::HW_WY_WINDOW_Y_POS));
 		
-		ImGui::Text("Dots This Frame: %1d", gameboy->ppu.m_TotalDotsThisFrame);
-		ImGui::Text("Total Frames: %1d", gameboy->ppu.m_TotalFrames);
+		ImGui::Text("Dots This Frame: %1d", m_GameBoy->m_PPU.m_TotalDotsThisFrame);
+		ImGui::Text("Total Frames: %1d", m_GameBoy->m_PPU.m_TotalFrames);
 
-		ImGui::Text("JOY: %2d", gameboy->mmu.Read(Core::HW_P1JOYP_JOYPAD));
+		ImGui::Text("JOY: %2d", m_GameBoy->m_MMU.Read(Core::HW_P1JOYP_JOYPAD));
 		ImGui::EndChild();
 
 		ImGui::SeparatorText("Rom Instructions");
@@ -85,14 +85,14 @@ namespace App
 		for (uint16_t i = 0; i < 0x7FFF; i++)
 		{
 			// todo: currently skipping instructions that are blank.  The cpu should clean this up
-			if (!instructions[i].empty())
+			if (!m_Instructions[i].empty())
 			{
-				bool isCurrentInstr = gameboy->cpu.State.PC == i;
+				bool isCurrentInstr = m_GameBoy->m_CPU.State.PC == i;
 
 				if (isCurrentInstr)
 					ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
 
-				ImGui::Text(instructions[i].c_str());
+				ImGui::Text(m_Instructions[i].c_str());
 
 				if (isCurrentInstr)
 				{
@@ -109,11 +109,11 @@ namespace App
 	{
 		if (event == Event::DEBUGGER_ENABLE)
 		{
-			ShowWindow = true;
+			m_ShowWindow = true;
 		}
 		if (event == Event::DEBUGGER_DISABLE)
 		{
-			ShowWindow = false;
+			m_ShowWindow = false;
 		}
 	}
 }
