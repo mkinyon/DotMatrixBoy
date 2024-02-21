@@ -66,8 +66,7 @@ namespace App
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; 
 
         // Setup Dear ImGui style
-        ImGui::StyleColorsLight();
-        setTheme();
+        SetTheme();
 
         // Setup Platform/Renderer backends
         ImGui_ImplSDL2_InitForSDLRenderer(sdlWindow, sdlRenderer);
