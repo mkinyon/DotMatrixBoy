@@ -46,7 +46,7 @@ namespace Core
 
 		//Disassemble(opcode, State.PC);
 
-		if (true)
+		if (false)
 		{
 			logBuffer << std::hex << std::setfill('0') << std::uppercase <<
 				"A:" << std::setw(2) << static_cast<int>(State.A) <<
