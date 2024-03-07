@@ -109,7 +109,6 @@ namespace App
         {
             ImGui_ImplSDL2_ProcessEvent(&event);       
 
-            // handle quit
             if (event.type == SDL_QUIT ||
                     (event.type == SDL_WINDOWEVENT &&
                     event.window.event == SDL_WINDOWEVENT_CLOSE &&
@@ -205,7 +204,7 @@ namespace App
             }
         }
 
-        Uint32 currentTime = SDL_GetTicks();
+        Uint64 currentTime = SDL_GetTicks64();
         m_ElapsedTime = currentTime - m_StartTime;
         m_StartTime = currentTime;
     }
@@ -245,7 +244,7 @@ namespace App
         return m_SDLRenderer;
     }
 
-    Uint32 Window::GetElapsedTime()
+    Uint64 Window::GetElapsedTime()
     {
         return m_ElapsedTime;
     }

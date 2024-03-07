@@ -21,7 +21,7 @@ namespace App
 		void EndRender();
 
 		SDL_Renderer* GetRenderer();
-		Uint32 GetElapsedTime();
+		Uint64 GetElapsedTime();
 
 		static void StaticAudioCallback(void* userdata, Uint8* stream, int len);
 
@@ -32,8 +32,8 @@ namespace App
 
 		Core::GameBoy* m_GameBoy;
 
-		Uint32 m_StartTime;
-		Uint32 m_ElapsedTime;
+		Uint64 m_StartTime;
+		Uint64 m_ElapsedTime;
 	};
 }
 
