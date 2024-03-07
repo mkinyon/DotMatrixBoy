@@ -73,6 +73,7 @@ namespace Core
 	private:
 		uint8_t m_BackBuffer[160 * 144] = {};
 		OAM m_OAMEntries[40] = {};
+		LCD_Mode m_LCDMode = LCD_Mode::MODE_0_HBLANK;
 	};
 }
 

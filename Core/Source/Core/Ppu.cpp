@@ -391,14 +391,7 @@ namespace Core
 	//  function exists just to simply the process of retreiving this value
 	LCD_Mode Ppu::ReadLCDMode()
 	{
-		bool lowBit = m_MMU.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT);
-		bool highBit = m_MMU.ReadRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT);
-
-		uint8_t value = 0;
-		value |= lowBit ? 0x01 : 0;
-		value |= highBit ? 0x02 : 0;
-
-		return static_cast<LCD_Mode>(value);
+		return m_LCDMode;
 	}
 
 	void Ppu::WriteLCDMode(LCD_Mode mode)
@@ -406,6 +399,8 @@ namespace Core
 		uint8_t value = static_cast<uint8_t>(mode);
 		m_MMU.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_HBIT, (value >> 1) & 0x1);
 		m_MMU.WriteRegisterBit(HW_STAT_LCD_STATUS, STAT_FLags::STAT_PPU_MODE_LBIT, value & 0x1);
+
+		m_LCDMode = mode;
 	}
 
 	void Ppu::RefreshOAMEntries()
