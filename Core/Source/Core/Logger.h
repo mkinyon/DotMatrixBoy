@@ -107,7 +107,10 @@ namespace Core
 
             stream << message;
 
-            //logMessages.push_back({ severity, domain, stream.str()});
+            if (severity == Severity::Verbose)
+            {
+                m_LogMessages.push_back({ severity, domain, stream.str() });
+            }
 
             if (m_LogMessages.size() >= MAX_MESSAGES)
             {

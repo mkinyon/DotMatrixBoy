@@ -1236,6 +1236,10 @@ namespace Core
 
 			PushSP(State.PC);
 			State.PC = destinationAddress;
+
+			std::ostringstream stream;
+			stream << "IRQ Write - Address: " << std::hex << destinationAddress << " Interrupt Type: ";
+			Logger::Instance().Verbose(Domain::CPU, stream.str());
 		}
 	}
 

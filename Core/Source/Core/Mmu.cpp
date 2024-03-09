@@ -28,6 +28,12 @@ namespace Core
 			return;
 		}
 
+		// test to see if writes every go out of bounds
+		if (address < 0 || address > 0xFFFF)
+		{
+			int breakpoint = 0;
+		}
+
 		if (address >= CART_ADDR_RANGE_START && address <= CART_ADDR_RANGE_END)
 		{
 			m_Cart.Write(address, value);
@@ -69,9 +75,10 @@ namespace Core
 			stream << "DMA write. Address: " << std::hex << address << " Value: " << std::dec << value;
 			Logger::Instance().Info(Domain::MMU, stream.str());
 		}
-
-
-		m_Memory[address] = value;
+		else
+		{
+			m_Memory[address] = value;
+		}	
 
 		for (BaseDevice* device : m_RegisteredDevices)
 		{
