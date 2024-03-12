@@ -36,14 +36,13 @@ namespace Core
 		LCD_Mode GetMode();
 		OAM* GetOAMEntries();
 
+		int GetTotalFrames();
+		int GetCurrentScanLine();
+		int GetTotalDotsThisFrame();
+		uint8_t* GetLCDPixels();
+
 	public:
 		Mmu& m_MMU;
-		unsigned int m_CycleCount = 0; // each cycle equates to one dot (pixel)
-		unsigned int m_TotalFrames = 0;
-		unsigned int m_CurrentScanLine = 0;
-		unsigned int m_TotalDotsThisFrame = 0;
-
-		uint8_t m_LCDPixels[160 * 144] = {};
 		
 
 	private:
@@ -74,6 +73,13 @@ namespace Core
 		uint8_t m_BackBuffer[160 * 144] = {};
 		OAM m_OAMEntries[40] = {};
 		LCD_Mode m_LCDMode = LCD_Mode::MODE_0_HBLANK;
+
+		unsigned int m_CycleCount = 0; // each cycle equates to one dot (pixel)
+		unsigned int m_TotalFrames = 0;
+		unsigned int m_CurrentScanLine = 0;
+		unsigned int m_TotalDotsThisFrame = 0;
+
+		uint8_t m_LCDPixels[160 * 144] = {};
 	};
 }
 

@@ -71,8 +71,8 @@ namespace App
 		ImGui::Text("WX: %1d", m_GameBoy->m_MMU.Read(Core::HW_WX_WINDOW_X_POS));
 		ImGui::Text("WY: %1d", m_GameBoy->m_MMU.Read(Core::HW_WY_WINDOW_Y_POS));
 		
-		ImGui::Text("Dots This Frame: %1d", m_GameBoy->m_PPU.m_TotalDotsThisFrame);
-		ImGui::Text("Total Frames: %1d", m_GameBoy->m_PPU.m_TotalFrames);
+		ImGui::Text("Dots This Frame: %1d", m_GameBoy->m_PPU.GetTotalDotsThisFrame());
+		ImGui::Text("Total Frames: %1d", m_GameBoy->m_PPU.GetTotalFrames());
 
 		ImGui::Text("JOY: %2d", m_GameBoy->m_MMU.Read(Core::HW_P1JOYP_JOYPAD));
 		ImGui::EndChild();

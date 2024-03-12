@@ -11,6 +11,12 @@ namespace Core
 
 	uint8_t& Mmu::Read(uint16_t address)
 	{
+		// test to see if read ever go out of bounds
+		if (address < 0 || address > 0xFFFF)
+		{
+			int breakpoint = 0;
+		}
+
 		// cart address space
 		if (address >= 0x0000 && address <= 0x7FFF)
 		{
@@ -28,7 +34,7 @@ namespace Core
 			return;
 		}
 
-		// test to see if writes every go out of bounds
+		// test to see if writes ever go out of bounds
 		if (address < 0 || address > 0xFFFF)
 		{
 			int breakpoint = 0;
@@ -53,13 +59,11 @@ namespace Core
 		// writing to the DIV register will cause is to reset to zero 
 		else if (address == HW_DIV_DIVIDER_REGISTER)
 		{
-			m_Memory[address] = 0;
-			m_Memory[address - 1] = 0;
+			ResetDIVTimer();
 		}
 		// trigger DMA transfer
 		else if (address == HW_DMA_OAM_DMA_SOURCE_ADDRESS)
 		{
-			m_Memory[address] = value;
 			uint16_t startAddress = value << 8;
 
 			for (int i = 0x0; i <= 0x9F; i++)
@@ -107,5 +111,11 @@ namespace Core
 	void Mmu::RegisterOnWrite(BaseDevice* device)
 	{
 		m_RegisteredDevices.push_back(device);
+	}
+
+	void Mmu::ResetDIVTimer()
+	{
+		m_Memory[HW_DIV_DIVIDER_REGISTER] = 0;
+		m_Memory[HW_DIV_DIVIDER_REGISTER - 1] = 0;
 	}
 }

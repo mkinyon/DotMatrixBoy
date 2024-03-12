@@ -17,6 +17,7 @@ namespace Core
 		bool ReadRegisterBit(uint16_t address, int flag);
 		void WriteRegisterBit(uint16_t address, int flag, bool isEnabled);
 		void RegisterOnWrite(BaseDevice* device);
+		void ResetDIVTimer();
 
 	private:
 		uint8_t m_Memory[0xFFFF + 1] = {};

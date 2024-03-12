@@ -143,6 +143,14 @@ namespace App
                         }
                         break;
                     }
+                    case SDLK_f:
+                    {
+                        if (m_GameBoy->IsPaused())
+                        {
+                            m_GameBoy->AdvanceFrame();
+                        }
+                        break;
+                    }
                     // game controls
                     case SDLK_UP:
                         m_GameBoy->m_Input.SetDPADState(Core::Joypad_DPAD::UP, true);

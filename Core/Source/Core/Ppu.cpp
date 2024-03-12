@@ -92,6 +92,7 @@ namespace Core
 				WriteLCDMode(LCD_Mode::MODE_2_OAMSCAN);
 
 			m_MMU.Write(HW_LY_LCD_Y_COORD, ly + 1);
+			m_CurrentScanLine = ly + 1;
 			m_CycleCount -= HBLANK_CYCLES;
 		}
 	}
@@ -116,10 +117,15 @@ namespace Core
 			{
 				WriteLCDMode(LCD_Mode::MODE_2_OAMSCAN);
 				m_MMU.Write(HW_LY_LCD_Y_COORD, 0);
+				m_CurrentScanLine = 0;
 				ProcessLYC();
 			}
 			else
+			{
 				m_MMU.Write(HW_LY_LCD_Y_COORD, ly + 1);
+				m_CurrentScanLine = ly + 1;
+			}
+				
 
 			m_CycleCount -= VBLANK_CYCLES;
 		}
@@ -486,5 +492,25 @@ namespace Core
 		{
 			m_MMU.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD, true);
 		}
+	}
+
+	int Ppu::GetTotalFrames()
+	{
+		return m_TotalFrames;
+	}
+
+	int Ppu::GetCurrentScanLine()
+	{
+		return m_CurrentScanLine;
+	}
+
+	int Ppu::GetTotalDotsThisFrame()
+	{
+		return m_TotalDotsThisFrame;
+	}
+
+	uint8_t* Ppu::GetLCDPixels()
+	{
+		return m_LCDPixels;
 	}
 }

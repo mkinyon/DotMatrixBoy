@@ -19,15 +19,7 @@ namespace Core
 
 			for (int i = 0; i < cyclesToRun; i++)
 			{
-				m_CPU.Clock();
-
-				for (int i = 0; i < 4; i++)
-				{
-					m_PPU.Clock();
-				}
-
-				m_APU.Clock();
-				m_Input.Clock();
+				ClockSystems();
 			}
 		}
 	}
@@ -51,17 +43,34 @@ namespace Core
 	{
 		do
 		{
-			m_CPU.Clock();
+			ClockSystems();
 
-			for (int i = 0; i < 4; i++)
-			{
-				m_PPU.Clock();
-			}
 		} while (!m_CPU.m_InstructionCompleted);
+	}
+
+	void GameBoy::AdvanceFrame()
+	{
+		for (int i = 0; i < 69905; i++)
+		{
+			ClockSystems();
+		}
 	}
 
 	void GameBoy::FeedAudioBuffer(uint8_t* stream, int len)
 	{
 		m_APU.FeedAudioBuffer(stream, len);
+	}
+
+	void GameBoy::ClockSystems()
+	{
+		m_CPU.Clock();
+
+		for (int i = 0; i < 4; i++)
+		{
+			m_PPU.Clock();
+		}
+
+		m_APU.Clock();
+		m_Input.Clock();
 	}
 }

@@ -92,7 +92,13 @@ namespace Core
 				case 0x00: m_Cycles = 4; break;
 
 					// "STOP n8" B:2 C:4 FLAGS: - - - -
-				case 0x10: State.PC++; m_Cycles = 4; break;
+				case 0x10:
+				{
+					State.PC++;
+					m_Cycles = 4;
+					m_MMU.ResetDIVTimer();
+					break;
+				}
 
 					// "HALT" B:1 C:4 FLAGS: - - - -
 				case 0x76: m_IsHalted = true; m_Cycles = 4;	break;

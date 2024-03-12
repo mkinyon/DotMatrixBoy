@@ -25,7 +25,11 @@ namespace Core
 		void Unpause();
 		bool IsPaused();
 		void StepCPU();
+		void AdvanceFrame();
 		void FeedAudioBuffer(uint8_t* stream, int len);
+
+	private:
+		void ClockSystems();
 
 	public:
 		Cartridge& m_Cart;
