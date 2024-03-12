@@ -50,7 +50,7 @@ namespace Core
 
 	void GameBoy::AdvanceFrame()
 	{
-		for (int i = 0; i < 69905; i++)
+		for (int i = 0; i < 70224; i++)
 		{
 			ClockSystems();
 		}
