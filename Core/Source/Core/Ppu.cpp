@@ -118,6 +118,7 @@ namespace Core
 				WriteLCDMode(LCD_Mode::MODE_2_OAMSCAN);
 				m_MMU.Write(HW_LY_LCD_Y_COORD, 0);
 				m_CurrentScanLine = 0;
+				m_TotalFrames++;
 				ProcessLYC();
 			}
 			else

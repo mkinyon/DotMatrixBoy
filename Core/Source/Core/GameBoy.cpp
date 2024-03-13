@@ -50,7 +50,7 @@ namespace Core
 
 	void GameBoy::AdvanceFrame()
 	{
-		for (int i = 0; i < 70224; i++)
+		for (int i = 0; i < 70368; i++)
 		{
 			ClockSystems();
 		}
@@ -64,11 +64,7 @@ namespace Core
 	void GameBoy::ClockSystems()
 	{
 		m_CPU.Clock();
-
-		for (int i = 0; i < 4; i++)
-		{
-			m_PPU.Clock();
-		}
+		m_PPU.Clock();
 
 		m_APU.Clock();
 		m_Input.Clock();
