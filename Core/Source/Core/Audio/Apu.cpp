@@ -103,14 +103,13 @@ namespace Core
 				m_File.save(m_Filename);
 			}
 
-
-			m_Buffer[m_SampleCounter++] = (static_cast<float>(m_CH1_Square.m_CurrentSample * 10));
+			m_Buffer[m_SampleCounter++] = (static_cast<float>(m_CH1_Square.m_CurrentSample * 5));
 
 			if (m_SampleCounter == SAMPLE_SIZE)
 			{
 				m_SampleCounter = 0;
 
-				//SDL_QueueAudio(sdlAudioDevice, buffer, sizeof(float) * SAMPLE_SIZE);
+				SDL_QueueAudio(m_SDLAudioDevice, m_Buffer, sizeof(float) * SAMPLE_SIZE);
 				Uint32 queuedBytes = SDL_GetQueuedAudioSize(m_SDLAudioDevice);
 				if (queuedBytes == 0) {
 					// The audio queue is empty
@@ -184,7 +183,7 @@ namespace Core
 
 	void Apu::FeedAudioBuffer(uint8_t * stream, int len)
 	{
-		//squareWaveTest(stream, len);
+		SquareWaveTest(stream, len);
 
 		for (int i = 0; i < len; i += 1)
 		{

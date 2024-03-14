@@ -27,7 +27,7 @@ namespace Core
 		SquareChannel m_CH2_Square;
 
 		int m_CycleCount = 0;
-		//RingBuffer audioBuffer;
+		RingBuffer audioBuffer;
 		uint8_t m_FrameSequencer = 0;
 		int m_FrameSequenceCountDown = 8192;
 
