@@ -1,4 +1,8 @@
 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
 #include "Window.h"
 
 #include "Core\Cartridge.h"
@@ -12,6 +16,9 @@
 #include "UI/MemoryMap.h"
 #include "UI/MenuBar.h"
 #include "UI/VRAMViewer.h"
+
+
+
 
 App::Window* window;
 Core::GameBoy* gb;
@@ -75,6 +82,23 @@ int main(int argv, char** args)
             isRunning = false;
         }
     }
+
+    // clean up
+    delete menuBar;
+    delete fileDialog;
+    delete lcdWindow;
+    delete debugger;
+    delete memoryMap;
+    delete vramViewer;
+    delete audioDebugger;
+    delete console;
+
+    delete cart;
+    delete gb;
+    delete window;
+
+
+    _CrtDumpMemoryLeaks();
 
     return 0;
 }
