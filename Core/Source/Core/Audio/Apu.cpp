@@ -9,7 +9,13 @@
 
 namespace Core
 {
-	Apu::Apu(Mmu& mmu) : m_MMU(mmu), m_CH1_Square(mmu, true), m_CH2_Square(mmu, false), m_Buffer()
+	Apu::Apu(Mmu& mmu) :
+		m_MMU(mmu), 
+		m_CH1_Square(mmu, true), 
+		m_CH2_Square(mmu, false), 
+		m_MasterBuffer(),
+		m_CH1Buffer(),
+		m_CH2Buffer()
 	{
 		mmu.RegisterOnWrite(this);
 
@@ -97,19 +103,31 @@ namespace Core
 		// only read the sample every (cpu frequency / 44100)
 		if (m_CycleCount >= 95)
 		{
-			m_File.samples[0].push_back(static_cast<float>(m_CH1_Square.m_CurrentSample * 10));
+			/*m_File.samples[0].push_back(static_cast<float>(m_CH1_Square.m_CurrentSample * 10));
 			if (m_File.samples[0].size() == 100000)
 			{
 				m_File.save(m_Filename);
-			}
+			}*/
 
-			m_Buffer[m_SampleCounter++] = (static_cast<float>(m_CH1_Square.m_CurrentSample * 5));
+			// check to see if audio channels are enabled
+			bool isCh1On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH1_ON);
+			bool isCh2On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH2_ON);
+
+			// get sample from each channel
+			float ch1Sample = isCh1On ? static_cast<float>(m_CH1_Square.m_CurrentSample * 1) : 0;
+			float ch2Sample = isCh2On ? static_cast<float>(m_CH2_Square.m_CurrentSample * 1) : 0;
+
+			// add samples to audio buffers
+			m_CH1Buffer[m_SampleCounter] = ch1Sample;
+			m_CH2Buffer[m_SampleCounter] = ch2Sample;
+			m_MasterBuffer[m_SampleCounter] = ch1Sample + ch2Sample;
+
+			m_SampleCounter++;
 
 			if (m_SampleCounter == SAMPLE_SIZE)
 			{
 				m_SampleCounter = 0;
-
-				SDL_QueueAudio(m_SDLAudioDevice, m_Buffer, sizeof(float) * SAMPLE_SIZE);
+				
 				Uint32 queuedBytes = SDL_GetQueuedAudioSize(m_SDLAudioDevice);
 				if (queuedBytes == 0) {
 					// The audio queue is empty
@@ -118,8 +136,12 @@ namespace Core
 				}
 				else
 				{
-					Logger::Instance().Warning(Core::Domain::APU, "Queue is not empty!");
+					std::ostringstream stream;
+					stream << "Audio Queued Bytes: " << queuedBytes;
+					Logger::Instance().Info(Core::Domain::APU, stream.str());
 				}
+
+				SDL_QueueAudio(m_SDLAudioDevice, m_MasterBuffer, sizeof(float) * SAMPLE_SIZE);
 			}
 			m_CycleCount = 0;
 		}
@@ -193,5 +215,20 @@ namespace Core
 			//stream[i + 1] = static_cast<uint8_t>((intSample >> 8) & 0xFF);  // High byte 
 
 		}
+	}
+
+	float* Apu::GetMasterAudioBuffer()
+	{
+		return m_MasterBuffer;
+	}
+
+	float* Apu::GetCh1AudioBuffer()
+	{
+		return m_CH1Buffer;
+	}
+
+	float* Apu::GetCh2AudioBuffer()
+	{
+		return m_CH2Buffer;
 	}
 }

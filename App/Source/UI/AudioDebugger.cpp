@@ -1,5 +1,6 @@
 #include "AudioDebugger.h"
 #include "EventManager.h"
+#include "Core\Defines.h"
 
 namespace App
 {
@@ -64,9 +65,14 @@ namespace App
 		};
 		ImGui::PlotLines("WAVE RAM", arr, IM_ARRAYSIZE(arr), 0, "", 0.0f, 15.0f, ImVec2(0.0f, 40.f));
 
-		uint8_t testfull = m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE);
-		uint8_t test = m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE) & 0x0F;
-		uint8_t test1 = (m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE) & 0xF0) >> 4;
+		float* masterBuffer = m_GameBoy->m_APU.GetMasterAudioBuffer();
+		ImGui::PlotLines("Master", masterBuffer, Core::AUDIO_SAMPLE_SIZE, 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
+
+		float* ch1Buffer = m_GameBoy->m_APU.GetCh1AudioBuffer();
+		ImGui::PlotLines("CH1 - Square", ch1Buffer, Core::AUDIO_SAMPLE_SIZE, 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
+		
+		float* ch2Buffer = m_GameBoy->m_APU.GetCh2AudioBuffer();
+		ImGui::PlotLines("CH2 - Square", ch2Buffer, Core::AUDIO_SAMPLE_SIZE, 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
 	}
 
 	void AudioDebugger::OnEvent(Event event)

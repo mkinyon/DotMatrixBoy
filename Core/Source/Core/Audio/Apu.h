@@ -17,6 +17,10 @@ namespace Core
 		void Clock();
 		void FeedAudioBuffer(uint8_t* stream, int len);
 
+		float* GetMasterAudioBuffer();
+		float* GetCh1AudioBuffer();
+		float* GetCh2AudioBuffer();
+
 	private:
 		void OnWrite(uint16_t address, uint8_t value);
 		void SquareWaveTest(uint8_t* stream, int len);
@@ -38,8 +42,12 @@ namespace Core
 		const int m_NumChannels = 1;    // Adjust as needed (1 for mono, 2 for stereo, etc.)
 
 		SDL_AudioDeviceID m_SDLAudioDevice;
-		float m_Buffer[4096] = { 0 };
+
+		float m_MasterBuffer[AUDIO_SAMPLE_SIZE] = { 0 };
+		float m_CH1Buffer[AUDIO_SAMPLE_SIZE] = { 0 };
+		float m_CH2Buffer[AUDIO_SAMPLE_SIZE] = { 0 };
+
 		int m_SampleCounter = 0;
-		const int SAMPLE_SIZE = 4096;
+		const int SAMPLE_SIZE = AUDIO_SAMPLE_SIZE;
 	};
 }
