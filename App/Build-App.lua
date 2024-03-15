@@ -30,8 +30,10 @@ project "App"
 
     -- imgui file browser
     "../ThirdParty/imgui-filebrowser/imfilebrowser.h",
-}
+    }
    
+
+    defines { "_CRT_SECURE_NO_WARNINGS" }
 
    includedirs
    {

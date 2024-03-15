@@ -12,6 +12,8 @@ project "Core"
       "Source"
    }
 
+   defines { "_CRT_SECURE_NO_WARNINGS" }
+
    targetdir ("../Binaries/" .. OutputDir .. "/%{prj.name}")
    objdir ("../Binaries/Intermediates/" .. OutputDir .. "/%{prj.name}")
 

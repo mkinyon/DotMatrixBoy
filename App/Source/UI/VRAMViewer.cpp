@@ -159,8 +159,8 @@ namespace App
 
 			for (int row = 0; row < 40; row++)
 			{
-				float startX = (entries[row].tileIndex * 8) % 128;
-				float startY = ((entries[row].tileIndex * 8) / 128) * 8;
+				float startX = static_cast<float>((entries[row].tileIndex * 8) % 128);
+				float startY = static_cast<float>(((entries[row].tileIndex * 8) / 128) * 8);
 
 				ImVec2 uvStart = ImVec2(startX / 128.0f, startY / 192.0f);
 				ImVec2 uvEnd = ImVec2((startX + 8) / 128.0f, (startY + 8) / 192.0f);
