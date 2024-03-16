@@ -1,10 +1,10 @@
 
 #include "Apu.h"
-#include "..\Defines.h"
+#include "../Defines.h"
 #include <stdint.h>
 #include "../../../../ThirdParty/SDL2/include/SDL_audio.h"
 #include "../../../../ThirdParty/SDL2/include/SDL.h"
-#include "..\Logger.h"
+#include "../Logger.h"
 
 
 namespace Core
@@ -15,12 +15,10 @@ namespace Core
 		m_CH2_Square(mmu, false), 
 		m_MasterBuffer(),
 		m_CH1Buffer(),
-		m_CH2Buffer()
+		m_CH2Buffer(),
+		m_SDLAudioDevice()
 	{
 		mmu.RegisterOnWrite(this);
-
-		m_File.setSampleRate(m_SampleRate);
-		m_File.setAudioBufferSize(m_NumChannels, 100000);
 
 		// Setup audio
 		if (SDL_Init(SDL_INIT_AUDIO) < 0)
@@ -33,14 +31,15 @@ namespace Core
 		SDL_memset(&want, 0, sizeof(want));
 		want.freq = 44100;
 		want.format = AUDIO_F32SYS;
-		want.channels = 1;
-		want.samples = SAMPLE_SIZE;
-		want.callback = NULL;
-		want.userdata = this;
+		want.channels = 2;
+		want.samples = 1024;
+
+		SDL_setenv("SDL_AUDIODRIVER", "directsound", 1);
+		//SDL_setenv("SDL_AUDIODRIVER", "disk", 1);
+		SDL_Init(SDL_INIT_AUDIO);
 
 		m_SDLAudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
 		SDL_PauseAudioDevice(m_SDLAudioDevice, 0);  // Start audio playback
-
 	}
 
 	Apu::~Apu() {}
@@ -103,47 +102,44 @@ namespace Core
 		// only read the sample every (cpu frequency / 44100)
 		if (m_CycleCount >= 95)
 		{
-			/*m_File.samples[0].push_back(static_cast<float>(m_CH1_Square.m_CurrentSample * 10));
-			if (m_File.samples[0].size() == 100000)
-			{
-				m_File.save(m_Filename);
-			}*/
-
 			// check to see if audio channels are enabled
 			bool isCh1On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH1_ON);
 			bool isCh2On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH2_ON);
 
 			// get sample from each channel
-			float ch1Sample = isCh1On ? static_cast<float>(m_CH1_Square.m_CurrentSample * 1) : 0;
-			float ch2Sample = isCh2On ? static_cast<float>(m_CH2_Square.m_CurrentSample * 1) : 0;
+			float ch1Sample = true ? static_cast<float>(m_CH1_Square.m_CurrentSample * 1) : 0;
+			float ch2Sample = true ? static_cast<float>(m_CH2_Square.m_CurrentSample * 1) : 0;
 
 			// add samples to audio buffers
-			m_CH1Buffer[m_SampleCounter] = ch1Sample;
-			m_CH2Buffer[m_SampleCounter] = ch2Sample;
-			m_MasterBuffer[m_SampleCounter] = ch1Sample + ch2Sample;
+			// todo: we push twice.. once for left speaker, once for right speaker
+			//			need to add stereo support
+			m_CH1Buffer.push_back(ch1Sample);
+			m_CH1Buffer.push_back(ch1Sample);
 
-			m_SampleCounter++;
+			m_CH2Buffer.push_back(ch2Sample);
+			m_CH2Buffer.push_back(ch2Sample);
 
-			if (m_SampleCounter == SAMPLE_SIZE)
-			{
-				m_SampleCounter = 0;
-				
-				Uint32 queuedBytes = SDL_GetQueuedAudioSize(m_SDLAudioDevice);
-				if (queuedBytes == 0) {
-					// The audio queue is empty
-					// You may want to enqueue more audio samples
-					Logger::Instance().Warning(Core::Domain::APU, "Queue is empty!");
-				}
-				else
-				{
-					std::ostringstream stream;
-					stream << "Audio Queued Bytes: " << queuedBytes;
-					Logger::Instance().Info(Core::Domain::APU, stream.str());
-				}
-
-				SDL_QueueAudio(m_SDLAudioDevice, m_MasterBuffer, sizeof(float) * SAMPLE_SIZE);
-			}
+			m_MasterBuffer.push_back(ch1Sample + ch2Sample);
+			m_MasterBuffer.push_back(ch1Sample + ch2Sample);
+			
 			m_CycleCount = 0;
+		}
+
+		if (m_MasterBuffer.size() >= 2048)
+		{
+			SDL_QueueAudio(m_SDLAudioDevice, m_MasterBuffer.data(), static_cast<Uint32>(m_MasterBuffer.size() * 4));
+
+			m_CH1Buffer.clear();
+			m_CH2Buffer.clear();
+			m_MasterBuffer.clear();
+
+
+			Uint32 queuedBytes = SDL_GetQueuedAudioSize(m_SDLAudioDevice);
+			std::ostringstream stream;
+			stream << "Audio Queued Bytes[End]: " << queuedBytes;
+			Logger::Instance().Info(Core::Domain::APU, stream.str());
+
+			//while (SDL_GetQueuedAudioSize(m_SDLAudioDevice) > 4096 * 4) {}
 		}
 	}
 
@@ -169,6 +165,21 @@ namespace Core
 		}*/
 	}
 
+	std::vector<float> Apu::GetMasterAudioBuffer()
+	{
+		return m_MasterBuffer;
+	}
+
+	std::vector<float> Apu::GetCh1AudioBuffer()
+	{
+		return m_CH1Buffer;
+	}
+
+	std::vector<float> Apu::GetCh2AudioBuffer()
+	{
+		return m_CH2Buffer;
+	}
+
 	void Apu::SquareWaveTest(uint8_t* stream, int len)
 	{
 		// generating a square wave
@@ -176,7 +187,6 @@ namespace Core
 		static double time = 0.0;
 		const double freq = 440; // static_cast<double>(mmu.Read(HW_NR12_SOUND_CHANNEL_1_VOL_ENVELOPE));
 		const double amplitude = 10;
-
 
 		for (int i = 0; i < len; ++i)
 		{
@@ -197,7 +207,8 @@ namespace Core
 			}
 
 			time += 1.0 / sampleRate;
-			if (time >= 1.0 / freq) {
+			if (time >= 1.0 / freq) 
+			{
 				time -= 1.0 / freq;
 			}
 		}
@@ -213,22 +224,6 @@ namespace Core
 
 			//stream[i] = static_cast<uint8_t>(intSample & 0xFF);
 			//stream[i + 1] = static_cast<uint8_t>((intSample >> 8) & 0xFF);  // High byte 
-
 		}
-	}
-
-	float* Apu::GetMasterAudioBuffer()
-	{
-		return m_MasterBuffer;
-	}
-
-	float* Apu::GetCh1AudioBuffer()
-	{
-		return m_CH1Buffer;
-	}
-
-	float* Apu::GetCh2AudioBuffer()
-	{
-		return m_CH2Buffer;
 	}
 }

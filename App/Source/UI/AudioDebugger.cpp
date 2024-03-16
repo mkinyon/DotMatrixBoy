@@ -1,6 +1,7 @@
 #include "AudioDebugger.h"
 #include "EventManager.h"
 #include "Core\Defines.h"
+#include <vector>
 
 namespace App
 {
@@ -14,6 +15,58 @@ namespace App
 
 	void AudioDebugger::RenderContent()
 	{
+		ImGui::SeparatorText("Master Mix");
+		bool masterEnabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_AUDIO_ON); ImGui::Checkbox("Enabled", &masterEnabled);
+
+		std::vector<float> masterBuffer = m_GameBoy->m_APU.GetMasterAudioBuffer();
+		ImGui::PlotLines("Master", masterBuffer.data(), masterBuffer.size(), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
+
+
+		ImGui::SeparatorText("Channel 1 - Square");
+		bool ch1Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_CH1_ON); ImGui::Checkbox("Enabled", &ch1Enabled);
+
+		std::vector<float> ch1Buffer = m_GameBoy->m_APU.GetCh1AudioBuffer();
+		ImGui::PlotLines("CH1 - Square", ch1Buffer.data(), ch1Buffer.size(), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
+
+
+		ImGui::SeparatorText("Channel 2 - Square");
+		bool ch2Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_CH2_ON); ImGui::Checkbox("Enabled", &ch2Enabled);
+
+		std::vector<float> ch2Buffer = m_GameBoy->m_APU.GetCh2AudioBuffer();
+		ImGui::PlotLines("CH2 - Square", ch2Buffer.data(), ch1Buffer.size(), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
+
+
+		ImGui::SeparatorText("Channel 3 - Wave");
+		bool ch3Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_CH3_ON); ImGui::Checkbox("Enabled", &ch3Enabled);
+
+		// TODO: Need to fix this abomination
+		float arr[] =
+		{
+			static_cast<float>(m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE) & 0x0F),
+			static_cast<float>((m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE) & 0xF0) >> 4),
+			static_cast<float>(m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 1) & 0x0F),
+			static_cast<float>((m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 1) & 0xF0) >> 4),
+			static_cast<float>(m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 2) & 0x0F),
+			static_cast<float>((m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 2) & 0xF0) >> 4),
+			static_cast<float>(m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 3) & 0x0F),
+			static_cast<float>((m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 3) & 0xF0) >> 4),
+			static_cast<float>(m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 4) & 0x0F),
+			static_cast<float>((m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 4) & 0xF0) >> 4),
+			static_cast<float>(m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 5) & 0x0F),
+			static_cast<float>((m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 5) & 0xF0) >> 4),
+			static_cast<float>(m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 6) & 0x0F),
+			static_cast<float>((m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 6) & 0xF0) >> 4),
+			static_cast<float>(m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 7) & 0x0F),
+			static_cast<float>((m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 7) & 0xF0) >> 4),
+			static_cast<float>(m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 8) & 0x0F),
+			static_cast<float>((m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 8) & 0xF0) >> 4)
+		};
+		ImGui::PlotLines("WAVE RAM", arr, IM_ARRAYSIZE(arr), 0, "", 0.0f, 15.0f, ImVec2(0.0f, 40.f));
+
+		ImGui::SeparatorText("Channel 4 - Noise");
+		bool ch4Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_CH4_ON); ImGui::Checkbox("Enabled", &ch4Enabled);
+
+
 		ImGui::SeparatorText("Registers");
 
 		// CPU Info
@@ -39,40 +92,7 @@ namespace App
 		ImGui::Text("NR51 Sound Panning: $%02x", m_GameBoy->m_MMU.Read(Core::HW_NR51_SOUND_PANNING));
 		ImGui::Text("NR52 Sound On/Off: $%02x", m_GameBoy->m_MMU.Read(Core::HW_NR52_SOUND_TOGGLE));
 		ImGui::Text("");
-		ImGui::SeparatorText("Waveforms");
-
-		// TODO: Need to fix this abomination
-		float arr[] =
-		{
-			static_cast<float>(  m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE) & 0x0F			  ),
-			static_cast<float>( (m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE) & 0xF0) >> 4	  ),
-			static_cast<float>(  m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 1) & 0x0F		  ),
-			static_cast<float>( (m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 1) & 0xF0) >> 4 ),
-			static_cast<float>(  m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 2) & 0x0F		  ),
-			static_cast<float>( (m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 2) & 0xF0) >> 4 ),
-			static_cast<float>(  m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 3) & 0x0F		  ),
-			static_cast<float>( (m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 3) & 0xF0) >> 4 ),
-			static_cast<float>(  m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 4) & 0x0F		  ),
-			static_cast<float>( (m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 4) & 0xF0) >> 4 ),
-			static_cast<float>(  m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 5) & 0x0F		  ),
-			static_cast<float>( (m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 5) & 0xF0) >> 4 ),
-			static_cast<float>(  m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 6) & 0x0F		  ),
-			static_cast<float>( (m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 6) & 0xF0) >> 4 ),
-			static_cast<float>(  m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 7) & 0x0F		  ),
-			static_cast<float>( (m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 7) & 0xF0) >> 4 ),
-			static_cast<float>(  m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 8) & 0x0F		  ),
-			static_cast<float>( (m_GameBoy->m_MMU.Read(Core::HW_WAVRAM_WAVEFORM_STORAGE + 8) & 0xF0) >> 4 )
-		};
-		ImGui::PlotLines("WAVE RAM", arr, IM_ARRAYSIZE(arr), 0, "", 0.0f, 15.0f, ImVec2(0.0f, 40.f));
-
-		float* masterBuffer = m_GameBoy->m_APU.GetMasterAudioBuffer();
-		ImGui::PlotLines("Master", masterBuffer, Core::AUDIO_SAMPLE_SIZE, 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
-
-		float* ch1Buffer = m_GameBoy->m_APU.GetCh1AudioBuffer();
-		ImGui::PlotLines("CH1 - Square", ch1Buffer, Core::AUDIO_SAMPLE_SIZE, 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
-		
-		float* ch2Buffer = m_GameBoy->m_APU.GetCh2AudioBuffer();
-		ImGui::PlotLines("CH2 - Square", ch2Buffer, Core::AUDIO_SAMPLE_SIZE, 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
+	
 	}
 
 	void AudioDebugger::OnEvent(Event event)
