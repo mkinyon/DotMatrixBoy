@@ -15,16 +15,16 @@ namespace App
 
 	void AudioDebugger::RenderContent()
 	{
-		ImGui::Text("RingBuffer: %d", m_GameBoy->m_APU.GetRingBufferSize());
+		ImGui::Text("Ring Buffer: %d", m_GameBoy->m_APU.GetRingBufferSize());
 
 		ImGui::SeparatorText("Master Mix");
 		bool masterEnabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_AUDIO_ON); ImGui::Checkbox("Enabled", &masterEnabled);
 
-		//std::vector<float> masterBuffer = m_GameBoy->m_APU.GetMasterAudioBuffer();
-		//ImGui::PlotLines("Master", masterBuffer.data(), masterBuffer.size(), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
+		std::vector<float> masterBuffer = m_GameBoy->m_APU.GetMasterAudioBuffer();
+		ImGui::PlotLines("Master", masterBuffer.data(), masterBuffer.size(), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
 
 
-		/*ImGui::SeparatorText("Channel 1 - Square");
+		ImGui::SeparatorText("Channel 1 - Square");
 		bool ch1Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_CH1_ON); ImGui::Checkbox("Enabled", &ch1Enabled);
 
 		std::vector<float> ch1Buffer = m_GameBoy->m_APU.GetCh1AudioBuffer();
@@ -35,11 +35,11 @@ namespace App
 		bool ch2Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_CH2_ON); ImGui::Checkbox("Enabled", &ch2Enabled);
 
 		std::vector<float> ch2Buffer = m_GameBoy->m_APU.GetCh2AudioBuffer();
-		ImGui::PlotLines("CH2 - Square", ch2Buffer.data(), ch1Buffer.size(), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
+		ImGui::PlotLines("CH2 - Square", ch2Buffer.data(), ch2Buffer.size(), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
 
 
 		ImGui::SeparatorText("Channel 3 - Wave");
-		bool ch3Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_CH3_ON); ImGui::Checkbox("Enabled", &ch3Enabled);*/
+		bool ch3Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_CH3_ON); ImGui::Checkbox("Enabled", &ch3Enabled);
 
 		// TODO: Need to fix this abomination
 		float arr[] =

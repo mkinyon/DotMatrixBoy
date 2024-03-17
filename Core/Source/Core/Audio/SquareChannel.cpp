@@ -6,7 +6,13 @@ namespace Core
 {
 	SquareChannel::SquareChannel(Mmu& mmu, bool isChannel1) : m_MMU(mmu)
 	{
-		this->m_IsChannel1 = isChannel1;
+		bool m_HasSweep = isChannel1;
+		m_SoundControlFlag = isChannel1 ? NR52_CH1_ON : NR52_CH2_ON;
+		m_DataAddr = isChannel1 ? HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH : HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH;
+		m_FreqLowAddr = isChannel1 ? HW_NR13_SOUND_CHANNEL_1_PERIOD_LOW : HW_NR13_SOUND_CHANNEL_1_PERIOD_LOW;
+		m_LengthDutyAddr = isChannel1 ? HW_NR11_SOUND_CHANNEL_1_LEN_TIMER : HW_NR21_SOUND_CHANNEL_2_LEN_TIMER;
+		m_EvenlopeAddr = isChannel1 ? HW_NR12_SOUND_CHANNEL_1_VOL_ENVELOPE : HW_NR22_SOUND_CHANNEL_2_VOL_ENVELOPE;
+		m_SweepAddr = isChannel1 ? HW_NR10_SOUND_CHANNEL_1_SWEEP : 0;
 	}
 
 	SquareChannel::~SquareChannel() {}
@@ -33,13 +39,40 @@ namespace Core
 			m_LengthCounter--;
 			if (m_LengthCounter == 0) {
 				m_IsActive = false;	// Disable channel
+				m_MMU.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, m_SoundControlFlag, false);
 			}
 		}
 	}
 
 	void SquareChannel::SweepClock()
 	{
+		if (sweepTime == 0) return;
 
+		if (elaspsedSweepTime != sweepTime) elaspsedSweepTime++;
+		if (elaspsedSweepTime == sweepTime)
+		{
+			int8_t sweepCorrection = isSweepDecreasing ? -1 : 1;
+			uint8_t sweepChange = (m_CurrentFrequency >> sweepShift) * sweepCorrection;
+
+			// overflow on decrease - do nothing
+			if (isSweepDecreasing && sweepChange > m_CurrentFrequency)
+			{
+				elaspsedSweepTime = 0;
+			}
+			// overflow on increase - stop channel
+			else if (!isSweepDecreasing && sweepChange + m_CurrentFrequency > 2047)
+			{
+				m_IsActive = false;
+			}
+			else
+			{
+				m_CurrentFrequency += sweepChange;
+				m_CycleSampleUpdate = (2048 - m_CurrentFrequency) * 4;
+				m_CycleCount = 0;
+				elaspsedSweepTime = 0;
+				SetFrequency(m_CurrentFrequency);
+			}
+		}
 	}
 
 	void SquareChannel::EnvelopeClock()
@@ -67,22 +100,45 @@ namespace Core
 		m_LengthEnable = m_MMU.ReadRegisterBit(m_DataAddr, NR14_LEN_ENABLE);
 	}
 
-	uint16_t SquareChannel::GetFrequency()
+	uint16_t SquareChannel::GetFrequency() const
 	{
+		// The frequency (period) is 11 bits is stored at two addresses. The
+		// low 8 bits are stored in FF13 (ch1) and FF18 (ch2). The
+		// upper 3 bits are stored in bits 0, 1, 2 at FF14 (ch1) and
+		// FF19 (ch2).
+
+		// the upper 3 bits
 		uint8_t frequencyData = m_MMU.Read(m_DataAddr);
+
+		// the lower 8 bits
 		uint16_t frequency = m_MMU.Read(m_FreqLowAddr);
+
+		// combine them into 11 bits and store in a 16 bit variable
 		frequency |= (frequencyData & 0b111) << 8;
+
 		return frequency;
+	}
+
+	void SquareChannel::SetFrequency(uint16_t frequency)
+	{
+		// read upper three bits from frequency (period)
+		uint8_t frequencyData = m_MMU.Read(m_DataAddr);
+
+		// AND 0xF8 deletes old frequency from the data and 0x700 takes the upper 3 bits of the frequency
+		m_MMU.Write(m_DataAddr, (frequencyData & 0xF8) | ((frequency & 0x700) >> 8));
+
+		// write lower 8 bits
+		m_MMU.Write(m_FreqLowAddr, frequency & 0xFF);
 	}
 
 	void SquareChannel::UpdateSample()
 	{
-		uint8_t dutyValue = m_DutyCycleTable[m_SelectedDuty][m_SampleIndex];
-		m_CurrentSample = dutyValue;
+		m_CurrentSample = 0;
 
-		if (!m_IsActive)
+		if (m_IsActive)
 		{
-			m_CurrentSample = 0;
+			uint8_t dutyValue = m_DutyCycleTable[m_SelectedDuty][m_SampleIndex];
+			m_CurrentSample = dutyValue;
 		}
 	}
 }

@@ -107,7 +107,7 @@ namespace Core
 
             stream << message;
 
-            m_LogMessages.push_back({ severity, domain, stream.str() });
+            //m_LogMessages.push_back({ severity, domain, stream.str() });
 
             if (m_LogMessages.size() >= MAX_MESSAGES)
             {

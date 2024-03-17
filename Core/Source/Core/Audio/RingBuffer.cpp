@@ -25,6 +25,9 @@ namespace Core
 
 		float data = m_Buffer[m_ReadIndex];
 		m_ReadIndex = (m_ReadIndex + 1) % m_Size;
+
+		m_NumOfElements = GetSize();
+
 		return data;
 	}
 
@@ -38,6 +41,8 @@ namespace Core
 		{
 			m_ReadIndex = (m_ReadIndex + 1) % m_Size;
 		}
+
+		m_NumOfElements = GetSize();
 	}
 
 	int RingBuffer::GetSize() const
@@ -49,6 +54,7 @@ namespace Core
 			// Adjust for wrap-around in ring buffer
 			size += m_Size;
 		}
+		
 		return size;
 	}
 }

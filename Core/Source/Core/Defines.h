@@ -210,7 +210,7 @@ namespace Core
 		APU Specific
 	*********************************************************************************************/
 
-	inline const uint8_t APU_DEFAULT_LENGTH = 0;
+	inline const uint8_t APU_DEFAULT_LENGTH = 64;
 	inline const unsigned int AUDIO_SAMPLE_SIZE = 4096;
 
 	// NR10: Channel 1 sweep

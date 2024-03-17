@@ -20,26 +20,26 @@ namespace Core
 	{
 		mmu.RegisterOnWrite(this);
 
-		//// Setup audio
-		//if (SDL_Init(SDL_INIT_AUDIO) < 0)
-		//{
-		//	// Handle SDL initialization failure
-		//	return;
-		//}
+		// Setup audio
+		if (SDL_Init(SDL_INIT_AUDIO) < 0)
+		{
+			// Handle SDL initialization failure
+			return;
+		}
 
-		//SDL_AudioSpec want, have;
-		//SDL_memset(&want, 0, sizeof(want));
-		//want.freq = 44100;
-		//want.format = AUDIO_F32SYS;
-		//want.channels = 2;
-		//want.samples = 1024;
+		SDL_AudioSpec want, have;
+		SDL_memset(&want, 0, sizeof(want));
+		want.freq = 44100;
+		want.format = AUDIO_F32SYS;
+		want.channels = 2;
+		want.samples = 1024;
 
 		//SDL_setenv("SDL_AUDIODRIVER", "directsound", 1);
-		////SDL_setenv("SDL_AUDIODRIVER", "disk", 1);
-		//SDL_Init(SDL_INIT_AUDIO);
+		//SDL_setenv("SDL_AUDIODRIVER", "disk", 1);
+		SDL_Init(SDL_INIT_AUDIO);
 
-		//m_SDLAudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
-		//SDL_PauseAudioDevice(m_SDLAudioDevice, 0);  // Start audio playback
+		m_SDLAudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+		SDL_PauseAudioDevice(m_SDLAudioDevice, 0);  // Start audio playback
 	}
 
 	Apu::~Apu() {}
@@ -107,12 +107,12 @@ namespace Core
 			bool isCh2On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH2_ON);
 
 			// get sample from each channel
-			float ch1Sample = true ? static_cast<float>(m_CH1_Square.m_CurrentSample * 1) : 0;
-			float ch2Sample = true ? static_cast<float>(m_CH2_Square.m_CurrentSample * 1) : 0;
+			float ch1Sample = isCh1On ? static_cast<float>(m_CH1_Square.m_CurrentSample * 1) : 0;
+			float ch2Sample = isCh2On ? static_cast<float>(m_CH2_Square.m_CurrentSample * 1) : 0;
 
 			// add samples to audio buffers
 			// todo: we push twice.. once for left speaker, once for right speaker
-			//			need to add stereo support
+			//	need to add stereo support
 			m_CH1Buffer.push_back(ch1Sample);
 			m_CH1Buffer.push_back(ch1Sample);
 
@@ -122,15 +122,15 @@ namespace Core
 			m_MasterBuffer.push_back(ch1Sample + ch2Sample);
 			m_MasterBuffer.push_back(ch1Sample + ch2Sample);
 
-			ringBuffer.Write(ch1Sample + ch2Sample);
-			ringBuffer.Write(ch1Sample + ch2Sample);
+			//ringBuffer.Write(ch1Sample + ch2Sample); // left
+			//ringBuffer.Write(ch1Sample + ch2Sample); // right
 			
 			m_CycleCount = 0;
 		}
 
-		if (m_MasterBuffer.size() >= 100)
+		if (m_MasterBuffer.size() >= 4096)
 		{
-			//SDL_QueueAudio(m_SDLAudioDevice, m_MasterBuffer.data(), static_cast<Uint32>(m_MasterBuffer.size() * 4));
+			SDL_QueueAudio(m_SDLAudioDevice, m_MasterBuffer.data(), static_cast<Uint32>(m_MasterBuffer.size() * 4));
 
 			m_CH1Buffer.clear();
 			m_CH2Buffer.clear();
@@ -219,10 +219,16 @@ namespace Core
 
 	void Apu::FeedAudioBuffer(uint8_t * stream, int len)
 	{
+		int samplesMissing = (len / 4) - ringBuffer.GetSize();
+		if (samplesMissing > 0)
+		{
+			// just here so it doesn't get optimized away
+			stream[0] = 0;
+		}
+
 		// The stream is just a pointer to an array of bytes. Since
 		// we are using 32 bit floats for our audio samples, we need
 		// to break the float into four distinct bytes
-
 		for (int i = 0; i < len; i += 4)
 		{
 			float sample = ringBuffer.Read();

@@ -12,7 +12,7 @@ namespace App
 		Window(int screenWidth, int screenHeight, const char* windowTitle, Core::GameBoy* gb);
 		~Window();
 
-		//std::mutex mutex;
+		std::mutex mutex;
 
 	public:
 		bool Initialize();

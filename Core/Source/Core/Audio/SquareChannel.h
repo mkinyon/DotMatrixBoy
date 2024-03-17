@@ -22,7 +22,8 @@ namespace Core
 
 	private:
 		void UpdateSample();
-		uint16_t GetFrequency();
+		uint16_t GetFrequency() const;
+		void SetFrequency(uint16_t frequency);
 
 	private:
 		Mmu& m_MMU;
@@ -44,14 +45,19 @@ namespace Core
 		uint8_t m_LengthLoad = 0;
 		uint8_t m_LengthCounter = 0;
 
+
+		uint8_t sweepShift = 0;
+		uint8_t sweepTime = 0;
+		uint8_t elaspsedSweepTime = 0;
+		bool isSweepDecreasing = false;
+
 		// channel 1 & 2 parameters
-		bool m_IsChannel1;
-		bool m_HasSweep = m_IsChannel1;
-		uint8_t  m_SoundControlFlag = m_IsChannel1 ?  NR52_CH1_ON: NR52_CH2_ON;
-		uint16_t m_DataAddr = m_IsChannel1 ? HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH : HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH;
-		uint16_t m_FreqLowAddr = m_IsChannel1 ? HW_NR13_SOUND_CHANNEL_1_PERIOD_LOW : HW_NR13_SOUND_CHANNEL_1_PERIOD_LOW;
-		uint16_t m_LengthDutyAddr = m_IsChannel1 ? HW_NR11_SOUND_CHANNEL_1_LEN_TIMER : HW_NR21_SOUND_CHANNEL_2_LEN_TIMER;
-		uint16_t m_EvenlopeAddr = m_IsChannel1 ? HW_NR12_SOUND_CHANNEL_1_VOL_ENVELOPE : HW_NR22_SOUND_CHANNEL_2_VOL_ENVELOPE;
-		uint16_t m_SweepAddr = m_IsChannel1 ? HW_NR10_SOUND_CHANNEL_1_SWEEP : 0;
+		bool m_HasSweep = false;
+		uint8_t  m_SoundControlFlag = 0;
+		uint16_t m_DataAddr = 0;
+		uint16_t m_FreqLowAddr = 0;
+		uint16_t m_LengthDutyAddr = 0;
+		uint16_t m_EvenlopeAddr = 0;
+		uint16_t m_SweepAddr = 0;
 	};
 }

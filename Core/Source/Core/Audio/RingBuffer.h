@@ -16,7 +16,8 @@ namespace Core
 		int GetSize() const;
 
 	private:
-		uint32_t m_Size = 1024 * 1024;
+		uint32_t m_Size = 8192 * 2;
+		int m_NumOfElements = 0;
 		std::vector<float> m_Buffer;
 		uint32_t m_ReadIndex = 0;
 		uint32_t m_WriteIndex = 0;

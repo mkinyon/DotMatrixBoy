@@ -62,6 +62,7 @@ namespace Core
 	{
 		if (!m_IsPaused)
 		{
+			// 97280 = 95 cycles per sample * 1024 samples to fill
 			for (int i = 0; i < 97280; i++)
 			{
 				ClockSystems();
