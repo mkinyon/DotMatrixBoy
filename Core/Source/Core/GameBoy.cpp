@@ -11,6 +11,8 @@ namespace Core
 		m_CPU.Reset(enableBootRom);
 	}
 
+	// this is deprecated since we are using the audio callback 
+	// to clock the gameboy
 	void GameBoy::Clock(float elapsedTimeMS)
 	{
 		if (!m_IsPaused)
@@ -44,8 +46,8 @@ namespace Core
 		do
 		{
 			ClockSystems();
-
-		} while (!m_CPU.m_InstructionCompleted);
+		} 
+		while (!m_CPU.m_InstructionCompleted);
 	}
 
 	void GameBoy::AdvanceFrame()
@@ -58,6 +60,14 @@ namespace Core
 
 	void GameBoy::FeedAudioBuffer(uint8_t* stream, int len)
 	{
+		if (!m_IsPaused)
+		{
+			for (int i = 0; i < 97280; i++)
+			{
+				ClockSystems();
+			}
+		}
+
 		m_APU.FeedAudioBuffer(stream, len);
 	}
 

@@ -21,6 +21,7 @@ namespace Core
 
 		void SquareWaveTest(uint8_t* stream, int len);
 		void FeedAudioBuffer(uint8_t* stream, int len);
+		int GetRingBufferSize() const;
 
 	private:
 		void OnWrite(uint16_t address, uint8_t value);
@@ -36,6 +37,7 @@ namespace Core
 
 		SDL_AudioDeviceID m_SDLAudioDevice;
 
+		RingBuffer ringBuffer;
 		std::vector<float> m_MasterBuffer;
 		std::vector<float> m_CH1Buffer;
 		std::vector<float> m_CH2Buffer;

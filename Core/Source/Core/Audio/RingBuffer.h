@@ -13,6 +13,7 @@ namespace Core
 		void Reset();
 		float Read();
 		void Write(float data);
+		int GetSize() const;
 
 	private:
 		uint32_t m_Size = 1024 * 1024;

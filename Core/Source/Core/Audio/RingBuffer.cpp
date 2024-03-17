@@ -39,4 +39,16 @@ namespace Core
 			m_ReadIndex = (m_ReadIndex + 1) % m_Size;
 		}
 	}
+
+	int RingBuffer::GetSize() const
+	{
+		// Calculate the difference between write and read indices
+		int size = m_WriteIndex - m_ReadIndex;
+		if (size < 0)
+		{
+			// Adjust for wrap-around in ring buffer
+			size += m_Size;
+		}
+		return size;
+	}
 }

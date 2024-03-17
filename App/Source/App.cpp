@@ -25,7 +25,7 @@ Core::GameBoy* gb;
 Core::Cartridge* cart;
 bool isPaused = true;
 bool enableBootRom = false;
-const char* romName = "../Roms/kirby.gb";
+const char* romName = "../Roms/tetris.gb";
 
 
 
@@ -58,7 +58,7 @@ int main(int argv, char** args)
     {
         window->Update(isRunning);
 
-        gb->Clock((float)std::min((int)window->GetElapsedTime(), 16 ));
+        //gb->Clock((float)std::min((int)window->GetElapsedTime(), 16 ));
 
         window->BeginRender();
 
@@ -96,7 +96,6 @@ int main(int argv, char** args)
     delete cart;
     delete gb;
     delete window;
-
 
     _CrtDumpMemoryLeaks();
 
