@@ -2,6 +2,7 @@
 
 #include "..\Mmu.h"
 #include "SquareChannel.h"
+#include "NoiseChannel.h"
 #include "AudioFile.h"
 #include "RingBuffer.h"
 #include "../../../../ThirdParty/SDL2/include/SDL_audio.h"
@@ -18,6 +19,8 @@ namespace Core
 		std::vector<float> GetMasterAudioBuffer();
 		std::vector<float> GetCh1AudioBuffer();
 		std::vector<float> GetCh2AudioBuffer();
+		std::vector<float> GetCh3AudioBuffer();
+		std::vector<float> GetCh4AudioBuffer();
 
 		void SquareWaveTest(uint8_t* stream, int len);
 		void FeedAudioBuffer(uint8_t* stream, int len);
@@ -30,6 +33,7 @@ namespace Core
 		Mmu& m_MMU;
 		SquareChannel m_CH1_Square;
 		SquareChannel m_CH2_Square;
+		NoiseChannel m_CH4_Noise;
 
 		int m_CycleCount = 0;
 		uint8_t m_FrameSequencer = 0;
@@ -41,6 +45,8 @@ namespace Core
 		std::vector<float> m_MasterBuffer;
 		std::vector<float> m_CH1Buffer;
 		std::vector<float> m_CH2Buffer;
+		std::vector<float> m_CH3Buffer;
+		std::vector<float> m_CH4Buffer;
 
 		const int SAMPLE_SIZE = AUDIO_SAMPLE_SIZE;
 	};

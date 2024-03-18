@@ -35,32 +35,37 @@ namespace Core
 
 	void SquareChannel::LengthClock()
 	{
-		if (m_LengthCounter > 0 && m_LengthEnable) {
-			m_LengthCounter--;
-			if (m_LengthCounter == 0) {
-				m_IsActive = false;	// Disable channel
-				m_MMU.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, m_SoundControlFlag, false);
-			}
+		m_IsActive = m_LengthComp.Clock();
+		if (!m_IsActive)
+		{
+			m_MMU.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, m_SoundControlFlag, false);
 		}
 	}
 
 	void SquareChannel::SweepClock()
 	{
-		if (sweepTime == 0) return;
-
-		if (elaspsedSweepTime != sweepTime) elaspsedSweepTime++;
-		if (elaspsedSweepTime == sweepTime)
+		if (m_SweepTime == 0)
 		{
-			int8_t sweepCorrection = isSweepDecreasing ? -1 : 1;
-			uint8_t sweepChange = (m_CurrentFrequency >> sweepShift) * sweepCorrection;
+			return;
+		}
+
+		if (m_ElaspsedSweepTime != m_SweepTime)
+		{
+			m_ElaspsedSweepTime++;
+		}
+			
+		if (m_ElaspsedSweepTime == m_SweepTime)
+		{
+			int8_t sweepCorrection = m_IsSweepDecreasing ? -1 : 1;
+			uint8_t sweepChange = (m_CurrentFrequency >> m_SweepShift) * sweepCorrection;
 
 			// overflow on decrease - do nothing
-			if (isSweepDecreasing && sweepChange > m_CurrentFrequency)
+			if (m_IsSweepDecreasing && sweepChange > m_IsSweepDecreasing)
 			{
-				elaspsedSweepTime = 0;
+				m_ElaspsedSweepTime = 0;
 			}
 			// overflow on increase - stop channel
-			else if (!isSweepDecreasing && sweepChange + m_CurrentFrequency > 2047)
+			else if (!m_IsSweepDecreasing && sweepChange + m_CurrentFrequency > 2047)
 			{
 				m_IsActive = false;
 			}
@@ -69,7 +74,7 @@ namespace Core
 				m_CurrentFrequency += sweepChange;
 				m_CycleSampleUpdate = (2048 - m_CurrentFrequency) * 4;
 				m_CycleCount = 0;
-				elaspsedSweepTime = 0;
+				m_ElaspsedSweepTime = 0;
 				SetFrequency(m_CurrentFrequency);
 			}
 		}
@@ -77,7 +82,7 @@ namespace Core
 
 	void SquareChannel::EnvelopeClock()
 	{
-		
+		m_EnvelopeComp.Clock();
 	}
 
 	void SquareChannel::Trigger()
@@ -86,6 +91,18 @@ namespace Core
 		m_MMU.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, m_SoundControlFlag, true);
 
 		m_SelectedDuty = (m_MMU.Read(m_LengthDutyAddr) & 0b11000000) >> 6;
+		
+		// setup length
+		uint16_t length = APU_DEFAULT_LENGTH - (m_MMU.Read(m_LengthDutyAddr) & 0b111111);
+		bool lengthStop = m_MMU.ReadRegisterBit(m_DataAddr, NR14_LEN_ENABLE);
+		m_LengthComp.SetLength(length, lengthStop);
+
+		// setup envelope
+		m_EnvelopeComp.SetEnvelope(
+			m_MMU.Read(m_EvenlopeAddr) & 0x7, // grab bits 0, 1, 2
+			(m_MMU.Read(m_EvenlopeAddr) & 240) >> 4,
+			m_MMU.Read(m_EvenlopeAddr) & 8
+		);
 
 		// https://gbdev.gg8.se/wiki/articles/Gameboy_sound_hardware#Square_Wave
 		// a square channel's frequency timer period is set to (2048-frequency)*4
@@ -94,10 +111,16 @@ namespace Core
 		m_CycleCount = 0;
 		m_SampleIndex = 0;
 
-		// setup length
-		uint16_t initLength = APU_DEFAULT_LENGTH - (m_MMU.Read(m_LengthDutyAddr) & 0b111111);
-		m_LengthCounter = m_LengthCounter == 0 ? initLength : m_LengthCounter;
-		m_LengthEnable = m_MMU.ReadRegisterBit(m_DataAddr, NR14_LEN_ENABLE);
+		// setup sweep
+		if (m_HasSweep)
+		{
+			m_ElaspsedSweepTime = 0;
+
+			uint8_t sweepData = m_MMU.Read(m_SweepAddr);
+			m_SweepTime = (sweepData & 0x70) >> 0x4;
+			m_IsSweepDecreasing = sweepData & 0x8;
+			m_SweepShift = sweepData & 0x7;
+		}
 	}
 
 	uint16_t SquareChannel::GetFrequency() const
@@ -138,7 +161,12 @@ namespace Core
 		if (m_IsActive)
 		{
 			uint8_t dutyValue = m_DutyCycleTable[m_SelectedDuty][m_SampleIndex];
-			m_CurrentSample = dutyValue;
+			m_CurrentSample = dutyValue * m_EnvelopeComp.GetVolume();
 		}
+	}
+
+	uint8_t SquareChannel::GetCurrentSample()
+	{
+		return m_CurrentSample;
 	}
 }

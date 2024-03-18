@@ -65,9 +65,12 @@ namespace App
 		};
 		ImGui::PlotLines("WAVE RAM", arr, IM_ARRAYSIZE(arr), 0, "", 0.0f, 15.0f, ImVec2(0.0f, 40.f));
 
+
 		ImGui::SeparatorText("Channel 4 - Noise");
 		bool ch4Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_CH4_ON); ImGui::Checkbox("Enabled", &ch4Enabled);
 
+		std::vector<float> ch4Buffer = m_GameBoy->m_APU.GetCh4AudioBuffer();
+		ImGui::PlotLines("CH4 - Noise", ch4Buffer.data(), ch4Buffer.size(), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
 
 		ImGui::SeparatorText("Registers");
 

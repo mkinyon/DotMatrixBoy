@@ -1,7 +1,9 @@
 #pragma once
 
-#include "..\Mmu.h"
-#include "..\Defines.h"
+#include "../Mmu.h"
+#include "../Defines.h"
+#include "Envelope.h"
+#include "Length.h"
 
 namespace Core
 {
@@ -16,9 +18,7 @@ namespace Core
 		void SweepClock();
 		void EnvelopeClock();
 		void Trigger();
-
-	public:
-		uint8_t m_CurrentSample = 0;
+		uint8_t GetCurrentSample();
 
 	private:
 		void UpdateSample();
@@ -34,22 +34,19 @@ namespace Core
 		{0, 1, 1, 1, 1, 1, 1, 0}
 		};
 
-		bool m_IsActive = 0;
+		bool m_IsActive = false;
+		uint8_t m_CurrentSample = 0;
+
 		uint8_t m_SelectedDuty = 0;
 		uint16_t m_SampleIndex = 0;
 		uint16_t m_CycleSampleUpdate = 0;
 		uint16_t m_CurrentFrequency = 0;
 		uint16_t m_CycleCount = 0;
 
-		bool m_LengthEnable = false;
-		uint8_t m_LengthLoad = 0;
-		uint8_t m_LengthCounter = 0;
-
-
-		uint8_t sweepShift = 0;
-		uint8_t sweepTime = 0;
-		uint8_t elaspsedSweepTime = 0;
-		bool isSweepDecreasing = false;
+		uint8_t m_SweepShift = 0;
+		uint8_t m_SweepTime = 0;
+		uint8_t m_ElaspsedSweepTime = 0;
+		bool m_IsSweepDecreasing = false;
 
 		// channel 1 & 2 parameters
 		bool m_HasSweep = false;
@@ -59,5 +56,9 @@ namespace Core
 		uint16_t m_LengthDutyAddr = 0;
 		uint16_t m_EvenlopeAddr = 0;
 		uint16_t m_SweepAddr = 0;
+
+		// components
+		Envelope m_EnvelopeComp;
+		Length m_LengthComp;
 	};
 }

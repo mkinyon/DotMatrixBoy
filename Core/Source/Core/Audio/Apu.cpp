@@ -13,9 +13,12 @@ namespace Core
 		m_MMU(mmu), 
 		m_CH1_Square(mmu, true), 
 		m_CH2_Square(mmu, false), 
+		m_CH4_Noise(mmu),
 		m_MasterBuffer(),
 		m_CH1Buffer(),
 		m_CH2Buffer(),
+		m_CH3Buffer(),
+		m_CH4Buffer(),
 		m_SDLAudioDevice()
 	{
 		mmu.RegisterOnWrite(this);
@@ -62,6 +65,7 @@ namespace Core
 				case 0:
 					m_CH1_Square.LengthClock();
 					m_CH2_Square.LengthClock();
+					m_CH4_Noise.LengthClock();
 					break;
 				case 1:
 					break;
@@ -69,12 +73,14 @@ namespace Core
 					m_CH1_Square.SweepClock();
 					m_CH1_Square.LengthClock();
 					m_CH2_Square.LengthClock();
+					m_CH4_Noise.LengthClock();
 					break;
 				case 3:
 					break;
 				case 4:
 					m_CH1_Square.LengthClock();
 					m_CH2_Square.LengthClock();
+					m_CH4_Noise.LengthClock();
 					break;
 				case 5:
 					break;
@@ -82,10 +88,12 @@ namespace Core
 					m_CH1_Square.SweepClock();
 					m_CH1_Square.LengthClock();
 					m_CH2_Square.LengthClock();
+					m_CH4_Noise.LengthClock();
 					break;
 				case 7: 
 					m_CH1_Square.EnvelopeClock();
 					m_CH2_Square.EnvelopeClock();
+					m_CH4_Noise.EnvelopeClock();
 					break;
 			}
 
@@ -98,6 +106,7 @@ namespace Core
 
 		m_CH1_Square.Clock();
 		m_CH2_Square.Clock();
+		m_CH4_Noise.Clock();
 
 		// only read the sample every (cpu frequency / 44100)
 		if (m_CycleCount >= 95)
@@ -105,10 +114,12 @@ namespace Core
 			// check to see if audio channels are enabled
 			bool isCh1On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH1_ON);
 			bool isCh2On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH2_ON);
+			bool isCh4On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH4_ON);
 
 			// get sample from each channel
-			float ch1Sample = isCh1On ? static_cast<float>(m_CH1_Square.m_CurrentSample * 1) : 0;
-			float ch2Sample = isCh2On ? static_cast<float>(m_CH2_Square.m_CurrentSample * 1) : 0;
+			float ch1Sample = isCh1On ? static_cast<float>(m_CH1_Square.GetCurrentSample() * 0.1f) : 0;
+			float ch2Sample = isCh2On ? static_cast<float>(m_CH2_Square.GetCurrentSample() * 0.1f) : 0;
+			float ch4Sample = isCh4On ? static_cast<float>(m_CH4_Noise.GetCurrentSample() * 0.1f) : 0;
 
 			// add samples to audio buffers
 			// todo: we push twice.. once for left speaker, once for right speaker
@@ -119,8 +130,11 @@ namespace Core
 			m_CH2Buffer.push_back(ch2Sample);
 			m_CH2Buffer.push_back(ch2Sample);
 
-			m_MasterBuffer.push_back(ch1Sample + ch2Sample);
-			m_MasterBuffer.push_back(ch1Sample + ch2Sample);
+			m_CH4Buffer.push_back(ch4Sample);
+			m_CH4Buffer.push_back(ch4Sample);
+
+			m_MasterBuffer.push_back(ch1Sample + ch2Sample + ch4Sample);
+			m_MasterBuffer.push_back(ch1Sample + ch2Sample + ch4Sample);
 
 			//ringBuffer.Write(ch1Sample + ch2Sample); // left
 			//ringBuffer.Write(ch1Sample + ch2Sample); // right
@@ -134,6 +148,8 @@ namespace Core
 
 			m_CH1Buffer.clear();
 			m_CH2Buffer.clear();
+			m_CH3Buffer.clear();
+			m_CH4Buffer.clear();
 			m_MasterBuffer.clear();
 
 
@@ -150,22 +166,25 @@ namespace Core
 	{
 		if (address == HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH)
 		{
-			if (m_MMU.ReadRegisterBit(HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH, NR14_TRIGGER))
+			if (m_MMU.ReadRegisterBit(HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH, 0x80))
 			{
 				m_CH1_Square.Trigger();
 			}
 		}
 		if (address == HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH)
 		{
-			if (m_MMU.ReadRegisterBit(HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH, NR14_TRIGGER))
+			if (m_MMU.ReadRegisterBit(HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH, 0x80))
 			{
 				m_CH2_Square.Trigger();
 			}
 		}
-		/*if (address == HW_NR11_SOUND_CHANNEL_1_LEN_TIMER)
+		if (address == HW_NR44_SOUND_CHANNEL_4_CONTROL)
 		{
-			m_CH1_Square.lengthLoad =
-		}*/
+			if (m_MMU.ReadRegisterBit(HW_NR44_SOUND_CHANNEL_4_CONTROL, 0x80))
+			{
+				m_CH4_Noise.Trigger();
+			}
+		}
 	}
 
 	std::vector<float> Apu::GetMasterAudioBuffer()
@@ -181,6 +200,16 @@ namespace Core
 	std::vector<float> Apu::GetCh2AudioBuffer()
 	{
 		return m_CH2Buffer;
+	}
+
+	std::vector<float> Apu::GetCh3AudioBuffer()
+	{
+		return m_CH3Buffer;
+	}
+
+	std::vector<float> Apu::GetCh4AudioBuffer()
+	{
+		return m_CH4Buffer;
 	}
 
 	void Apu::SquareWaveTest(uint8_t* stream, int len)
