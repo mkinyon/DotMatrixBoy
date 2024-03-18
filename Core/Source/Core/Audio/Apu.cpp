@@ -24,6 +24,11 @@ namespace Core
 	{
 		mmu.RegisterOnWrite(this);
 
+		m_File.setSampleRate(41000);
+		m_File.setNumChannels(2);
+		m_File.setNumSamplesPerChannel(1200000);
+		m_File.setBitDepth(32);
+
 		// Setup audio
 		if (SDL_Init(SDL_INIT_AUDIO) < 0)
 		{
@@ -117,7 +122,7 @@ namespace Core
 		// only read the sample every (cpu frequency / 44100)
 		if (m_CycleCount >= 95)
 		{
-			float tempVolume = 0.01f;
+			float tempVolume = 1.0f;
 
 			// check to see if audio channels are enabled
 			bool isCh1On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH1_ON);
@@ -146,8 +151,20 @@ namespace Core
 			m_CH4Buffer.push_back(ch4Sample);
 			m_CH4Buffer.push_back(ch4Sample);
 
-			m_MasterBuffer.push_back(ch1Sample + ch2Sample + ch3Sample + ch4Sample);
-			m_MasterBuffer.push_back(ch1Sample + ch2Sample + ch3Sample + ch4Sample);
+			float leftCombined = (ch1Sample + ch2Sample + ch3Sample + ch4Sample) / 4;
+			float rightCombined = (ch1Sample + ch2Sample + ch3Sample + ch4Sample) / 4;
+
+			m_MasterBuffer.push_back((leftCombined) / 8);
+			m_MasterBuffer.push_back((rightCombined) / 8);
+
+			static int counter = 0;
+			m_File.samples[0].at(counter) = leftCombined;
+			m_File.samples[1].at(counter) = rightCombined;			
+			if (counter == 1200000 - 1)
+			{
+				m_File.save("output.wav");
+			}
+			counter++;
 
 			//ringBuffer.Write(ch1Sample + ch2Sample); // left
 			//ringBuffer.Write(ch1Sample + ch2Sample); // right

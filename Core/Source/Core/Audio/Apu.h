@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AudioFile.h"
 #include "..\Mmu.h"
 #include "SquareChannel.h"
 #include "NoiseChannel.h"
@@ -42,6 +43,7 @@ namespace Core
 
 		SDL_AudioDeviceID m_SDLAudioDevice;
 
+		AudioFile<float> m_File;
 		RingBuffer ringBuffer;
 		std::vector<float> m_MasterBuffer;
 		std::vector<float> m_CH1Buffer;
