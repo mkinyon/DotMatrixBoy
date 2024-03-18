@@ -3,7 +3,7 @@
 #include "..\Mmu.h"
 #include "SquareChannel.h"
 #include "NoiseChannel.h"
-#include "AudioFile.h"
+#include "WaveChannel.h"
 #include "RingBuffer.h"
 #include "../../../../ThirdParty/SDL2/include/SDL_audio.h"
 
@@ -33,6 +33,7 @@ namespace Core
 		Mmu& m_MMU;
 		SquareChannel m_CH1_Square;
 		SquareChannel m_CH2_Square;
+		WaveChannel m_CH3_Wave;
 		NoiseChannel m_CH4_Noise;
 
 		int m_CycleCount = 0;

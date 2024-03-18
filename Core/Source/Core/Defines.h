@@ -212,6 +212,15 @@ namespace Core
 
 	inline const uint8_t APU_DEFAULT_LENGTH = 64;
 	inline const unsigned int AUDIO_SAMPLE_SIZE = 4096;
+	inline const uint16_t AUDIO_WAVE_LENGTH = 256;
+
+	typedef enum
+	{
+		MUTE = 0,
+		LEVEL_100 = 1,
+		LEVEL_50 = 2,
+		LEVEL_25 = 3
+	} AUDIO_LEVEL;
 
 	// NR10: Channel 1 sweep
 	typedef enum

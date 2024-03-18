@@ -17,7 +17,8 @@
 #include "UI/MenuBar.h"
 #include "UI/VRAMViewer.h"
 
-
+#define NOMINMAX // needed to prevent the Windows.h header (as in microsoft) from replacing min/max 
+#include <algorithm>
 
 
 App::Window* window;
@@ -58,7 +59,7 @@ int main(int argv, char** args)
     {
         window->Update(isRunning);
 
-        gb->Clock((float)std::min((int)window->GetElapsedTime(), 16 ));
+        gb->Clock((float)(std::min)((int)window->GetElapsedTime(), 16 ));
 
         window->BeginRender();
 

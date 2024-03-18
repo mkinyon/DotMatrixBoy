@@ -13,6 +13,7 @@ namespace Core
 		m_MMU(mmu), 
 		m_CH1_Square(mmu, true), 
 		m_CH2_Square(mmu, false), 
+		m_CH3_Wave(mmu),
 		m_CH4_Noise(mmu),
 		m_MasterBuffer(),
 		m_CH1Buffer(),
@@ -65,6 +66,7 @@ namespace Core
 				case 0:
 					m_CH1_Square.LengthClock();
 					m_CH2_Square.LengthClock();
+					m_CH3_Wave.LengthClock();
 					m_CH4_Noise.LengthClock();
 					break;
 				case 1:
@@ -73,6 +75,7 @@ namespace Core
 					m_CH1_Square.SweepClock();
 					m_CH1_Square.LengthClock();
 					m_CH2_Square.LengthClock();
+					m_CH3_Wave.LengthClock();
 					m_CH4_Noise.LengthClock();
 					break;
 				case 3:
@@ -80,6 +83,7 @@ namespace Core
 				case 4:
 					m_CH1_Square.LengthClock();
 					m_CH2_Square.LengthClock();
+					m_CH3_Wave.LengthClock();
 					m_CH4_Noise.LengthClock();
 					break;
 				case 5:
@@ -88,6 +92,7 @@ namespace Core
 					m_CH1_Square.SweepClock();
 					m_CH1_Square.LengthClock();
 					m_CH2_Square.LengthClock();
+					m_CH3_Wave.LengthClock();
 					m_CH4_Noise.LengthClock();
 					break;
 				case 7: 
@@ -106,20 +111,25 @@ namespace Core
 
 		m_CH1_Square.Clock();
 		m_CH2_Square.Clock();
+		m_CH3_Wave.Clock();
 		m_CH4_Noise.Clock();
 
 		// only read the sample every (cpu frequency / 44100)
 		if (m_CycleCount >= 95)
 		{
+			float tempVolume = 0.01f;
+
 			// check to see if audio channels are enabled
 			bool isCh1On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH1_ON);
 			bool isCh2On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH2_ON);
+			bool isCh3On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH3_ON);
 			bool isCh4On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH4_ON);
 
 			// get sample from each channel
-			float ch1Sample = isCh1On ? static_cast<float>(m_CH1_Square.GetCurrentSample() * 0.1f) : 0;
-			float ch2Sample = isCh2On ? static_cast<float>(m_CH2_Square.GetCurrentSample() * 0.1f) : 0;
-			float ch4Sample = isCh4On ? static_cast<float>(m_CH4_Noise.GetCurrentSample() * 0.1f) : 0;
+			float ch1Sample = isCh1On ? static_cast<float>(m_CH1_Square.GetCurrentSample() * tempVolume) : 0;
+			float ch2Sample = isCh2On ? static_cast<float>(m_CH2_Square.GetCurrentSample() * tempVolume) : 0;
+			float ch3Sample = isCh3On ? static_cast<float>(m_CH3_Wave.GetCurrentSample()   * tempVolume) : 0;
+			float ch4Sample = isCh4On ? static_cast<float>(m_CH4_Noise.GetCurrentSample()  *  tempVolume) : 0;
 
 			// add samples to audio buffers
 			// todo: we push twice.. once for left speaker, once for right speaker
@@ -130,11 +140,14 @@ namespace Core
 			m_CH2Buffer.push_back(ch2Sample);
 			m_CH2Buffer.push_back(ch2Sample);
 
+			m_CH3Buffer.push_back(ch3Sample);
+			m_CH3Buffer.push_back(ch3Sample);
+
 			m_CH4Buffer.push_back(ch4Sample);
 			m_CH4Buffer.push_back(ch4Sample);
 
-			m_MasterBuffer.push_back(ch1Sample + ch2Sample + ch4Sample);
-			m_MasterBuffer.push_back(ch1Sample + ch2Sample + ch4Sample);
+			m_MasterBuffer.push_back(ch1Sample + ch2Sample + ch3Sample + ch4Sample);
+			m_MasterBuffer.push_back(ch1Sample + ch2Sample + ch3Sample + ch4Sample);
 
 			//ringBuffer.Write(ch1Sample + ch2Sample); // left
 			//ringBuffer.Write(ch1Sample + ch2Sample); // right
@@ -176,6 +189,13 @@ namespace Core
 			if (m_MMU.ReadRegisterBit(HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH, 0x80))
 			{
 				m_CH2_Square.Trigger();
+			}
+		}
+		if (address == HW_NR34_SOUND_CHANNEL_3_PERIOD_HIGH)
+		{
+			if (m_MMU.ReadRegisterBit(HW_NR34_SOUND_CHANNEL_3_PERIOD_HIGH, 0x80))
+			{
+				m_CH3_Wave.Trigger();
 			}
 		}
 		if (address == HW_NR44_SOUND_CHANNEL_4_CONTROL)

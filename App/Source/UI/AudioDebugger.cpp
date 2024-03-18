@@ -21,7 +21,7 @@ namespace App
 		bool masterEnabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_AUDIO_ON); ImGui::Checkbox("Enabled", &masterEnabled);
 
 		std::vector<float> masterBuffer = m_GameBoy->m_APU.GetMasterAudioBuffer();
-		ImGui::PlotLines("Master", masterBuffer.data(), masterBuffer.size(), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
+		ImGui::PlotLines("Master", masterBuffer.data(), masterBuffer.size(), 0, nullptr, -0.5f, 0.5f, ImVec2(0, 40.0f));
 
 
 		ImGui::SeparatorText("Channel 1 - Square");
@@ -40,6 +40,9 @@ namespace App
 
 		ImGui::SeparatorText("Channel 3 - Wave");
 		bool ch3Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_CH3_ON); ImGui::Checkbox("Enabled", &ch3Enabled);
+
+		std::vector<float> ch3Buffer = m_GameBoy->m_APU.GetCh3AudioBuffer();
+		ImGui::PlotLines("CH3 - Wave", ch3Buffer.data(), ch3Buffer.size(), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
 
 		// TODO: Need to fix this abomination
 		float arr[] =
