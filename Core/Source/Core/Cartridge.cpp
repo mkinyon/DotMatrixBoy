@@ -9,8 +9,10 @@ namespace Core
 
 	Cartridge::Cartridge(const std::string& fileName, bool enableBootRom)
 	{
+		// load rom file into rom data
 		std::ifstream file;
 		file.open(fileName, std::ifstream::binary);
+
 		if (file.is_open())
 		{
 			// read header
@@ -24,11 +26,10 @@ namespace Core
 			m_RomData = new std::vector<uint8_t>(cartSize);
 			file.read((char*)m_RomData->data(), cartSize);
 
+			file.close();
 		}
 
-		// load bootrom
-		// TODO: I believe the bootrom is only enabled during the boot process.
-		//	Afterwards, the bootrom is unmapped. idk.
+		// load bootrom file into bootrom data
 		if (enableBootRom)
 		{
 			std::ifstream bootrom;
@@ -36,9 +37,22 @@ namespace Core
 			if (bootrom.is_open())
 			{
 				bootrom.seekg(0);
-				bootrom.read((char*)m_RomData->data(), 256);
+
+				m_BootRomData = new std::vector<uint8_t>(256);
+				bootrom.read((char*)m_BootRomData->data(), 256);
+
+				m_BootRomActive = true;
 			}
+			else
+			{
+				// bootrom not found 
+				m_BootRomActive = false;
+			}
+
+			bootrom.close();
 		}
+
+		m_RamData = new std::vector<uint8_t>(32768);
 	}
 
 	Cartridge::~Cartridge() {}
@@ -48,73 +62,89 @@ namespace Core
 		if (address >= CARTBANK_ADDR_RANGE_START && address <= CARTBANK_ADDR_RANGE_END)
 		{
 			// offset address based on current rombank
-			uint8_t romBank = GetRomBank();
-			uint16_t romAddress = address + (romBank * ROM_BANK_SIZE);
-			//return romData->at(romAddress);
-
-			return m_RomData->at(address + ((GetRomBank() - 1) * 0x4000));
+			return m_RomData->at(address + ((GetRomBank() - 1) * ROM_BANK_SIZE));
 		}
 		else if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
 		{
 			if (m_RamEnabled)
 			{
-				uint8_t ramBank = GetRamBank();
-				uint16_t ramAddress = address + (ramBank * RAM_BANK_SIZE);
+				uint16_t ramAddress = address + (GetRomBank() * RAM_BANK_SIZE);
 				uint16_t addrOffset = ramAddress - 0xA000;
-				return m_RAM[addrOffset];
+				return m_RamData->at(addrOffset);
 			}
 			else
 			{
+				// if ram is disabled then 0xFF is returned
 				return m_BadRamRead;
 			}
 		}
 		else
 		{
-			return m_RomData->at(address);
+			// The boot rom is only temporarily mapped until control is handed off to
+			// the cartridge program so if the boot rom is active we want to map reads
+			// to that.
+			if (m_BootRomActive)
+			{
+				// Address $0100 is the starting address for the catridge program. 
+				// At this point we want to disable the bootrom and hand over control.
+				if (address == 0x100)
+				{
+					m_BootRomActive = false;
+					return m_RomData->at(address);
+				}
+				// In some cases the bootrom will read an address from outside the 
+				// bootrom address space. We need to allow it because the bootrom
+				// needs to access the cartridge program for the logo graphics.
+				else if (address > 0x100)
+				{
+					return m_RomData->at(address);
+				}
+
+				return m_BootRomData->at(address);
+			}
+			else
+			{
+				return m_RomData->at(address);
+			}
 		}
 	}
 
 	void Cartridge::Write(uint16_t address, uint8_t value)
 	{
-		std::ostringstream stream;
-		stream << "Cartridge write detected. Address: " << std::hex << address << " Value: " << std::setw(2) << std::setfill('0') << static_cast<int>(value);
-		Logger::Instance().Info(Domain::MMU, stream.str());
-
+		// ram bank
 		if (address >= MBC1_RAMG_START && address <= MBC1_RAMG_END)
 		{
-			// writing 0xA (0b1010) to this address range will enable ram
-			if (value == 0xA)
-			{
-				m_RamEnabled = true;
-			}
-			// all other writes will disable it
-			else
-			{
-				m_RamEnabled = false;
-			}
+			// Writing 0xA (0b1010) to this address range will enable ram. All
+			// other writes will disable it.
+			m_RamEnabled = ((value & 0xF) == 0xA);
 		}
-		if (address >= MBC1_BANKREG1_START && address <= MBC1_BANKREG1_END)
+		else if (address >= MBC1_BANKREG1_START && address <= MBC1_BANKREG1_END)
 		{
-			m_Register_MBC1_Bank1 = value;
+			uint8_t regValue = value & 0x1F;
+			m_Register_MBC1_Bank1 = (regValue == 0x0 ? 0x1 : regValue);
 		}
-		if (address >= MBC1_BANKREG2_START && address <= MBC1_BANKREG2_END)
+		else if (address >= MBC1_BANKREG2_START && address <= MBC1_BANKREG2_END)
 		{
-			m_Register_MBC1_Bank2 = value;
+			m_Register_MBC1_Bank2 = value & 0x3;
 		}
-		if (address >= MBC1_MODE_START && address <= MBC1_MODE_END)
+		else if (address >= MBC1_MODE_START && address <= MBC1_MODE_END)
 		{
 			m_Register_MBC1_Mode = value & 0x1;
 		}
-		if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
+		else if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
 		{
-			if (/*register_mbc1_mode == 1 &&*/ m_RamEnabled)
+			if (m_RamEnabled)
 			{
-				uint8_t ramBank = GetRamBank();
-				uint16_t ramAddress = address + (ramBank * RAM_BANK_SIZE);
+				uint16_t ramAddress = address + (GetRamBank() * RAM_BANK_SIZE);
 				uint16_t addrOffset = ramAddress - 0xA000;
-				m_RAM[addrOffset] = value;
+				m_RamData->at(addrOffset) = value;
 			}
 		}
+	}
+
+	std::vector<uint8_t>* Cartridge::GetRomData() const
+	{
+		return m_RomData;
 	}
 
 	uint8_t Cartridge::GetRomBank()

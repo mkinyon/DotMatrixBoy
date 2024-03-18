@@ -16,6 +16,7 @@ namespace Core
 	public:
 		uint8_t& Read(uint16_t address);
 		void Write(uint16_t address, uint8_t value);
+		std::vector<uint8_t>* GetRomData() const;
 
 	public:
 		struct sHeader
@@ -29,27 +30,29 @@ namespace Core
 			uint8_t cartridgeType;
 			uint8_t romSize;
 			uint8_t ramSize;
-			uint8_t desitinationCode;
+			uint8_t destinationCode;
 			uint8_t oldLicenseeCode;
 			uint8_t maskRomVersionNumber;
 			uint8_t headerChecksum;
 			uint8_t globalChecksum[2];
 		} Header;
 
-		std::vector<uint8_t>* m_RomData;
-
 	private:
 		uint8_t GetRomBank();
 		uint8_t GetRamBank();
 
 	private:
+		bool m_BootRomActive = false;
 		bool m_RamEnabled = false;
-		uint8_t m_Register_MBC1_Bank1 = 0;
+
+		uint8_t m_Register_MBC1_Bank1 = 1;
 		uint8_t m_Register_MBC1_Bank2 = 0;
-		uint8_t m_Register_MBC1_Mode = 0;
-		uint8_t m_RAM[32768] = { 0 };
-		
+		uint8_t m_Register_MBC1_Mode = 0;		
 		uint8_t m_BadRamRead = 0xFF;
+
+		std::vector<uint8_t>* m_BootRomData;
+		std::vector<uint8_t>* m_RomData;
+		std::vector<uint8_t>* m_RamData;
 	};
 }
 
