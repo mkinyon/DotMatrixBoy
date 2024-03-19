@@ -28,24 +28,6 @@ namespace App
             SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
         #endif
 
-        //// Setup audio
-        //if (SDL_Init(SDL_INIT_AUDIO) < 0)
-        //{
-        //    // Handle SDL initialization failure
-        //    return;
-        //}
-
-        //SDL_AudioSpec want, have;
-        //SDL_memset(&want, 0, sizeof(want));
-        //want.freq = 44100;
-        //want.format = AUDIO_F32SYS;
-        //want.channels = 2;
-        //want.samples = 1024;
-        //want.callback = StaticAudioCallback;
-        //want.userdata = this;
-
-        //m_SDLAudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
-
         // Create window with SDL_Renderer graphics context
         SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
         m_SDLWindow = SDL_CreateWindow( windowTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screenWidth, screenHeight, window_flags);
@@ -83,7 +65,6 @@ namespace App
         ImGui::DestroyContext();
 
         // Clean up SDL resources
-        // SDL_CloseAudioDevice(m_SDLAudioDevice);
         SDL_DestroyRenderer(m_SDLRenderer);
         SDL_DestroyWindow(m_SDLWindow);
         SDL_Quit();
@@ -92,7 +73,6 @@ namespace App
     bool Window::Initialize()
     {
         // Check if SDL initialization was successful
-        //SDL_PauseAudioDevice(m_SDLAudioDevice, 0);  // Start audio playback
         return m_SDLWindow != nullptr && m_SDLRenderer != nullptr;
         
     }
@@ -255,15 +235,5 @@ namespace App
     Uint64 Window::GetElapsedTime()
     {
         return m_ElapsedTime;
-    }
-
-    void Window::StaticAudioCallback(void* userdata, Uint8* stream, int len)
-    {
-        Window* window = static_cast<Window*>(userdata);
-        std::lock_guard<std::mutex> lock(window->mutex);  // Ensure proper synchronization
-
-        if (window && window->m_GameBoy) {
-            window->m_GameBoy->FeedAudioBuffer(stream, len);
-        }
     }
 }

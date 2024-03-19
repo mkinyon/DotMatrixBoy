@@ -5,7 +5,7 @@
 
 namespace Core
 {
-	Cartridge::Cartridge() {}
+	Cartridge::Cartridge() : m_Header(), m_BootRomData(), m_RomData(), m_RamData() {}
 
 	Cartridge::Cartridge(const std::string& fileName, bool enableBootRom)
 	{
@@ -17,7 +17,7 @@ namespace Core
 		{
 			// read header
 			file.seekg(0x100); // the header starts at location $100
-			file.read((char*)&Header, sizeof(sHeader));
+			file.read((char*)&m_Header, sizeof(sRomHeader));
 
 			file.seekg(0, file.end);
 			int cartSize = (unsigned long)file.tellg();
@@ -62,6 +62,7 @@ namespace Core
 		if (address >= CARTBANK_ADDR_RANGE_START && address <= CARTBANK_ADDR_RANGE_END)
 		{
 			// offset address based on current rombank
+			int test = GetRomBank();
 			return m_RomData->at(address + ((GetRomBank() - 1) * ROM_BANK_SIZE));
 		}
 		else if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
@@ -159,7 +160,7 @@ namespace Core
 		}
 
 		// 32KiB roms do not use rom banking so hardcode it to one
-		if (Header.cartridgeType == 0x0)
+		if (m_Header.cartridgeType == 0x0)
 		{
 			bank = 1;
 			return bank;
@@ -173,7 +174,7 @@ namespace Core
 		}
 
 		// if the rom is larger than 256KiB than we want to keep the 5th bit
-		if (Header.romSize > 0x03)
+		if (m_Header.romSize > 0x03)
 		{
 			return bank & 0b11111;
 		}
@@ -193,5 +194,10 @@ namespace Core
 
 		// during mode 0, only the first ram bank is used
 		return 0;
+	}
+
+	Cartridge::sRomHeader Cartridge::GetRomInfo() const
+	{
+		return m_Header;
 	}
 }

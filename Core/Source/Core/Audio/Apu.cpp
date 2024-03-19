@@ -26,7 +26,7 @@ namespace Core
 
 		m_File.setSampleRate(41000);
 		m_File.setNumChannels(2);
-		m_File.setNumSamplesPerChannel(1200000);
+		m_File.setNumSamplesPerChannel(4000000);
 		m_File.setBitDepth(32);
 
 		// Setup audio
@@ -157,14 +157,15 @@ namespace Core
 			m_MasterBuffer.push_back((leftCombined) / 8);
 			m_MasterBuffer.push_back((rightCombined) / 8);
 
-			static int counter = 0;
-			m_File.samples[0].at(counter) = leftCombined;
-			m_File.samples[1].at(counter) = rightCombined;			
-			if (counter == 1200000 - 1)
-			{
-				m_File.save("output.wav");
-			}
-			counter++;
+			//// test audio output
+			//static int counter = 0;
+			//m_File.samples[0].at(counter) = leftCombined;
+			//m_File.samples[1].at(counter) = rightCombined;			
+			//if (counter == 4000000 - 2)
+			//{
+			//	m_File.save("output.wav");
+			//}
+			//counter++;
 
 			//ringBuffer.Write(ch1Sample + ch2Sample); // left
 			//ringBuffer.Write(ch1Sample + ch2Sample); // right
@@ -174,7 +175,7 @@ namespace Core
 
 		if (m_MasterBuffer.size() >= 4096)
 		{
-			SDL_QueueAudio(m_SDLAudioDevice, m_MasterBuffer.data(), static_cast<Uint32>(m_MasterBuffer.size() * 4));
+			SDL_QueueAudio(m_SDLAudioDevice, m_MasterBuffer.data(), static_cast<Uint32>(m_MasterBuffer.size() * sizeof(float)));
 
 			m_CH1Buffer.clear();
 			m_CH2Buffer.clear();
@@ -188,7 +189,7 @@ namespace Core
 			stream << "Audio Queued Bytes[End]: " << queuedBytes;
 			Logger::Instance().Info(Core::Domain::APU, stream.str());*/
 
-			//while (SDL_GetQueuedAudioSize(m_SDLAudioDevice) > 4096 * 4) {}
+			//while (SDL_GetQueuedAudioSize(m_SDLAudioDevice) > 4096 * sizeof(float)) {}
 		}
 	}
 
@@ -249,70 +250,8 @@ namespace Core
 		return m_CH4Buffer;
 	}
 
-	void Apu::SquareWaveTest(uint8_t* stream, int len)
+	int Apu::GetQueuedAudioBufferSize()
 	{
-		// generating a square wave
-		const int sampleRate = 44100;
-		static double time = 0.0;
-		const double freq = 440; // static_cast<double>(mmu.Read(HW_NR12_SOUND_CHANNEL_1_VOL_ENVELOPE));
-		const double amplitude = 10;
-
-		for (int i = 0; i < len; ++i)
-		{
-			// Toggle between two amplitude values
-			double sample = (time < 0.5 / freq) ? amplitude : -amplitude;
-
-			int16_t intSample = static_cast<int16_t>(sample * 32767.0);  // Convert to signed 16-bit
-
-			if (true)
-			{
-				stream[i] = static_cast<uint8_t>(intSample & 0xFF);            // Low byte
-				stream[i + 1] = static_cast<uint8_t>((intSample >> 8) & 0xFF);  // High byte 
-			}
-			else
-			{
-				stream[i] = 0;
-				stream[i + 1] = 0;
-			}
-
-			time += 1.0 / sampleRate;
-			if (time >= 1.0 / freq) 
-			{
-				time -= 1.0 / freq;
-			}
-		}
-	}
-
-	void Apu::FeedAudioBuffer(uint8_t * stream, int len)
-	{
-		int samplesMissing = (len / 4) - ringBuffer.GetSize();
-		if (samplesMissing > 0)
-		{
-			// just here so it doesn't get optimized away
-			stream[0] = 0;
-		}
-
-		// The stream is just a pointer to an array of bytes. Since
-		// we are using 32 bit floats for our audio samples, we need
-		// to break the float into four distinct bytes
-		for (int i = 0; i < len; i += 4)
-		{
-			float sample = ringBuffer.Read();
-			
-			// copy float to an array of 4 bytes
-			uint8_t bytes[4];
-			memcpy(bytes, &sample, sizeof(float));
-
-			// set individual bytes
-			stream[i] = bytes[0];
-			stream[i + 1] = bytes[1];
-			stream[i + 2] = bytes[2];
-			stream[i + 3] = bytes[3];
-		}
-	}
-
-	int Apu::GetRingBufferSize() const
-	{
-		return ringBuffer.GetSize();
+		return SDL_GetQueuedAudioSize(m_SDLAudioDevice);
 	}
 }

@@ -18,8 +18,7 @@ namespace Core
 		void Write(uint16_t address, uint8_t value);
 		std::vector<uint8_t>* GetRomData() const;
 
-	public:
-		struct sHeader
+		struct sRomHeader
 		{
 			uint8_t codeBeginPoint[4];
 			uint8_t scrollingNintendoGraphic[48];
@@ -35,13 +34,15 @@ namespace Core
 			uint8_t maskRomVersionNumber;
 			uint8_t headerChecksum;
 			uint8_t globalChecksum[2];
-		} Header;
+		};
 
-	private:
+		sRomHeader GetRomInfo() const;
 		uint8_t GetRomBank();
 		uint8_t GetRamBank();
 
 	private:
+		sRomHeader m_Header;
+
 		bool m_BootRomActive = false;
 		bool m_RamEnabled = false;
 

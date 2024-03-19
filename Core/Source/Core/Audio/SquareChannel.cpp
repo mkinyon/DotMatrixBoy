@@ -60,7 +60,7 @@ namespace Core
 			uint8_t sweepChange = (m_CurrentFrequency >> m_SweepShift) * sweepCorrection;
 
 			// overflow on decrease - do nothing
-			if (m_IsSweepDecreasing && sweepChange > m_IsSweepDecreasing)
+			if (m_IsSweepDecreasing && sweepChange > m_CurrentFrequency)
 			{
 				m_ElaspsedSweepTime = 0;
 			}

@@ -15,6 +15,7 @@
 #include "UI/LCD.h"
 #include "UI/MemoryMap.h"
 #include "UI/MenuBar.h"
+#include "UI/RomInfo.h"
 #include "UI/VRAMViewer.h"
 
 // Main code
@@ -41,6 +42,7 @@ int main(int argv, char** args)
     App::MemoryMap* memoryMap = new App::MemoryMap(gb);
     App::VRAMViewer* vramViewer = new App::VRAMViewer(gb, window->GetRenderer());
     App::Console* console = new App::Console();
+    App::RomInfo* romInfo = new App::RomInfo(gb);
 
     bool show_demo_window = true;
     bool show_another_window = false;
@@ -67,6 +69,7 @@ int main(int argv, char** args)
         vramViewer->Render();
         audioDebugger->Render();
         console->Render();
+        romInfo->Render();
 
         window->EndRender();
 

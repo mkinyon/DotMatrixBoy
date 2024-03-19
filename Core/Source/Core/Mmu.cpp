@@ -12,9 +12,12 @@ namespace Core
 	uint8_t& Mmu::Read(uint16_t address)
 	{
 		// test to see if read ever go out of bounds
-		if (address < 0 || address > 0xFFFF)
+		if (address < 0 || address > 0xFFFF || address == HW_LY_LCD_Y_COORD)
 		{
-			int breakpoint = 0;
+			if (m_Memory[address] > 153)
+			{
+				int breakpoint = 0;
+			}
 		}
 
 		// cart address space
@@ -28,16 +31,19 @@ namespace Core
 
 	void Mmu::Write(uint16_t address, uint8_t value, bool rawWrite)
 	{	
+		// test to see if writes ever go out of bounds
+		if (address < 0 || address > 0xFFFF || address == HW_LY_LCD_Y_COORD)
+		{
+			if (value > 153)
+			{
+				int breakpoint = 0;
+			}
+		}
+
 		if (rawWrite)
 		{
 			m_Memory[address] = value;
 			return;
-		}
-
-		// test to see if writes ever go out of bounds
-		if (address < 0 || address > 0xFFFF)
-		{
-			int breakpoint = 0;
 		}
 
 		if (address >= CART_ADDR_RANGE_START && address <= CART_ADDR_RANGE_END)
@@ -54,7 +60,7 @@ namespace Core
 			// this should never happen
 			std::ostringstream stream;
 			stream << "Can't write to echo RAM! Address: " << std::hex << address << " Value: " << std::dec << value;
-			Logger::Instance().Info(Domain::MMU, stream.str());
+			//Logger::Instance().Info(Domain::MMU, stream.str());
 		}
 		// writing to the DIV register will cause is to reset to zero 
 		else if (address == HW_DIV_DIVIDER_REGISTER)
@@ -77,7 +83,7 @@ namespace Core
 
 			std::ostringstream stream;
 			stream << "DMA write. Address: " << std::hex << address << " Value: " << std::dec << value;
-			Logger::Instance().Info(Domain::MMU, stream.str());
+			//Logger::Instance().Info(Domain::MMU, stream.str());
 		}
 		else
 		{
@@ -88,6 +94,8 @@ namespace Core
 		{
 			device->OnWrite(address, value);
 		}
+
+		m_Memory[address] = value;
 	}
 
 	bool Mmu::ReadRegisterBit(uint16_t address, int flag)

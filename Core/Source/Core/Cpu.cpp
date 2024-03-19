@@ -2179,7 +2179,7 @@ namespace Core
 		output += "\n";
 
 		m_CurrentInstructionName = output;
-		Logger::Instance().Info(Domain::CPU, output);
+		//Logger::Instance().Info(Domain::CPU, output);
 	}
 
 	std::string Cpu::GetCurrentInstruction()

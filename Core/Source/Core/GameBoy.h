@@ -27,8 +27,8 @@ namespace Core
 		bool IsPaused();
 		void StepCPU();
 		void AdvanceFrame();
-		void FeedAudioBuffer(uint8_t* stream, int len);
 		bool IsBootRomEnabled();
+		Cartridge* GetCart();
 
 	private:
 		void ClockSystems();

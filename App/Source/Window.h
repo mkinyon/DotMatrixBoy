@@ -12,8 +12,6 @@ namespace App
 		Window(int screenWidth, int screenHeight, const char* windowTitle, Core::GameBoy* gb);
 		~Window();
 
-		std::mutex mutex;
-
 	public:
 		bool Initialize();
 		void Update(bool& isRunning);
@@ -23,12 +21,9 @@ namespace App
 		SDL_Renderer* GetRenderer();
 		Uint64 GetElapsedTime();
 
-		static void StaticAudioCallback(void* userdata, Uint8* stream, int len);
-
 	private:
 		SDL_Window* m_SDLWindow;
 		SDL_Renderer* m_SDLRenderer;
-		SDL_AudioDeviceID m_SDLAudioDevice;
 
 		Core::GameBoy* m_GameBoy;
 

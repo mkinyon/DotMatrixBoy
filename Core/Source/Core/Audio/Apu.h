@@ -22,10 +22,7 @@ namespace Core
 		std::vector<float> GetCh2AudioBuffer();
 		std::vector<float> GetCh3AudioBuffer();
 		std::vector<float> GetCh4AudioBuffer();
-
-		void SquareWaveTest(uint8_t* stream, int len);
-		void FeedAudioBuffer(uint8_t* stream, int len);
-		int GetRingBufferSize() const;
+		int GetQueuedAudioBufferSize();
 
 	private:
 		void OnWrite(uint16_t address, uint8_t value);
@@ -44,7 +41,6 @@ namespace Core
 		SDL_AudioDeviceID m_SDLAudioDevice;
 
 		AudioFile<float> m_File;
-		RingBuffer ringBuffer;
 		std::vector<float> m_MasterBuffer;
 		std::vector<float> m_CH1Buffer;
 		std::vector<float> m_CH2Buffer;

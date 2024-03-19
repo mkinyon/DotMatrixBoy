@@ -15,13 +15,13 @@ namespace App
 
 	void AudioDebugger::RenderContent()
 	{
-		ImGui::Text("Ring Buffer: %d", m_GameBoy->m_APU.GetRingBufferSize());
+		ImGui::Text("SDL Audio Buffer Queue: %d", m_GameBoy->m_APU.GetQueuedAudioBufferSize());
 
 		ImGui::SeparatorText("Master Mix");
 		bool masterEnabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_NR52_SOUND_TOGGLE, Core::NR52_AUDIO_ON); ImGui::Checkbox("Enabled", &masterEnabled);
 
 		std::vector<float> masterBuffer = m_GameBoy->m_APU.GetMasterAudioBuffer();
-		ImGui::PlotLines("Master", masterBuffer.data(), masterBuffer.size(), 0, nullptr, -0.5f, 0.5f, ImVec2(0, 40.0f));
+		ImGui::PlotLines("Master", masterBuffer.data(), masterBuffer.size(), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
 
 
 		ImGui::SeparatorText("Channel 1 - Square");
