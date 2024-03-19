@@ -56,25 +56,25 @@ namespace App
 		ImGui::Text("Cart Type: %s", typeName);
 
 		const char* sizeDescription;
-		int NumRomBanks;
+		int numRomBanks;
 		switch (header.romSize)
 		{
-			case 0x00: sizeDescription = "32 KiB (No Banking)";	NumRomBanks = 2;   break;
-			case 0x01: sizeDescription = "64 KiB";				NumRomBanks = 4;   break;
-			case 0x02: sizeDescription = "128 KiB";				NumRomBanks = 8;   break;
-			case 0x03: sizeDescription = "256 KiB";				NumRomBanks = 16;  break;
-			case 0x04: sizeDescription = "512 KiB";				NumRomBanks = 32;  break;
-			case 0x05: sizeDescription = "1 MiB";				NumRomBanks = 64;  break;
-			case 0x06: sizeDescription = "2 MiB";				NumRomBanks = 128; break;
-			case 0x07: sizeDescription = "4 MiB";				NumRomBanks = 256; break;
-			case 0x08: sizeDescription = "8 MiB";				NumRomBanks = 512; break;
-			case 0x52: sizeDescription = "1.1 MiB";				NumRomBanks = 72;  break;
-			case 0x53: sizeDescription = "1.2 MiB";				NumRomBanks = 80;  break;
-			case 0x54: sizeDescription = "1.5 MiB";				NumRomBanks = 96;  break;
+			case 0x00: sizeDescription = "32 KiB (No Banking)";	numRomBanks = 2;   break;
+			case 0x01: sizeDescription = "64 KiB";				numRomBanks = 4;   break;
+			case 0x02: sizeDescription = "128 KiB";				numRomBanks = 8;   break;
+			case 0x03: sizeDescription = "256 KiB";				numRomBanks = 16;  break;
+			case 0x04: sizeDescription = "512 KiB";				numRomBanks = 32;  break;
+			case 0x05: sizeDescription = "1 MiB";				numRomBanks = 64;  break;
+			case 0x06: sizeDescription = "2 MiB";				numRomBanks = 128; break;
+			case 0x07: sizeDescription = "4 MiB";				numRomBanks = 256; break;
+			case 0x08: sizeDescription = "8 MiB";				numRomBanks = 512; break;
+			case 0x52: sizeDescription = "1.1 MiB";				numRomBanks = 72;  break;
+			case 0x53: sizeDescription = "1.2 MiB";				numRomBanks = 80;  break;
+			case 0x54: sizeDescription = "1.5 MiB";				numRomBanks = 96;  break;
 		};
 
 		ImGui::Text("Rom Size: %s", sizeDescription);
-		ImGui::Text("Number of Rom Banks: %d", NumRomBanks);
+		ImGui::Text("Number of Rom Banks: %d", numRomBanks);
 
 		const char* sramSize;
 		const char* ramComment;

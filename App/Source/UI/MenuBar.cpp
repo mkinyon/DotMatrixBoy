@@ -16,7 +16,6 @@ namespace App
         static bool isPaused = false;
         static bool enableBootRom = false;
 
-        //ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 255, 255));
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("File"))
@@ -98,7 +97,6 @@ namespace App
             }
             ImGui::EndMainMenuBar();
         }
-        //ImGui::PopStyleColor();
 	}
 
     void MenuBar::OnEvent(Event event)

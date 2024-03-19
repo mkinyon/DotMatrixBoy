@@ -175,6 +175,13 @@ namespace Core
 
 		if (m_MasterBuffer.size() >= 4096)
 		{
+			// empty the buffer if we get too far ahead.
+			Uint32 queuedBytes = SDL_GetQueuedAudioSize(m_SDLAudioDevice);
+			if (queuedBytes > 4096 * 4)
+			{
+				SDL_ClearQueuedAudio(m_SDLAudioDevice);
+			}
+
 			SDL_QueueAudio(m_SDLAudioDevice, m_MasterBuffer.data(), static_cast<Uint32>(m_MasterBuffer.size() * sizeof(float)));
 
 			m_CH1Buffer.clear();
@@ -182,14 +189,6 @@ namespace Core
 			m_CH3Buffer.clear();
 			m_CH4Buffer.clear();
 			m_MasterBuffer.clear();
-
-
-			/*Uint32 queuedBytes = SDL_GetQueuedAudioSize(m_SDLAudioDevice);
-			std::ostringstream stream;
-			stream << "Audio Queued Bytes[End]: " << queuedBytes;
-			Logger::Instance().Info(Core::Domain::APU, stream.str());*/
-
-			//while (SDL_GetQueuedAudioSize(m_SDLAudioDevice) > 4096 * sizeof(float)) {}
 		}
 	}
 
