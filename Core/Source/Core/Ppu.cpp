@@ -362,7 +362,7 @@ namespace Core
 	{
 		uint8_t color = bgPalette >> (colorIndex * 2) & 0x03;
 
-		if (x >= 160 || y >= 144)
+		if (x < 0 || x >= 160 || y < 0 || y >= 144)
 		{
 			Logger::Instance().Warning(Domain::PPU, "Attempted bad write to backbuffer");
 			return;
