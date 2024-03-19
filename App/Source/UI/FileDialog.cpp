@@ -20,11 +20,13 @@ namespace App
 
 		if (m_FileDialog.HasSelected())
 		{
-			Core::Cartridge* newCart = new Core::Cartridge(m_FileDialog.GetSelected().string(), false);
+			bool bootRomEnabled = m_GameBoy->IsBootRomEnabled();
+			Core::Cartridge* newCart = new Core::Cartridge(m_FileDialog.GetSelected().string(), bootRomEnabled);
+			
 			delete m_GameBoy;
 			m_GameBoy = new Core::GameBoy(*newCart);
 
-			m_GameBoy->Run(false);
+			m_GameBoy->Run(bootRomEnabled);
 			m_FileDialog.ClearSelected();
 		}
 	}

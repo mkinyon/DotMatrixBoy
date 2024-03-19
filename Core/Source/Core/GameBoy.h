@@ -19,6 +19,7 @@ namespace Core
 		~GameBoy();
 
 	public:
+		void Run();
 		void Run(bool enableBootRom);
 		void Clock(float elapsedTimeMS);
 		void Pause();
@@ -27,6 +28,7 @@ namespace Core
 		void StepCPU();
 		void AdvanceFrame();
 		void FeedAudioBuffer(uint8_t* stream, int len);
+		bool IsBootRomEnabled();
 
 	private:
 		void ClockSystems();
@@ -41,6 +43,7 @@ namespace Core
 
 	private:
 		bool m_IsPaused = false;
+		bool m_BootRomEnabled = false;
 	};
 }
 

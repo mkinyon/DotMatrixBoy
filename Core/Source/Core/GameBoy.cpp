@@ -6,8 +6,14 @@ namespace Core
 	GameBoy::GameBoy(Cartridge& cart) : m_Cart(cart), m_MMU(cart), m_CPU(m_MMU), m_PPU(m_MMU), m_APU(m_MMU), m_Input(m_MMU) {}
 	GameBoy::~GameBoy() {}
 
+	void GameBoy::Run()
+	{
+		Run(m_BootRomEnabled);
+	}
+
 	void GameBoy::Run(bool enableBootRom)
 	{
+		m_BootRomEnabled = enableBootRom;
 		m_CPU.Reset(enableBootRom);
 	}
 
@@ -79,5 +85,10 @@ namespace Core
 
 		m_APU.Clock();
 		m_Input.Clock();
+	}
+
+	bool GameBoy::IsBootRomEnabled()
+	{
+		return m_BootRomEnabled;
 	}
 }

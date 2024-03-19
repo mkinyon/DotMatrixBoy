@@ -17,19 +17,17 @@
 #include "UI/MenuBar.h"
 #include "UI/VRAMViewer.h"
 
-App::Window* window;
-Core::GameBoy* gb;
-Core::Cartridge* cart;
-bool isPaused = true;
-bool enableBootRom = false;
-const char* romName = "../Roms/kirby.gb";
-
 // Main code
 int main(int argv, char** args)
 {
-    cart = new Core::Cartridge(romName, enableBootRom);
-    gb = new Core::GameBoy(*cart);
-    window = new App::Window(1280, 720, "DotMatrixBoy", gb);
+    const char* romName = "../Roms/donkeykong.gb";// "../Roms/Mooneye/emulator-only/mbc1/bits_bank2.gb";
+
+    bool isPaused = true;
+    bool enableBootRom = true;
+
+    Core::Cartridge* cart = new Core::Cartridge(romName, enableBootRom);
+    Core::GameBoy* gb = new Core::GameBoy(*cart);
+    App::Window*  window = new App::Window(1280, 720, "DotMatrixBoy", gb);
     window->Initialize();
 
     gb->Run(enableBootRom);
@@ -53,7 +51,7 @@ int main(int argv, char** args)
     {
         window->Update(isRunning);
 
-        gb->Clock(window->GetElapsedTime());
+        gb->Clock((float)(std::min)((int)window->GetElapsedTime(), 20));
 
         window->BeginRender();
 
