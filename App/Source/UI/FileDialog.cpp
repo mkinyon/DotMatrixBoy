@@ -20,9 +20,15 @@ namespace App
 
 		if (m_FileDialog.HasSelected())
 		{
+			// pause the emulator so we don't risk deleting it
+			// while in the middle of a clock cycle
+			m_GameBoy->Pause();
+
+			// create new cart
 			bool bootRomEnabled = m_GameBoy->IsBootRomEnabled();
 			Core::Cartridge* newCart = new Core::Cartridge(m_FileDialog.GetSelected().string(), bootRomEnabled);
 			
+			// clean up and create new gameboy
 			delete m_GameBoy;
 			m_GameBoy = new Core::GameBoy(*newCart);
 

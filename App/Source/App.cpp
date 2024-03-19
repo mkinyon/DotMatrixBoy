@@ -25,7 +25,7 @@ int main(int argv, char** args)
     bool isPaused = true;
     bool enableBootRom = true;
 
-    Core::Cartridge* cart = new Core::Cartridge(romName, enableBootRom);
+    std::unique_ptr<Core::Cartridge> cart = std::make_unique<Core::Cartridge>(romName, enableBootRom);
     Core::GameBoy* gb = new Core::GameBoy(*cart);
     App::Window*  window = new App::Window(1280, 720, "DotMatrixBoy", gb);
     window->Initialize();
@@ -86,7 +86,6 @@ int main(int argv, char** args)
     delete audioDebugger;
     delete console;
 
-    delete cart;
     delete gb;
     delete window;
 
