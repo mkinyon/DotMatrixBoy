@@ -1,6 +1,8 @@
 #include "Cartridge.h"
 #include "Defines.h"
 #include "Logger.h"
+#include "Utils.h"
+
 #include <ostream>
 
 namespace Core
@@ -12,6 +14,7 @@ namespace Core
 		// load rom file into rom data
 		std::ifstream file;
 		file.open(fileName, std::ifstream::binary);
+		m_RomFileName = StripPathAndExt(fileName);
 
 		if (file.is_open())
 		{
@@ -52,10 +55,14 @@ namespace Core
 			bootrom.close();
 		}
 
-		m_RamData = new std::vector<uint8_t>(32768);
+		m_RamData = new std::vector<uint8_t>(RAM_SIZE);
+		LoadSaveFile(m_RomFileName, m_RamData);
 	}
 
-	Cartridge::~Cartridge() {}
+	Cartridge::~Cartridge()
+	{
+		SaveGameRamToDisk();
+	}
 
 	uint8_t& Cartridge::Read(uint16_t address)
 	{
@@ -199,5 +206,45 @@ namespace Core
 	Cartridge::sRomHeader Cartridge::GetRomInfo() const
 	{
 		return m_Header;
+	}
+
+	void Cartridge::SaveGameRamToDisk()
+	{
+		if (!HasBattery())
+		{
+			return;
+		}
+
+		if (EnsureDirectoryExists("Saves"))
+		{
+			CreateSaveFile(m_RomFileName, m_RamData);
+		}
+	}
+
+	void Cartridge::LoadGameRamFromDisk()
+	{
+		if (!HasBattery())
+		{
+			return;
+		}
+
+		if (EnsureDirectoryExists("Saves"))
+		{
+			LoadSaveFile(m_RomFileName, m_RamData);
+		}
+	}
+
+	bool Cartridge::HasBattery()
+	{
+		return m_Header.cartridgeType == 0x03 ||
+			m_Header.cartridgeType == 0x09 ||
+			m_Header.cartridgeType == 0x0D ||
+			m_Header.cartridgeType == 0x0F ||
+			m_Header.cartridgeType == 0x10 ||
+			m_Header.cartridgeType == 0x13 ||
+			m_Header.cartridgeType == 0x1B ||
+			m_Header.cartridgeType == 0x1E ||
+			m_Header.cartridgeType == 0x22 ||
+			m_Header.cartridgeType == 0xFF;
 	}
 }

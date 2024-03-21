@@ -1,66 +1,53 @@
 
 #include "Mmu.h"
 #include "Logger.h"
-#include "Defines.h"
 #include "Utils.h"
 
 namespace Core
 {
-	Mmu::Mmu(Cartridge& cart) : m_Cart(cart) {}
+	Mmu::Mmu(Cartridge& cart) : m_Cart(cart)
+	{
+		m_Memory = new std::vector<uint8_t>(0xFFFF + 1);
+	}
+
 	Mmu::~Mmu() {}
 
-	uint8_t& Mmu::Read(uint16_t address)
+	uint8_t& Mmu::Read(uint16_t address, const bool hasPPUAccess)
 	{
-		// test to see if read ever go out of bounds
-		if (address < 0 || address > 0xFFFF || address == HW_LY_LCD_Y_COORD)
-		{
-			if (m_Memory[address] > 153)
-			{
-				int breakpoint = 0;
-			}
-		}
-
 		// cart address space
-		if (address >= 0x0000 && address <= 0x7FFF)
+		if (address >= CART_ADDR_RANGE_START && address <= CART_ADDR_RANGE_END)
 		{
 			return m_Cart.Read(address);
 		}
-
-		return m_Memory[address];
+		// ignore reads to VRAM while PPU is drawing
+		else if (address >= 0x8000 && address <= 0xFE9F && !hasPPUAccess && m_CurrentLCDMode == LCD_Mode::MODE_3_DRAWING)
+		{
+			return m_BadReadData.at(0);
+		}
+		// ignore reads to OAM address space while PPU is drawing or scanning OAM objects
+		else if (address >= 0xFE00 && address <= 0xFE9F && !hasPPUAccess &&
+			(m_CurrentLCDMode == LCD_Mode::MODE_3_DRAWING || m_CurrentLCDMode == LCD_Mode::MODE_2_OAMSCAN))
+		{
+			return m_BadReadData.at(0);
+		}
+		else
+		{
+			return m_Memory->at(address);
+		}
 	}
 
 	void Mmu::Write(uint16_t address, uint8_t value, bool rawWrite)
 	{	
-		// test to see if writes ever go out of bounds
-		if (address < 0 || address > 0xFFFF || address == HW_LY_LCD_Y_COORD)
-		{
-			if (value > 153)
-			{
-				int breakpoint = 0;
-			}
-		}
-
 		if (rawWrite)
 		{
-			m_Memory[address] = value;
+			m_Memory->at(address) = value;
 			return;
 		}
 
+		// we'll let the cartridge handle any writes to that address space
 		if (address >= CART_ADDR_RANGE_START && address <= CART_ADDR_RANGE_END)
 		{
 			m_Cart.Write(address, value);
-		}
-		else if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)
-		{
-			m_Cart.Write(address, value);
-		}
-		// $E000-$FDFF   Echo RAM (Not used) (This shouldn't be written to??)
-		else if (address >= 0xE000 && address <= 0xFDFF)
-		{
-			// this should never happen
-			std::ostringstream stream;
-			stream << "Can't write to echo RAM! Address: " << std::hex << address << " Value: " << std::dec << value;
-			//Logger::Instance().Info(Domain::MMU, stream.str());
 		}
 		// writing to the DIV register will cause is to reset to zero 
 		else if (address == HW_DIV_DIVIDER_REGISTER)
@@ -77,17 +64,28 @@ namespace Core
 				uint16_t copyFrom = startAddress + i;
 				uint16_t copyTo = 0xFE00 + i;
 
-				uint8_t copyValue = Read(copyFrom);
+				uint8_t copyValue = Read(copyFrom, true);
 				Write(copyTo, copyValue);
 			}
-
-			std::ostringstream stream;
-			stream << "DMA write. Address: " << std::hex << address << " Value: " << std::dec << value;
-			//Logger::Instance().Info(Domain::MMU, stream.str());
+		}
+		// writes to the LCDY register will reset it
+		else if (address == HW_LY_LCD_Y_COORD)
+		{
+			m_Memory->at(HW_LY_LCD_Y_COORD) = 0;
+		}
+		// writes to the joypad register will require us to preserve the lower bits
+		else if (address == HW_P1JOYP_JOYPAD)
+		{
+			m_Memory->at(HW_P1JOYP_JOYPAD) = (value & 0x30) | (m_Memory->at(HW_P1JOYP_JOYPAD) & 0xCF);
+		}
+		// writes to the lcd status register will require us to preserve the lower two bits
+		else if (address == HW_STAT_LCD_STATUS)
+		{
+			m_Memory->at(HW_STAT_LCD_STATUS) = (value & 0x7C) | (m_Memory->at(HW_STAT_LCD_STATUS) & 0x03);
 		}
 		else
 		{
-			m_Memory[address] = value;
+			m_Memory->at(address) = value;
 		}	
 
 		for (BaseDevice* device : m_RegisteredDevices)
@@ -95,12 +93,12 @@ namespace Core
 			device->OnWrite(address, value);
 		}
 
-		m_Memory[address] = value;
+		//m_Memory->at(address) = value;
 	}
 
-	bool Mmu::ReadRegisterBit(uint16_t address, int flag)
+	bool Mmu::ReadRegisterBit(uint16_t address, int flag, const bool hasPPUAccess)
 	{
-		uint8_t value = Read(address);
+		uint8_t value = Read(address, hasPPUAccess);
 		return GetFlag(value, flag);
 	}
 
@@ -123,7 +121,17 @@ namespace Core
 
 	void Mmu::ResetDIVTimer()
 	{
-		m_Memory[HW_DIV_DIVIDER_REGISTER] = 0;
-		m_Memory[HW_DIV_DIVIDER_REGISTER - 1] = 0;
+		m_Memory->at(HW_DIV_DIVIDER_REGISTER) = 0;
+		m_Memory->at(HW_DIV_DIVIDER_REGISTER - 1) = 0;
+	}
+
+	LCD_Mode Mmu::ReadLCDMode() const
+	{
+		return m_CurrentLCDMode;
+	}
+
+	void Mmu::WriteLCDMode(const LCD_Mode lcdMode)
+	{
+		m_CurrentLCDMode = lcdMode;
 	}
 }

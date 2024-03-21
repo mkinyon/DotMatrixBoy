@@ -41,6 +41,12 @@ namespace Core
 		uint8_t GetRamBank();
 
 	private:
+		void SaveGameRamToDisk();
+		void LoadGameRamFromDisk();
+		bool HasBattery();
+
+	private:
+		std::string m_RomFileName;
 		sRomHeader m_Header;
 
 		bool m_BootRomActive = false;

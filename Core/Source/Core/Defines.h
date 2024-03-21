@@ -2,6 +2,7 @@
 
 namespace Core
 {
+	inline const unsigned int RAM_SIZE = 32768;
 	constexpr float CYCLES_PER_MS = 4194.304f;
 
 	typedef enum

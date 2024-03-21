@@ -12,7 +12,8 @@ namespace Core
 	Cpu::Cpu(Mmu& mmu) : m_MMU(mmu)
 	{
 		// Check if the log file already exists
-		if (std::filesystem::exists("cpu.txt")) {
+		if (std::filesystem::exists("cpu.txt"))
+		{
 			// If it exists, delete it
 			std::filesystem::remove("cpu.txt");
 		}
@@ -2218,8 +2219,8 @@ namespace Core
 		m_MMU.Write(0xFF04, 0xAB);
 		m_MMU.Write(0xFF05, 0x00);
 		m_MMU.Write(0xFF06, 0x00);
-		m_MMU.Write(0xFF07, 0xF8);
-		m_MMU.Write(0xFF0F, 0xE1);
+		m_MMU.Write(0xFF07, 0x00);
+		m_MMU.Write(0xFF0F, 0x00);
 		m_MMU.Write(0xFF10, 0x80);
 		m_MMU.Write(0xFF11, 0xBF);
 		m_MMU.Write(0xFF12, 0xF3);
@@ -2249,8 +2250,8 @@ namespace Core
 		m_MMU.Write(0xFF45, 0x00);
 		m_MMU.Write(0xFF46, 0xFF);
 		m_MMU.Write(0xFF47, 0xFC);
-		m_MMU.Write(0xFF48, 0x00);
-		m_MMU.Write(0xFF49, 0x00);
+		m_MMU.Write(0xFF48, 0xFF);
+		m_MMU.Write(0xFF49, 0xFF);
 		m_MMU.Write(0xFF4A, 0x00);
 		m_MMU.Write(0xFF4B, 0x00);
 		m_MMU.Write(0xFF4D, 0xFF);
