@@ -92,8 +92,6 @@ namespace Core
 		{
 			device->OnWrite(address, value);
 		}
-
-		//m_Memory->at(address) = value;
 	}
 
 	bool Mmu::ReadRegisterBit(uint16_t address, int flag, const bool hasPPUAccess)
@@ -107,9 +105,13 @@ namespace Core
 		uint8_t value = Read(address);
 
 		if (isEnabled)
+		{
 			SetFlag(value, flag);
+		}	
 		else
+		{
 			ClearFlag(value, flag);
+		}
 
 		Write(address, value);
 	}
@@ -132,6 +134,9 @@ namespace Core
 
 	void Mmu::WriteLCDMode(const LCD_Mode lcdMode)
 	{
+		uint8_t lcdModeValue = static_cast<uint8_t>(lcdMode);
+		WriteRegisterBit(HW_STAT_LCD_STATUS, 0x2, (lcdModeValue >> 1) & 0x1);
+		WriteRegisterBit(HW_STAT_LCD_STATUS, 0x1, lcdModeValue & 0x1);
 		m_CurrentLCDMode = lcdMode;
 	}
 }

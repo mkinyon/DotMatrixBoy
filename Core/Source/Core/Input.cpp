@@ -30,7 +30,7 @@ namespace Core
 
 			// We only want to update the lower 4 bits of the JOYPAD register which 
 			// contain the buttons that are pressed.
-			mmu.Write(HW_P1JOYP_JOYPAD, (currentState & 0xF0) | newState);
+			mmu.Write(HW_P1JOYP_JOYPAD, (currentState & 0xF0) | newState, true);
 			mmu.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_JOYPAD, true);
 		}
 	}

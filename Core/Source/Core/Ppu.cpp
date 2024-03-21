@@ -91,7 +91,7 @@ namespace Core
 			else
 				WriteLCDMode(LCD_Mode::MODE_2_OAMSCAN);
 
-			m_MMU.Write(HW_LY_LCD_Y_COORD, ly + 1);
+			m_MMU.Write(HW_LY_LCD_Y_COORD, ly + 1, true);
 			m_CurrentScanLine = ly + 1;
 			m_CycleCount -= HBLANK_CYCLES;
 		}
@@ -116,14 +116,14 @@ namespace Core
 			if (ly == 153)
 			{
 				WriteLCDMode(LCD_Mode::MODE_2_OAMSCAN);
-				m_MMU.Write(HW_LY_LCD_Y_COORD, 0);
+				m_MMU.Write(HW_LY_LCD_Y_COORD, 0, true);
 				m_CurrentScanLine = 0;
 				m_TotalFrames++;
 				ProcessLYC();
 			}
 			else
 			{
-				m_MMU.Write(HW_LY_LCD_Y_COORD, ly + 1);
+				m_MMU.Write(HW_LY_LCD_Y_COORD, ly + 1, true);
 				m_CurrentScanLine = ly + 1;
 			}
 				
