@@ -19,3 +19,4 @@ postbuildcommands {
 
 include "Core/Build-Core.lua"
 include "App/Build-App.lua"
+include "CPUTests/Build-CPUTests.lua"

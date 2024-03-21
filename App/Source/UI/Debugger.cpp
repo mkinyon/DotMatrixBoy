@@ -8,7 +8,7 @@ namespace App
 		EventManager::Instance().Subscribe(Event::DEBUGGER_ENABLE, this);
 		EventManager::Instance().Subscribe(Event::DEBUGGER_DISABLE, this);
 
-		//instructions = m_GameBoy->cpu.DisassebleAll();
+		m_Instructions = m_GameBoy->m_CPU.DisassebleAll();
 	}
 
 	Debugger::~Debugger() {}
@@ -80,29 +80,29 @@ namespace App
 		ImGui::SeparatorText("Rom Instructions");
 
 		//// Rom Data
-		//ImGui::BeginChild("Instruct", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None);
+		ImGui::BeginChild("Instruct", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None);
 
-		//for (uint16_t i = 0; i < 0x7FFF; i++)
-		//{
-		//	// todo: currently skipping instructions that are blank.  The cpu should clean this up
-		//	if (!m_Instructions[i].empty())
-		//	{
-		//		bool isCurrentInstr = m_GameBoy->m_CPU.State.PC == i;
+		for (uint16_t i = 0; i < 0x7FFF; i++)
+		{
+			// todo: currently skipping instructions that are blank.  The cpu should clean this up
+			if (!m_Instructions[i].empty())
+			{
+				bool isCurrentInstr = m_GameBoy->m_CPU.State.PC == i;
 
-		//		if (isCurrentInstr)
-		//			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
+				if (isCurrentInstr)
+					ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));
 
-		//		ImGui::Text(m_Instructions[i].c_str());
+				ImGui::Text(m_Instructions[i].c_str());
 
-		//		if (isCurrentInstr)
-		//		{
-		//			ImGui::SetScrollHereY();
-		//			ImGui::PopStyleColor();
-		//		}
-		//	}
-		//}
+				if (isCurrentInstr)
+				{
+					ImGui::SetScrollHereY();
+					ImGui::PopStyleColor();
+				}
+			}
+		}
 
-		//ImGui::EndChild();
+		ImGui::EndChild();
 	}
 
 	void Debugger::OnEvent(Event event)
