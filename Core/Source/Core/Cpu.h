@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Mmu.h"
+#include "IMmu.h"
 
 #include <stdint.h>
 #include <iostream>
@@ -12,11 +12,11 @@ namespace Core
 	class Cpu
 	{
 	public:
-		Cpu(Mmu& mmu);
+		Cpu(IMmu& mmu);
 		~Cpu();
 
 	public:
-		struct m_CpuState
+		struct sCPUState
 		{
 			// 8 bit registers that are grouped into 16 bit pairs
 			// The pairings are AF, BC, DE, & HL.
@@ -66,12 +66,14 @@ namespace Core
 
 			uint16_t SP = 0x00; // stack pointer
 			uint16_t PC = 0x100; // the gameboy program counter starts at $100
-		} State;
+		};
+
 		int m_TotalCycles = 0;
 		bool m_InstructionCompleted = false;
 
 	private:
-		Mmu& m_MMU;
+		sCPUState m_State;
+		IMmu& m_MMU;
 		int m_Cycles = 0; // how many cycles remain before the cpu can fetch another instruction
 		std::string m_CurrentInstructionName;
 		bool m_InterruptMasterFlag = false;
@@ -88,19 +90,32 @@ namespace Core
 		bool GetCPUFlag(int flag);
 		void SetCPUFlag(int flag, bool enable);
 
-	private:
-		void Process16bitInstruction(uint16_t opcode, Cpu::m_CpuState& state);
-		void ProcessInterrupts();
+		sCPUState* GetState();
+		void SetState(sCPUState state);
 
+		IMmu& GetMMU();
+
+	private:
+		void Process16bitInstruction(uint16_t opcode, sCPUState& state);
+		void ProcessInterrupts();
+		void ProcessTimers();
+		void PushSP(uint16_t value);
+		uint16_t PopSP();
+
+
+		//// Instructions ////
+		
 		// disassembly
 		void Disasseble16bit(uint8_t* opcode, int pc);
 		void OutputDisassembledInstruction(const char* instructionName, int pc, uint8_t* opcode, int totalOpBytes);
-		void UnimplementedInstruction(Cpu::m_CpuState& state, uint8_t opcode);
+		void UnimplementedInstruction(sCPUState& state, uint8_t opcode);
+
 
 		// 8-bit Load Instructions
 		void Instruction_ld_reg_value(uint8_t& reg, uint8_t& value);
 		void Instruction_ld_addr_reg(uint16_t& address, uint8_t& reg);
 		void Instruction_ld_reg_addr(uint8_t& reg, uint16_t& address);
+
 
 		// 16-bit Load Instructions
 		void Instruction_ld16_reg_value(uint16_t& reg, uint16_t value);
@@ -178,11 +193,6 @@ namespace Core
 
 		void Instruction_set_bit_reg(uint8_t& reg, uint8_t bit);
 		void Instruction_set_bit_hl(uint8_t bit);
-
-		void PushSP(uint16_t value);
-		uint16_t PopSP();
-
-		void ProcessTimers();
 	};
 
 }

@@ -20,12 +20,12 @@ namespace App
 		// CPU Info
 		ImGui::BeginChild("L", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 150), ImGuiChildFlags_None);
 		ImGui::Text("Cycles: %d", m_GameBoy->m_CPU.m_TotalCycles);
-		ImGui::Text("PC: $%04x", m_GameBoy->m_CPU.State.PC);
-		ImGui::Text("SP: $%04x", m_GameBoy->m_CPU.State.SP);
-		ImGui::Text("AF: $%04x", m_GameBoy->m_CPU.State.AF);
-		ImGui::Text("BC: $%04x", m_GameBoy->m_CPU.State.BC);
-		ImGui::Text("DE: $%04x", m_GameBoy->m_CPU.State.DE);
-		ImGui::Text("HL: $%04x", m_GameBoy->m_CPU.State.HL);
+		ImGui::Text("PC: $%04x", m_GameBoy->m_CPU.GetState()->PC);
+		ImGui::Text("SP: $%04x", m_GameBoy->m_CPU.GetState()->SP);
+		ImGui::Text("AF: $%04x", m_GameBoy->m_CPU.GetState()->AF);
+		ImGui::Text("BC: $%04x", m_GameBoy->m_CPU.GetState()->BC);
+		ImGui::Text("DE: $%04x", m_GameBoy->m_CPU.GetState()->DE);
+		ImGui::Text("HL: $%04x", m_GameBoy->m_CPU.GetState()->HL);
 		ImGui::Text("IE: %01d", m_GameBoy->m_MMU.Read(Core::HW_INTERRUPT_ENABLE));
 		ImGui::EndChild();
 
@@ -87,7 +87,7 @@ namespace App
 			// todo: currently skipping instructions that are blank.  The cpu should clean this up
 			if (!m_Instructions[i].empty())
 			{
-				bool isCurrentInstr = m_GameBoy->m_CPU.State.PC == i;
+				bool isCurrentInstr = m_GameBoy->m_CPU.GetState()->PC == i;
 
 				if (isCurrentInstr)
 					ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 0, 0, 255));

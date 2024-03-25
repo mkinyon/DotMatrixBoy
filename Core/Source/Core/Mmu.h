@@ -1,13 +1,14 @@
 #pragma once
 #include <cstdint>
 
+#include "IMmu.h"
 #include "Cartridge.h"
 #include "BaseDevice.h"
 #include "Defines.h"
 
 namespace Core
 {
-	class Mmu
+	class Mmu : public IMmu
 	{
 	public:
 		Mmu(Cartridge& cart);
