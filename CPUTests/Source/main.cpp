@@ -289,7 +289,14 @@ int main()
 		std::vector<Test> tests = ParseTestsFromJSON("Source/Tests/00.json");
 		bool didPass = RunTests(cpu, tests);
 
-		std::cout << "Passed?: " << std::boolalpha << didPass << std::endl;
+		if (didPass)
+		{
+			std::cout << "Test Passed" << std::endl;
+		}
+		else
+		{
+			std::cout << "********************** TEST FAILED **********************" << std::endl;
+		}
 	}
 		
 }
