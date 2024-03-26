@@ -58,7 +58,7 @@ struct Test
 {
 	std::string name;
 	Initial initial;
-	Initial final;
+	Final final;
 	std::vector<CycleEntry> cycles;
 };
 
@@ -145,11 +145,14 @@ std::vector<Test> ParseTestsFromJSON(std::string filePath)
 		}
 
 		return tests;
+
+		file.close();
 	}
 }
 
 bool RunTests(Core::Cpu cpu, std::vector<Test> tests)
 {
+	bool didPass = true;
 	TestMmu& mmu = dynamic_cast<TestMmu&>(cpu.GetMMU());
 
 	for (int i = 0; i < tests.size(); i++)
@@ -170,6 +173,7 @@ bool RunTests(Core::Cpu cpu, std::vector<Test> tests)
 		cpuState.L = tests[i].initial.L;
 		cpuState.PC = tests[i].initial.PC;
 		cpuState.SP = tests[i].initial.SP;
+		cpuState.IME = tests[i].initial.IME;
 
 		cpu.SetState(cpuState);
 
@@ -180,6 +184,7 @@ bool RunTests(Core::Cpu cpu, std::vector<Test> tests)
 		}
 
 		// run CPU
+		cpu.m_InstructionCompleted = false;
 		for (auto cycle : tests[i].cycles)
 		{
 			while (!cpu.m_InstructionCompleted)
@@ -189,14 +194,86 @@ bool RunTests(Core::Cpu cpu, std::vector<Test> tests)
 		}
 
 		// verify/output results
-		Core::Cpu::sCPUState* state = cpu.GetState();
+		Core::Cpu::sCPUState* state = cpu.GetState();	
+
 		if (state->A != tests[i].final.A)
 		{
-			return false;
+			std::cout << "Test: " << i << " State A - Result: " << state->A << " Final: " << tests[i].final.A << std::endl;
+			didPass = false;
+		}
+
+		if (state->B != tests[i].final.B)
+		{
+			std::cout << "Test: " << i << " State B - Result: " << state->B << " Final: " << tests[i].final.B << std::endl;
+			didPass = false;
+		}
+
+		if (state->C != tests[i].final.C)
+		{
+			std::cout << "Test: " << i << " State C - Result: " << state->C << " Final: " << tests[i].final.C << std::endl;
+			didPass = false;
+		}
+
+		if (state->D != tests[i].final.D)
+		{
+			std::cout << "Test: " << i << " State D - Result: " << state->D << " Final: " << tests[i].final.D << std::endl;
+			didPass = false;
+		}
+
+		if (state->E != tests[i].final.E)
+		{
+			std::cout << "Test: " << i << " State E - Result: " << state->E << " Final: " << tests[i].final.E << std::endl;
+			didPass = false;
+		}
+
+		if (state->F != tests[i].final.F)
+		{
+			std::cout << "Test: " << i << " State F - Result: " << state->F << " Final: " << tests[i].final.F << std::endl;
+			didPass = false;
+		}
+
+		if (state->H != tests[i].final.H)
+		{
+			std::cout << "Test: " << i << " State H - Result: " << state->H << " Final: " << tests[i].final.H << std::endl;
+			didPass = false;
+		}
+
+		if (state->L != tests[i].final.L)
+		{
+			std::cout << "Test: " << i << " State L - Result: " << state->L << " Final: " << tests[i].final.L << std::endl;
+			didPass = false;
+		}
+
+		if (state->PC != tests[i].final.PC)
+		{
+			std::cout << "Test: " << i << " State PC - Result: " << state->PC << " Final: " << tests[i].final.PC << std::endl;
+			didPass = false;
+		}
+
+		if (state->SP != tests[i].final.SP)
+		{
+			std::cout << "Test: " << i << " State SP - Result: " << state->A << " Final: " << tests[i].final.A << std::endl;
+			didPass = false;
+		}
+
+		if (state->IME != tests[i].final.IME)
+		{
+			std::cout << "Test: " << i << " State IME - Result: " << state->IME << " Final: " << tests[i].final.IME << std::endl;
+			didPass = false;
+		}
+
+		for (auto mem : tests[i].final.ram)
+		{
+			uint8_t result = mmu.Read(mem.address, true);
+			if (result != mem.value)
+			{
+				std::cout << "Test: " << i << " RAM - Result: " << result << " Final: " << mem.value << std::endl;
+				didPass = false;
+			}
 		}
 	}
 
-	return true;
+	return didPass;
 }
 
 int main()
@@ -204,6 +281,15 @@ int main()
 	TestMmu mmu;
 	Core::Cpu cpu(mmu);
 
-	std::vector<Test> tests = ParseTestsFromJSON("Source/Tests/00.json");
-	bool didPass = RunTests(cpu, tests);
+	std::string path = "Source/Tests/";
+	for (const auto& entry : std::filesystem::directory_iterator(path))
+	{
+		std::cout << "Loading Test " << entry.path() << std::endl;
+
+		std::vector<Test> tests = ParseTestsFromJSON("Source/Tests/00.json");
+		bool didPass = RunTests(cpu, tests);
+
+		std::cout << "Passed?: " << std::boolalpha << didPass << std::endl;
+	}
+		
 }

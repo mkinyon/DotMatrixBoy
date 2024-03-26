@@ -66,6 +66,7 @@ namespace Core
 
 			uint16_t SP = 0x00; // stack pointer
 			uint16_t PC = 0x100; // the gameboy program counter starts at $100
+			bool IME = false; // interrupt master enable
 		};
 
 		int m_TotalCycles = 0;
@@ -76,7 +77,6 @@ namespace Core
 		IMmu& m_MMU;
 		int m_Cycles = 0; // how many cycles remain before the cpu can fetch another instruction
 		std::string m_CurrentInstructionName;
-		bool m_InterruptMasterFlag = false;
 		bool m_IsHalted = false;
 		enum Cpu_Flags;
 

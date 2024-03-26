@@ -20,5 +20,6 @@ void TestMmu::Write(uint16_t address, uint8_t value, bool rawWrite)
 
 void TestMmu::Reset()
 {
+	delete m_Memory;
 	m_Memory = new std::vector<uint8_t>(0xFFFF + 1);
 }

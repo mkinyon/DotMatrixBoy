@@ -108,10 +108,10 @@ namespace Core
 				case 0xCB: Process16bitInstruction((opcode[0] << 8) | (opcode[1]), m_State); m_State.PC++; break;
 
 					// "DI" B:1 C:4 FLAGS: - - - -
-				case 0xF3: m_InterruptMasterFlag = false; m_Cycles = 4; break;
+				case 0xF3: m_State.IME = false; m_Cycles = 4; break;
 
 					// "EI" B:1 C:4 FLAGS: - - - -
-				case 0xFB: m_InterruptMasterFlag = true; m_Cycles = 4; break;
+				case 0xFB: m_State.IME = true; m_Cycles = 4; break;
 
 
 					/********************************************************************************************
@@ -429,7 +429,7 @@ namespace Core
 				case 0xD9:
 				{
 					m_State.PC = PopSP();
-					m_InterruptMasterFlag = true;
+					m_State.IME = true;
 
 					m_Cycles = 16;
 					break;
@@ -1236,9 +1236,9 @@ namespace Core
 			m_IsHalted = false;
 		}
 
-		if (destinationAddress != 0 && m_InterruptMasterFlag)
+		if (destinationAddress != 0 && m_State.IME)
 		{
-			m_InterruptMasterFlag = false;;
+			m_State.IME = false;;
 			m_MMU.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, interruptFlag, false);
 
 			PushSP(m_State.PC);
