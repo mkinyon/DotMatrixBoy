@@ -8,7 +8,7 @@ namespace App
 		EventManager::Instance().Subscribe(Event::DEBUGGER_ENABLE, this);
 		EventManager::Instance().Subscribe(Event::DEBUGGER_DISABLE, this);
 
-		m_Instructions = m_GameBoy->m_CPU.DisassebleAll();
+		//m_Instructions = m_GameBoy->m_CPU.DisassebleAll();
 	}
 
 	Debugger::~Debugger() {}

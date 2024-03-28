@@ -16,6 +16,13 @@ namespace App
 	{
 		ImGui::SeparatorText("Rom Header");
 		Core::Cartridge* cart = m_GameBoy->GetCart();
+
+		if (cart == nullptr)
+		{
+			ImGui::Text("Rom Not Loaded");
+			return;
+		}
+
 		Core::Cartridge::sRomHeader header = cart->GetRomInfo();
 
 		ImGui::Text("Title: %s", header.title); 

@@ -2191,6 +2191,7 @@ namespace Core
 	void Cpu::Reset(bool enableBootRom)
 	{
 		Cpu::m_TotalCycles = 0;
+		m_IsHalted = false;
 
 		// registers
 		m_State.AF = enableBootRom ? 0x000 : 0x01B0;

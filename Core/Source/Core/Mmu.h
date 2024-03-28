@@ -11,8 +11,10 @@ namespace Core
 	class Mmu : public IMmu
 	{
 	public:
-		Mmu(Cartridge& cart);
+		Mmu();
 		~Mmu();
+
+		void SetCart(Cartridge* cart);
 
 		uint8_t& Read(uint16_t address, const bool hasPPUAccess = false);
 		void Write(uint16_t address, uint8_t value, bool rawWrite = false);
@@ -28,7 +30,7 @@ namespace Core
 		std::vector<uint8_t>* m_Memory;
 		std::vector<uint8_t> m_BadReadData = { 0xFF, 0xFF, 0xFF };
 
-		Cartridge m_Cart;
+		Cartridge* m_Cart;
 		LCD_Mode m_CurrentLCDMode = LCD_Mode::MODE_0_HBLANK;
 
 		std::vector<BaseDevice*> m_RegisteredDevices;

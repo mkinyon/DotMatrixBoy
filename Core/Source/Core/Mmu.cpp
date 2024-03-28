@@ -5,19 +5,24 @@
 
 namespace Core
 {
-	Mmu::Mmu(Cartridge& cart) : m_Cart(cart)
+	Mmu::Mmu()
 	{
 		m_Memory = new std::vector<uint8_t>(0xFFFF + 1);
 	}
 
 	Mmu::~Mmu() {}
 
+	void Mmu::SetCart(Cartridge* cart)
+	{
+		m_Cart = cart;
+	}
+
 	uint8_t& Mmu::Read(uint16_t address, const bool hasPPUAccess)
 	{
 		// cart address space
 		if (address >= CART_ADDR_RANGE_START && address <= CART_ADDR_RANGE_END)
 		{
-			return m_Cart.Read(address);
+			return m_Cart->Read(address);
 		}
 		// ignore reads to VRAM while PPU is drawing
 		else if (address >= 0x8000 && address <= 0xFE9F && !hasPPUAccess && m_CurrentLCDMode == LCD_Mode::MODE_3_DRAWING)
@@ -47,7 +52,7 @@ namespace Core
 		// we'll let the cartridge handle any writes to that address space
 		if (address >= CART_ADDR_RANGE_START && address <= CART_ADDR_RANGE_END)
 		{
-			m_Cart.Write(address, value);
+			m_Cart->Write(address, value);
 		}
 		// writing to the DIV register will cause is to reset to zero 
 		else if (address == HW_DIV_DIVIDER_REGISTER)

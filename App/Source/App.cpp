@@ -24,19 +24,16 @@ using namespace App;
 int main(int argv, char** args)
 {
     sAppState appState;
-
-    const char* romName = "../Roms/drmario.gb";// "../Roms/Mooneye/emulator-only/mbc1/bits_bank2.gb";
-
-    std::unique_ptr<Core::Cartridge> cart = std::make_unique<Core::Cartridge>(romName, appState.IsBootRomEnabled);
-    Core::GameBoy* gb = new Core::GameBoy(*cart);
+    appState.IsPaused = true; // need to always set to true since we don't have a rom loaded
+    
+    Core::GameBoy* gb = new Core::GameBoy(appState.IsBootRomEnabled);
+    
     Window*  window = new Window(1280, 720, "DotMatrixBoy", gb, appState);
     window->Initialize();
-
-    gb->Run(appState.IsBootRomEnabled);
     
     // Widgets
     FileDialog* fileDialog = new FileDialog(gb, appState);
-    MenuBar* menuBar = new MenuBar(appState);
+    MenuBar* menuBar = new MenuBar(gb, appState);
     LCD* lcdWindow = new LCD(gb->m_PPU.GetLCDPixels(), window->GetRenderer());
     AudioDebugger* audioDebugger = new AudioDebugger(gb);
     Debugger* debugger = new Debugger(gb);
@@ -52,14 +49,8 @@ int main(int argv, char** args)
     bool isRunning = true;
     while (isRunning)
     {
-        if (appState.IsPaused)
-        {
-            gb->Pause();
-        }
-        else
-        {
-            gb->Unpause();
-        }
+        appState.IsPaused = gb->IsPaused();
+        gb->SetBootRomEnabled(appState.IsBootRomEnabled);
 
         window->Update(isRunning);
 

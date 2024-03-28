@@ -3,23 +3,35 @@
 
 namespace Core
 {
-	GameBoy::GameBoy(Cartridge& cart) : m_Cart(cart), m_MMU(cart), m_CPU(m_MMU), m_PPU(m_MMU), m_APU(m_MMU), m_Input(m_MMU) {}
+	GameBoy::GameBoy(bool enableBootRom) : m_MMU(), m_CPU(m_MMU), m_PPU(m_MMU), m_APU(m_MMU), m_Input(m_MMU)
+	{
+		m_BootRomEnabled = enableBootRom;
+	}
+
 	GameBoy::~GameBoy() {}
+
+	void GameBoy::LoadRom(const char* file)
+	{
+		// pause the emulator so we don't risk causing
+		// issues while the cart is replaced.
+		Pause();
+
+		delete m_Cart;
+		m_Cart = new Cartridge(file, m_BootRomEnabled);
+		m_MMU.SetCart(m_Cart);
+
+		Run();
+	}
 
 	void GameBoy::Run()
 	{
-		Run(m_BootRomEnabled);
-	}
-
-	void GameBoy::Run(bool enableBootRom)
-	{
-		m_BootRomEnabled = enableBootRom;
-		m_CPU.Reset(enableBootRom);
+		m_CPU.Reset(m_BootRomEnabled);
+		Unpause();
 	}
 
 	void GameBoy::Clock(float elapsedTimeMS)
 	{
-		if (!m_IsPaused)
+		if (!m_IsPaused && m_Cart != nullptr)
 		{
 			float cyclesToRun = elapsedTimeMS * Core::CYCLES_PER_MS;
 
@@ -76,9 +88,14 @@ namespace Core
 		return m_BootRomEnabled;
 	}
 
+	void GameBoy::SetBootRomEnabled(bool enabled)
+	{
+		m_BootRomEnabled = enabled;
+	}
+
 	Cartridge* GameBoy::GetCart()
 	{
-		return &m_Cart;
+		return m_Cart;
 	}
 
 }

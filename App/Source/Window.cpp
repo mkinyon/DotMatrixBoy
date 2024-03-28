@@ -105,13 +105,15 @@ namespace App
                 {
                     case SDLK_p:
                     {
-                        if (m_GameBoy->IsPaused())
+                        if (m_AppState.IsPaused)
                         {
                             m_AppState.IsPaused = false;
+                            m_GameBoy->Unpause();
                         }
                         else
                         {
                             m_AppState.IsPaused = true;
+                            m_GameBoy->Pause();
                         }
                         break;
                     }

@@ -3,13 +3,12 @@
 
 namespace App
 {
-	MenuBar::MenuBar(sAppState& appState) : ImguiWidgetBase("MenuBar"), m_AppState(appState)
+	MenuBar::MenuBar(Core::GameBoy* gb, sAppState& appState) : ImguiWidgetBase("MenuBar"), m_GameBoy(gb), m_AppState(appState)
 	{
         m_DisableTitleWrapper = true;
 	}
 
 	MenuBar::~MenuBar() {}
-
 
 	void MenuBar::RenderContent()
 	{ 
@@ -26,7 +25,10 @@ namespace App
 
                 for (auto& rom : m_AppState.recentRoms)
                 {
-                    ImGui::MenuItem(rom.c_str(), "");
+                    if (ImGui::MenuItem(rom.c_str(), ""))
+                    {
+                        m_GameBoy->LoadRom(rom.c_str());
+                    }
                 }
 
                 ImGui::Separator();
@@ -42,7 +44,6 @@ namespace App
             if (ImGui::BeginMenu("Emulator"))
             {
                 if (ImGui::MenuItem("Pause", "CTRL+P", &m_AppState.IsPaused)) {}
-                if (ImGui::MenuItem("Reset", "CTRL+R")) {}
                 if (ImGui::MenuItem("Step", "CTRL+S")) {}
                 ImGui::Separator();
                 if (ImGui::MenuItem("Enable Boot Rom", NULL, &m_AppState.IsBootRomEnabled)) {}

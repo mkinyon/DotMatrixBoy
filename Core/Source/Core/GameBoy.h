@@ -15,26 +15,31 @@ namespace Core
 	class GameBoy
 	{
 	public:
-		GameBoy(Cartridge& cart);
+		GameBoy(bool enableBootRom);
 		~GameBoy();
 
 	public:
+		void LoadRom(const char* file);
 		void Run();
-		void Run(bool enableBootRom);
 		void Clock(float elapsedTimeMS);
+
 		void Pause();
 		void Unpause();
 		bool IsPaused();
+
 		void StepCPU();
 		void AdvanceFrame();
+
 		bool IsBootRomEnabled();
+		void SetBootRomEnabled(bool enabled);
+
 		Cartridge* GetCart();
 
 	private:
 		void ClockSystems();
 
 	public:
-		Cartridge& m_Cart;
+		Cartridge* m_Cart = nullptr;
 		Mmu m_MMU;
 		Cpu m_CPU;
 		Ppu m_PPU;
@@ -42,7 +47,7 @@ namespace Core
 		Input m_Input;
 
 	private:
-		bool m_IsPaused = false;
+		bool m_IsPaused = true;
 		bool m_BootRomEnabled = false;
 	};
 }
