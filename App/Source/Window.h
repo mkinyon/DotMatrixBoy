@@ -2,6 +2,7 @@
 
 #include "SDL.h"
 #include "Core/GameBoy.h"
+#include "AppState.h"
 #include <mutex>
 
 namespace App
@@ -9,7 +10,7 @@ namespace App
 	class Window
 	{
 	public:
-		Window(int screenWidth, int screenHeight, const char* windowTitle, Core::GameBoy* gb);
+		Window(int screenWidth, int screenHeight, const char* windowTitle, Core::GameBoy* gb, sAppState& appState);
 		~Window();
 
 	public:
@@ -22,6 +23,8 @@ namespace App
 		Uint64 GetElapsedTime();
 
 	private:
+		sAppState& m_AppState;
+
 		SDL_Window* m_SDLWindow;
 		SDL_Renderer* m_SDLRenderer;
 

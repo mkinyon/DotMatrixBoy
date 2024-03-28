@@ -2,13 +2,14 @@
 
 #include "ImguiWidgetBase.h"
 #include "Enums.h"
+#include "AppState.h"
 
 namespace App
 {
 	class MenuBar : public ImguiWidgetBase
 	{
 	public:
-		MenuBar();
+		MenuBar(sAppState& appState);
 		~MenuBar();
 
 	public:
@@ -19,11 +20,6 @@ namespace App
 		void OnEvent(Event event);
 
 	private:
-		bool m_ShowMemoryMap;
-		bool m_ShowDebugger;
-		bool m_ShowVRAMViewer;
-		bool m_ShowLCD;
-		bool m_ShowAudioDebugger;
-		bool m_ShowConsole;
+		sAppState& m_AppState;
 	};
 }

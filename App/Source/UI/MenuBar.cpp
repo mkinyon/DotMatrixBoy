@@ -3,7 +3,7 @@
 
 namespace App
 {
-	MenuBar::MenuBar() : ImguiWidgetBase("MenuBar")
+	MenuBar::MenuBar(sAppState& appState) : ImguiWidgetBase("MenuBar"), m_AppState(appState)
 	{
         m_DisableTitleWrapper = true;
 	}
@@ -13,9 +13,6 @@ namespace App
 
 	void MenuBar::RenderContent()
 	{ 
-        static bool isPaused = false;
-        static bool enableBootRom = false;
-
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("File"))
@@ -24,6 +21,15 @@ namespace App
                 {
                     EventManager::Instance().Emit(Event::OPEN_FILE_DIALOG);
                 }
+
+                ImGui::Separator();
+
+                for (auto& rom : m_AppState.recentRoms)
+                {
+                    ImGui::MenuItem(rom.c_str(), "");
+                }
+
+                ImGui::Separator();
 
                 if (ImGui::MenuItem("Exit", "CTRL+Q"))
                 {
@@ -35,59 +41,59 @@ namespace App
             
             if (ImGui::BeginMenu("Emulator"))
             {
-                if (ImGui::MenuItem("Pause", "CTRL+P", &isPaused)) {}
+                if (ImGui::MenuItem("Pause", "CTRL+P", &m_AppState.IsPaused)) {}
                 if (ImGui::MenuItem("Reset", "CTRL+R")) {}
                 if (ImGui::MenuItem("Step", "CTRL+S")) {}
                 ImGui::Separator();
-                if (ImGui::MenuItem("Enable Boot Rom", NULL, &enableBootRom)) {}
+                if (ImGui::MenuItem("Enable Boot Rom", NULL, &m_AppState.IsBootRomEnabled)) {}
                 ImGui::EndMenu();
             }
 
             if (ImGui::BeginMenu("Tools"))
             {
-                if (ImGui::MenuItem("Debugger", "F5", &m_ShowDebugger))
+                if (ImGui::MenuItem("Debugger", "F5", &m_AppState.ShowDebugger))
                 {
-                    if (m_ShowDebugger)
+                    if (m_AppState.ShowDebugger)
                         EventManager::Instance().Emit(Event::DEBUGGER_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::DEBUGGER_DISABLE);
                 }
 
-                if (ImGui::MenuItem("VRAM Viewer", "F6", &m_ShowVRAMViewer))
+                if (ImGui::MenuItem("VRAM Viewer", "F6", &m_AppState.ShowVRAMViewer))
                 {
-                    if (m_ShowVRAMViewer)
+                    if (m_AppState.ShowVRAMViewer)
                         EventManager::Instance().Emit(Event::VRAM_VIEWER_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::VRAM_VIEWER_DISABLE);
                 }
 
-                if (ImGui::MenuItem("LCD", "F7", &m_ShowLCD))
+                if (ImGui::MenuItem("LCD", "F7", &m_AppState.ShowLCD))
                 {
-                    if (m_ShowLCD)
+                    if (m_AppState.ShowLCD)
                         EventManager::Instance().Emit(Event::LCD_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::LCD_DISABLE);
                 }
 
-                if (ImGui::MenuItem("Memory Map", "F8", &m_ShowMemoryMap))
+                if (ImGui::MenuItem("Memory Map", "F8", &m_AppState.ShowMemoryMap))
                 {
-                    if (m_ShowMemoryMap)
+                    if (m_AppState.ShowMemoryMap)
                         EventManager::Instance().Emit(Event::MEMORY_MAP_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::MEMORY_MAP_DISABLE);
                 }
 
-                if (ImGui::MenuItem("Audio Debugger", "F9", &m_ShowAudioDebugger))
+                if (ImGui::MenuItem("Audio Debugger", "F9", &m_AppState.ShowAudioDebugger))
                 {
-                    if (m_ShowAudioDebugger)
+                    if (m_AppState.ShowAudioDebugger)
                         EventManager::Instance().Emit(Event::AUDIO_DEBUGGER_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::AUDIO_DEBUGGER_DISABLE);
                 }
 
-                if (ImGui::MenuItem("Console", "F10", &m_ShowConsole))
+                if (ImGui::MenuItem("Console", "F10", &m_AppState.ShowConsole))
                 {
-                    if (m_ShowConsole)
+                    if (m_AppState.ShowConsole)
                         EventManager::Instance().Emit(Event::CONSOLE_ENABLE);
                     else
                         EventManager::Instance().Emit(Event::CONSOLE_DISABLE);

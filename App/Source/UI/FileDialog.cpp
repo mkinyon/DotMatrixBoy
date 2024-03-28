@@ -3,7 +3,7 @@
 
 namespace App
 {
-	FileDialog::FileDialog(Core::GameBoy* gb) : ImguiWidgetBase("File Browser"), m_GameBoy(gb)
+	FileDialog::FileDialog(Core::GameBoy* gb, sAppState& appState) : ImguiWidgetBase("File Browser"), m_GameBoy(gb), m_AppState(appState)
 	{
 		m_DisableTitleWrapper = true;
 		m_FileDialog.SetTitle("Open Rom");
@@ -25,14 +25,14 @@ namespace App
 			m_GameBoy->Pause();
 
 			// create new cart
-			bool bootRomEnabled = m_GameBoy->IsBootRomEnabled();
-			Core::Cartridge* newCart = new Core::Cartridge(m_FileDialog.GetSelected().string(), bootRomEnabled);
+			Core::Cartridge* newCart = new Core::Cartridge(m_FileDialog.GetSelected().string(), m_AppState.IsBootRomEnabled);
 			
 			// clean up and create new gameboy
 			delete m_GameBoy;
 			m_GameBoy = new Core::GameBoy(*newCart);
+			m_GameBoy->Run(m_AppState.IsBootRomEnabled);
 
-			m_GameBoy->Run(bootRomEnabled);
+			m_AppState.AddRecentRomEntry(m_FileDialog.GetSelected().string());
 			m_FileDialog.ClearSelected();
 		}
 	}

@@ -4,6 +4,7 @@
 #include <crtdbg.h>
 
 #include "Window.h"
+#include "AppState.h"
 
 #include "Core\Cartridge.h"
 #include "Core\GameBoy.h"
@@ -18,31 +19,31 @@
 #include "UI/RomInfo.h"
 #include "UI/VRAMViewer.h"
 
-// Main code
+using namespace App;
+
 int main(int argv, char** args)
 {
-    const char* romName = "../Roms/donkeykong.gb";// "../Roms/Mooneye/emulator-only/mbc1/bits_bank2.gb";
+    sAppState appState;
 
-    bool isPaused = true;
-    bool enableBootRom = true;
+    const char* romName = "../Roms/drmario.gb";// "../Roms/Mooneye/emulator-only/mbc1/bits_bank2.gb";
 
-    std::unique_ptr<Core::Cartridge> cart = std::make_unique<Core::Cartridge>(romName, enableBootRom);
+    std::unique_ptr<Core::Cartridge> cart = std::make_unique<Core::Cartridge>(romName, appState.IsBootRomEnabled);
     Core::GameBoy* gb = new Core::GameBoy(*cart);
-    App::Window*  window = new App::Window(1280, 720, "DotMatrixBoy", gb);
+    Window*  window = new Window(1280, 720, "DotMatrixBoy", gb, appState);
     window->Initialize();
 
-    gb->Run(enableBootRom);
+    gb->Run(appState.IsBootRomEnabled);
     
     // Widgets
-    App::FileDialog* fileDialog = new App::FileDialog(gb);
-    App::MenuBar* menuBar = new App::MenuBar();
-    App::LCD* lcdWindow = new App::LCD(gb->m_PPU.GetLCDPixels(), window->GetRenderer());
-    App::AudioDebugger* audioDebugger = new App::AudioDebugger(gb);
-    App::Debugger* debugger = new App::Debugger(gb);
-    App::MemoryMap* memoryMap = new App::MemoryMap(gb);
-    App::VRAMViewer* vramViewer = new App::VRAMViewer(gb, window->GetRenderer());
-    App::Console* console = new App::Console();
-    App::RomInfo* romInfo = new App::RomInfo(gb);
+    FileDialog* fileDialog = new FileDialog(gb, appState);
+    MenuBar* menuBar = new MenuBar(appState);
+    LCD* lcdWindow = new LCD(gb->m_PPU.GetLCDPixels(), window->GetRenderer());
+    AudioDebugger* audioDebugger = new AudioDebugger(gb);
+    Debugger* debugger = new Debugger(gb);
+    MemoryMap* memoryMap = new MemoryMap(gb);
+    VRAMViewer* vramViewer = new VRAMViewer(gb, window->GetRenderer());
+    Console* console = new Console();
+    RomInfo* romInfo = new RomInfo(gb);
 
     bool show_demo_window = true;
     bool show_another_window = false;
@@ -51,6 +52,15 @@ int main(int argv, char** args)
     bool isRunning = true;
     while (isRunning)
     {
+        if (appState.IsPaused)
+        {
+            gb->Pause();
+        }
+        else
+        {
+            gb->Unpause();
+        }
+
         window->Update(isRunning);
 
         gb->Clock((float)(std::min)((int)window->GetElapsedTime(), 20));
@@ -78,6 +88,8 @@ int main(int argv, char** args)
             isRunning = false;
         }
     }
+
+    appState.SaveStateToFile();
 
     // clean up
     delete menuBar;

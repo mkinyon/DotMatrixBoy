@@ -21,6 +21,7 @@ project "CPUTests"
       -- Include Core
 	  "../Core/Source",
 
+      -- json
       "../ThirdParty/json/single_include/nlohmann/"
    }
 

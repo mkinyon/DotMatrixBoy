@@ -56,5 +56,6 @@ Tools/
 *.gb
 *.sav
 *.wav
+*.json
 dmg_boot.bin
 imgui.ini

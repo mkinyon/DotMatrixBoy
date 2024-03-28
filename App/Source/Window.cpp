@@ -10,7 +10,7 @@
 
 namespace App
 {
-    Window::Window(int screenWidth, int screenHeight, const char* windowTitle, Core::GameBoy* gb) : m_GameBoy(gb)
+    Window::Window(int screenWidth, int screenHeight, const char* windowTitle, Core::GameBoy* gb, sAppState& appState) : m_GameBoy(gb), m_AppState(appState)
     {
         #if !SDL_VERSION_ATLEAST(2,0,17)
             #error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
@@ -107,11 +107,11 @@ namespace App
                     {
                         if (m_GameBoy->IsPaused())
                         {
-                            m_GameBoy->Unpause();
+                            m_AppState.IsPaused = false;
                         }
                         else
                         {
-                            m_GameBoy->Pause();
+                            m_AppState.IsPaused = true;
                         }
                         break;
                     }

@@ -12,7 +12,7 @@ namespace Core
 	Cpu::Cpu(IMmu& mmu) : m_MMU(mmu)
 	{
 		// Check if the log file already exists
-		if (std::filesystem::exists("cpu.txt"))
+		if (std::filesystem::exists("cpu.txt") && m_EnableLogging)
 		{
 			// If it exists, delete it
 			std::filesystem::remove("cpu.txt");
@@ -47,7 +47,7 @@ namespace Core
 
 		//Disassemble(opcode, m_State.PC);
 
-		if (false)
+		if (m_EnableLogging)
 		{
 			logBuffer << std::hex << std::setfill('0') << std::uppercase <<
 				"A:" << std::setw(2) << static_cast<int>(m_State.A) <<

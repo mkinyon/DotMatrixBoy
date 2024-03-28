@@ -30,6 +30,9 @@ project "App"
 
     -- imgui file browser
     "../ThirdParty/imgui-filebrowser/imfilebrowser.h",
+
+    -- json
+    "../ThirdParty/json/single_include/nlohmann/json.hpp"
     }
    
 
@@ -46,7 +49,10 @@ project "App"
       "../ThirdParty/imgui/backends",
       "../ThirdParty/imgui-filebrowser",
       "../ThirdParty/OneLoneCoder",
-      "../ThirdParty/SDL2/include"
+      "../ThirdParty/SDL2/include",
+
+      -- json
+      "../ThirdParty/json/single_include/nlohmann/"
    }
 
    libdirs {
