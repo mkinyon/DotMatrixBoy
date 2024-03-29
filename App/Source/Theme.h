@@ -16,7 +16,7 @@ namespace App
 	}
 
 	void SetTheme()
-	{	
+	{
 		// Deep Dark style by janekb04 from ImThemes
 		ImGuiStyle& style = ImGui::GetStyle();
 
@@ -104,12 +104,39 @@ namespace App
 		style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.0f, 0.0f, 0.0f, 0.699999988079071f);
 		style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(1.0f, 0.0f, 0.0f, 0.2000000029802322f);
 		style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.0f, 0.0f, 0.0f, 0.3499999940395355f);
+		
+		// Turning this font off for now because it is not monospace and its causing elements
+		// to shift around
 
 		// set font
-		ImGuiIO& io = ImGui::GetIO();
-		ImFontConfig fontConfig;
-		fontConfig.FontDataOwnedByAtlas = false;
-		ImFont* robotoFont = io.Fonts->AddFontFromMemoryTTF((void*)g_RobotoRegular, sizeof(g_RobotoRegular), 14.0f, &fontConfig);
-		io.FontDefault = robotoFont;
+		//ImGuiIO& io = ImGui::GetIO();
+		//ImFontConfig fontConfig;
+		//fontConfig.FontDataOwnedByAtlas = false;
+		//ImFont* robotoFont = io.Fonts->AddFontFromMemoryTTF((void*)g_RobotoRegular, sizeof(g_RobotoRegular), 14.0f, &fontConfig);
+		//io.FontDefault = robotoFont;
 	}
+
+	struct sRGB {
+		uint8_t R = 0;
+		uint8_t G = 0;
+		uint8_t B = 0;
+	};
+
+	struct sDisplayPalette {
+		sRGB Color1;
+		sRGB Color2;
+		sRGB Color3;
+		sRGB Color4;
+	};
+
+	enum class PaletteType
+	{
+		DOT_MATRIX = 0,
+		GB_POCKET = 1
+	};
+
+	std::vector<sDisplayPalette> DisplayPalettes = {
+		{ sRGB(15, 188, 155), sRGB(15, 172, 139), sRGB(48, 98, 48), sRGB(15, 56, 15) }, // dot matrix
+		{ sRGB(196, 207, 161),sRGB(139, 149, 109),sRGB(77, 83, 60),sRGB(31, 31, 31) } // gb pocket
+	};
 }
