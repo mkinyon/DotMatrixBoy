@@ -1244,7 +1244,7 @@ namespace Core
 			PushSP(m_State.PC);
 			m_State.PC = destinationAddress;
 
-			m_Cycles = 5;
+			m_Cycles = 20;
 
 			std::ostringstream stream;
 			stream << "IRQ Write - Address: " << std::hex << destinationAddress << " Interrupt Type: ";
@@ -2204,18 +2204,11 @@ namespace Core
 		m_State.SP = enableBootRom ? 0x0000 : 0xFFFE;
 		m_State.IME = false;
 
-		// randomize memory to mimick real gameboy
-		for (uint16_t address = 0x8000; address <= 0x97FF; address++)
-		{
-			//m_MMU.Write(address, GenerateRandomNumber(0, 255));
-			m_MMU.Write(address, 0);
-		}
-
 		// hardware registers
 		m_MMU.Write(0xFF00, 0xCF);
 		m_MMU.Write(0xFF01, 0x00);
 		m_MMU.Write(0xFF02, 0x7E);
-		m_MMU.Write(0xFF04, 0xAB);
+		//m_MMU.Write(0xFF04, 0xAB);
 		m_MMU.Write(0xFF05, 0x00);
 		m_MMU.Write(0xFF06, 0x00);
 		m_MMU.Write(0xFF07, 0x00);

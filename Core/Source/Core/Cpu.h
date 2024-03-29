@@ -71,7 +71,7 @@ namespace Core
 
 		int m_TotalCycles = 0;
 		bool m_InstructionCompleted = false;
-		bool m_EnableLogging = false;
+		bool m_EnableLogging = true;
 
 	private:
 		sCPUState m_State;

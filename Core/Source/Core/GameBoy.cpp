@@ -33,6 +33,12 @@ namespace Core
 
 	void GameBoy::Reset()
 	{
+		// randomize memory
+		for (uint16_t address = 0x8000; address <= 0x97FF; address++)
+		{
+			m_MMU.Write(address, GenerateRandomNumber(0, 255));
+		}
+
 		// reset div
 		m_MMU.Write(HW_FF04_DIV_DIVIDER_REGISTER, 0xAC);
 		m_MMU.Write(HW_FF03_DIV_DIVIDER_REGISTER_LOW, 0x00);

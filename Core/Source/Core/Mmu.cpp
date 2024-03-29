@@ -7,7 +7,7 @@ namespace Core
 {
 	Mmu::Mmu()
 	{
-		m_Memory = new std::vector<uint8_t>(0xFFFF + 1);
+		m_Memory = new std::vector<uint8_t>(0xFFFF + 1, 0);
 	}
 
 	Mmu::~Mmu() {}
@@ -15,6 +15,11 @@ namespace Core
 	void Mmu::SetCart(Cartridge* cart)
 	{
 		m_Cart = cart;
+
+		// if we are replacing the cart, then we should just reset the
+		// memory as well
+		delete m_Memory;
+		m_Memory = new std::vector<uint8_t>(0xFFFF + 1, 0);
 	}
 
 	uint8_t& Mmu::Read(uint16_t address, const bool hasPPUAccess)
