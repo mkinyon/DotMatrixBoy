@@ -33,6 +33,7 @@ namespace Core
 		};
 
 		void Clock();
+		void Reset();
 		LCD_Mode GetMode();
 		OAM* GetOAMEntries();
 

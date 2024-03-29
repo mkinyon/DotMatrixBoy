@@ -62,6 +62,16 @@ namespace Core
 			return;
 		}
 
+		// check if wave channel should start
+		if (m_MMU.ReadRegisterBit(HW_NR30_SOUND_CHANNEL_3_DAC_ENABLE, NR30_DAC_ON_OFF))
+		{
+			m_CH3_Wave.Start();
+		}
+		else
+		{
+			m_CH3_Wave.Stop();
+		}
+
 		m_FrameSequenceCountDown--;
 		if (m_FrameSequenceCountDown <= 0)
 		{

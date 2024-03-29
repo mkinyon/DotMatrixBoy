@@ -26,6 +26,7 @@ namespace Core
 	void GameBoy::Run()
 	{
 		m_CPU.Reset(m_BootRomEnabled);
+		m_PPU.Reset();
 		Unpause();
 	}
 

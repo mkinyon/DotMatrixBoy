@@ -37,6 +37,15 @@ namespace Core
 		}
 	}
 
+	void Ppu::Reset()
+	{
+		m_LCDMode = LCD_Mode::MODE_0_HBLANK;
+		m_CycleCount = 0;
+		m_TotalFrames = 0;
+		m_CurrentScanLine = 0;
+		m_TotalDotsThisFrame = 0;
+	}
+
 	LCD_Mode Ppu::GetMode()
 	{
 		return ReadLCDMode();
