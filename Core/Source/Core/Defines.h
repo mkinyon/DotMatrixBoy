@@ -143,7 +143,7 @@ namespace Core
 		IE_TIMER = (0x01 << 2),
 		IE_SERIAL = (0x01 << 3),
 		IE_JOYPAD = (0x01 << 4),
-	} InterruptEnable_Flags;
+	} IE_Flags;
 
 	typedef enum
 	{
@@ -152,7 +152,7 @@ namespace Core
 		IF_TIMER = (0x01 << 2),
 		IF_SERIAL = (0x01 << 3),
 		IF_JOYPAD = (0x01 << 4),
-	} Interrupt_Flags;
+	} IF_Flags;
 
 	typedef enum
 	{

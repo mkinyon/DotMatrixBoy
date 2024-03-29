@@ -36,7 +36,7 @@ namespace Core
 		// randomize memory
 		for (uint16_t address = 0x8000; address <= 0x97FF; address++)
 		{
-			m_MMU.Write(address, GenerateRandomNumber(0, 255));
+			//m_MMU.Write(address, GenerateRandomNumber(0, 255));
 		}
 
 		// reset div

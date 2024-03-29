@@ -1203,32 +1203,28 @@ namespace Core
 			interruptFlag = IF_VBLANK;
 			m_IsHalted = false;
 		}
-
-		if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_LCD) &&
+		else if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_LCD) &&
 			m_MMU.ReadRegisterBit(HW_FF0F_IF_INTERRUPT_FLAG, IF_LCD))
 		{
 			destinationAddress = DEST_ADDRESS_LCD_STAT;
 			interruptFlag = IF_LCD;
 			m_IsHalted = false;
 		}
-
-		if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_TIMER) &&
+		else if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_TIMER) &&
 			m_MMU.ReadRegisterBit(HW_FF0F_IF_INTERRUPT_FLAG, IF_TIMER))
 		{
 			destinationAddress = DEST_ADDRESS_TIMER;
 			interruptFlag = IF_TIMER;
 			m_IsHalted = false;
 		}
-
-		if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_SERIAL) &&
+		else if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_SERIAL) &&
 			m_MMU.ReadRegisterBit(HW_FF0F_IF_INTERRUPT_FLAG, IF_SERIAL))
 		{
 			destinationAddress = DEST_ADDRESS_SERIAL;
 			interruptFlag = IF_SERIAL;
 			m_IsHalted = false;
 		}
-
-		if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_JOYPAD) &&
+		else if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_JOYPAD) &&
 			m_MMU.ReadRegisterBit(HW_FF0F_IF_INTERRUPT_FLAG, IF_JOYPAD))
 		{
 			destinationAddress = DEST_ADDRESS_JOYPAD;
@@ -2246,19 +2242,6 @@ namespace Core
 		m_MMU.Write(0xFF49, 0xFF);
 		m_MMU.Write(0xFF4A, 0x00);
 		m_MMU.Write(0xFF4B, 0x00);
-		m_MMU.Write(0xFF4D, 0xFF);
-		m_MMU.Write(0xFF4F, 0xFF);
-		m_MMU.Write(0xFF51, 0xFF);
-		m_MMU.Write(0xFF52, 0xFF);
-		m_MMU.Write(0xFF53, 0xFF);
-		m_MMU.Write(0xFF54, 0xFF);
-		m_MMU.Write(0xFF55, 0xFF);
-		m_MMU.Write(0xFF56, 0xFF);
-		m_MMU.Write(0xFF68, 0xFF);
-		m_MMU.Write(0xFF69, 0xFF);
-		m_MMU.Write(0xFF6A, 0xFF);
-		m_MMU.Write(0xFF6B, 0xFF);
-		m_MMU.Write(0xFF70, 0xFF);
 		m_MMU.Write(HW_FFFF_INTERRUPT_ENABLE, 0x00);
 	}
 

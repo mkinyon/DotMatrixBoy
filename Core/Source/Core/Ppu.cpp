@@ -358,7 +358,7 @@ namespace Core
 
 	uint8_t Ppu::ReadFromBuffer(int x, int y)
 	{
-		if (x >= 160 || y >= 144)
+		if (x < 0 || x >= 160 || y < 0 || y >= 144)
 		{
 			Logger::Instance().Warning(Domain::PPU, "Attempted bad read from backbuffer");
 			return 0;

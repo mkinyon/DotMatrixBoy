@@ -15,36 +15,62 @@ namespace App
 
 	void Debugger::RenderContent()
 	{
-		ImGui::SeparatorText("CPU/PPU State");
+		ImGui::SeparatorText("CPU");
+		Core::Cpu::sCPUState* cpuState = m_GameBoy->m_CPU.GetState();
 
 		// CPU Info
-		ImGui::BeginChild("L", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 150), ImGuiChildFlags_None);
-		ImGui::Text("Cycles: %d", m_GameBoy->m_CPU.m_TotalCycles);
-		ImGui::Text("PC: $%04x", m_GameBoy->m_CPU.GetState()->PC);
-		ImGui::Text("SP: $%04x", m_GameBoy->m_CPU.GetState()->SP);
-		ImGui::Text("AF: $%04x", m_GameBoy->m_CPU.GetState()->AF);
-		ImGui::Text("BC: $%04x", m_GameBoy->m_CPU.GetState()->BC);
-		ImGui::Text("DE: $%04x", m_GameBoy->m_CPU.GetState()->DE);
-		ImGui::Text("HL: $%04x", m_GameBoy->m_CPU.GetState()->HL);
-		ImGui::Text("IE: %01d", m_GameBoy->m_MMU.Read(Core::HW_FFFF_INTERRUPT_ENABLE));
-		ImGui::EndChild();
+		ImGui::Text("Clock Cycles: %d", m_GameBoy->m_CPU.m_TotalCycles);
+		ImGui::Separator();
 
-		ImGui::SameLine();
+		ImGui::Text("PC: $%04x", cpuState->PC);	 ImGui::SameLine(0,30);
+		ImGui::Text("SP: $%04x", cpuState->SP);	 ImGui::SameLine(0,30);
+		ImGui::Text("AF: $%04x", cpuState->AF);
+		ImGui::Text("BC: $%04x", cpuState->BC);	 ImGui::SameLine(0,30);
+		ImGui::Text("DE: $%04x", cpuState->DE);	 ImGui::SameLine(0,30);
+		ImGui::Text("HL: $%04x", cpuState->HL);	 ImGui::SameLine(0,30);
+		ImGui::Text("IME: %01d", cpuState->IME);
 
-		// CPU Flags
-		ImGui::BeginChild("LM", ImVec2(ImGui::GetContentRegionAvail().x * 0.25f, 150), ImGuiChildFlags_None);
-		// Flags
-		// todo: the cpu flags are currently read only but should be read/write
-		bool z = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_ZERO); ImGui::Checkbox("Z", &z);
-		bool n = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_SUBTRACT); ImGui::Checkbox("N", &n);
-		bool h = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_HALF_CARRY); ImGui::Checkbox("H", &h);
+		bool z = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_ZERO); ImGui::Checkbox("Z", &z);	   ImGui::SameLine(0,50);
+		bool n = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_SUBTRACT); ImGui::Checkbox("N", &n);   ImGui::SameLine(0,50);
+		bool h = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_HALF_CARRY); ImGui::Checkbox("H", &h); ImGui::SameLine(0,50);
 		bool c = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_CARRY); ImGui::Checkbox("C", &c);
-		ImGui::EndChild();
+		ImGui::Text("");
 
-		ImGui::SameLine();
+
+		// Interrupts
+		uint8_t ie = m_GameBoy->m_MMU.Read(Core::HW_FFFF_INTERRUPT_ENABLE);
+		bool ie_vb = ie & Core::IE_Flags::IE_VBLANK; ImGui::Checkbox("VBLANK (IE)", &ie_vb);	       ImGui::SameLine(0, 25);
+		bool ie_lcd = ie & Core::IE_Flags::IE_LCD; ImGui::Checkbox("LCD (IE)", &ie_lcd);		       ImGui::SameLine(0, 25);
+		bool ie_timer = ie & Core::IE_Flags::IE_TIMER; ImGui::Checkbox("TIMER (IE)", &ie_timer);       ImGui::SameLine(0, 25);
+		bool ie_serial = ie & Core::IE_Flags::IE_SERIAL; ImGui::Checkbox("SERIAL (IE)", &ie_serial);   ImGui::SameLine(0, 25);
+		bool ie_jp = ie & Core::IE_Flags::IE_JOYPAD; ImGui::Checkbox("JOYPAD (IE)", &ie_jp);
+
+		uint8_t intf = m_GameBoy->m_MMU.Read(Core::HW_FF0F_IF_INTERRUPT_FLAG);
+		bool if_vb = intf & Core::IF_Flags::IF_VBLANK; ImGui::Checkbox("VBLANK (IF)", &if_vb);	       ImGui::SameLine(0, 25);
+		bool if_lcd = intf & Core::IF_Flags::IF_LCD; ImGui::Checkbox("LCD (IF)", &if_lcd);			   ImGui::SameLine(0, 25);
+		bool if_timer = intf & Core::IF_Flags::IF_TIMER; ImGui::Checkbox("TIMER (IF)", &if_timer);     ImGui::SameLine(0, 25);
+		bool if_serial = intf & Core::IF_Flags::IF_SERIAL; ImGui::Checkbox("SERIAL (IF)", &if_serial); ImGui::SameLine(0, 25);
+		bool if_jp = intf & Core::IF_Flags::IF_JOYPAD; ImGui::Checkbox("JOYPAD (IF)", &if_jp);
+		ImGui::Text("");
+
+		// Timer
+		ImGui::SeparatorText("Timer");
+		ImGui::Text("Internal DIV: %02x", m_GameBoy->m_MMU.Read(Core::HW_FF03_DIV_DIVIDER_REGISTER_LOW));
+		ImGui::Text("DIV: %02x", m_GameBoy->m_MMU.Read(Core::HW_FF04_DIV_DIVIDER_REGISTER));
+		ImGui::Text("TIMA: %02x", m_GameBoy->m_MMU.Read(Core::HW_FF05_TIMA_TIMER_COUNTER));
+		ImGui::Text("TMA: %02x", m_GameBoy->m_MMU.Read(Core::HW_FF06_TMA_TIMER_MODULO));
+
+		bool tacEnabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_FF07_TAC_TIMER_CONTROL, Core::TAC_ENABLE);
+		ImGui::Text("TAC Enabled: %s", tacEnabled ? "True" : "False");
+
+		uint8_t selectedClock = m_GameBoy->m_MMU.Read(Core::HW_FF07_TAC_TIMER_CONTROL) & 0x3;
+		ImGui::Text("TAC Clock Select: %02x", selectedClock);
+		ImGui::Text("");
 
 		// PPU Info
-		ImGui::BeginChild("RM", ImVec2(ImGui::GetContentRegionAvail().x * 0.50f, 150), ImGuiChildFlags_None);
+		ImGui::SeparatorText("PPU");
+
+		ImGui::BeginChild("RM", ImVec2(ImGui::GetContentRegionAvail().x * 0.50f, 160), ImGuiChildFlags_None);
 		if (m_GameBoy->m_PPU.GetMode() == Core::MODE_0_HBLANK)  ImGui::Text("Mode: MODE_0_HBLANK");
 		if (m_GameBoy->m_PPU.GetMode() == Core::MODE_1_VBLANK)  ImGui::Text("Mode: MODE_1_VBLANK");
 		if (m_GameBoy->m_PPU.GetMode() == Core::MODE_2_OAMSCAN) ImGui::Text("Mode: MODE_2_OAMSCAN");
@@ -56,10 +82,7 @@ namespace App
 		ImGui::Text("SCX: %1d", m_GameBoy->m_MMU.Read(Core::HW_FF43_SCX_VIEWPORT_X_POS));
 		ImGui::Text("SCY: %1d", m_GameBoy->m_MMU.Read(Core::HW_FF42_SCY_VIEWPORT_Y_POS));
 
-		ImGui::Text("DIV: %02x", m_GameBoy->m_MMU.Read(Core::HW_FF04_DIV_DIVIDER_REGISTER));
-		ImGui::Text("TIMA: %02x", m_GameBoy->m_MMU.Read(Core::HW_FF05_TIMA_TIMER_COUNTER));
-		ImGui::Text("TMA: %02x", m_GameBoy->m_MMU.Read(Core::HW_FF06_TMA_TIMER_MODULO));
-		ImGui::Text("TAC: %02x", m_GameBoy->m_MMU.Read(Core::HW_FF07_TAC_TIMER_CONTROL));
+		
 		ImGui::EndChild();
 
 		ImGui::SameLine();
@@ -77,9 +100,9 @@ namespace App
 		ImGui::Text("JOY: %2d", m_GameBoy->m_MMU.Read(Core::HW_FF00_P1JOYP_JOYPAD));
 		ImGui::EndChild();
 
-		ImGui::SeparatorText("Rom Instructions");
 
-		//// Rom Data
+		// ROM instructions
+		ImGui::SeparatorText("Rom Instructions");
 		ImGui::BeginChild("Instruct", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None);
 
 		for (uint16_t i = 0; i < 0x7FFF; i++)

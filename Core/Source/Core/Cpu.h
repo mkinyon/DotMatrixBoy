@@ -71,7 +71,7 @@ namespace Core
 
 		int m_TotalCycles = 0;
 		bool m_InstructionCompleted = false;
-		bool m_EnableLogging = true;
+		bool m_EnableLogging = false;
 
 	private:
 		sCPUState m_State;
@@ -103,12 +103,12 @@ namespace Core
 		void PushSP(uint16_t value);
 		uint16_t PopSP();
 
-
-		//// Instructions ////
-		
 		// disassembly
 		void Disasseble16bit(uint8_t* opcode, int pc);
 		void OutputDisassembledInstruction(const char* instructionName, int pc, uint8_t* opcode, int totalOpBytes);
+
+
+		//// Instructions ////
 		void UnimplementedInstruction(sCPUState& state, uint8_t opcode);
 
 
