@@ -55,12 +55,12 @@ namespace Core
 			m_Cart->Write(address, value);
 		}
 		// writing to the DIV register will cause is to reset to zero 
-		else if (address == HW_DIV_DIVIDER_REGISTER)
+		else if (address == HW_FF04_DIV_DIVIDER_REGISTER)
 		{
 			ResetDIVTimer();
 		}
 		// trigger DMA transfer
-		else if (address == HW_DMA_OAM_DMA_SOURCE_ADDRESS)
+		else if (address == HW_FF46_DMA_OAM_DMA_SOURCE_ADDRESS)
 		{
 			uint16_t startAddress = value << 8;
 
@@ -74,19 +74,19 @@ namespace Core
 			}
 		}
 		// writes to the LCDY register will reset it
-		else if (address == HW_LY_LCD_Y_COORD)
+		else if (address == HW_FF44_LY_LCD_Y_COORD)
 		{
-			m_Memory->at(HW_LY_LCD_Y_COORD) = 0;
+			m_Memory->at(HW_FF44_LY_LCD_Y_COORD) = 0;
 		}
 		// writes to the joypad register will require us to preserve the lower bits
-		else if (address == HW_P1JOYP_JOYPAD)
+		else if (address == HW_FF00_P1JOYP_JOYPAD)
 		{
-			m_Memory->at(HW_P1JOYP_JOYPAD) = (value & 0x30) | (m_Memory->at(HW_P1JOYP_JOYPAD) & 0xCF);
+			m_Memory->at(HW_FF00_P1JOYP_JOYPAD) = (value & 0x30) | (m_Memory->at(HW_FF00_P1JOYP_JOYPAD) & 0xCF);
 		}
 		// writes to the lcd status register will require us to preserve the lower two bits
-		else if (address == HW_STAT_LCD_STATUS)
+		else if (address == HW_FF41_STAT_LCD_STATUS)
 		{
-			m_Memory->at(HW_STAT_LCD_STATUS) = (value & 0x7C) | (m_Memory->at(HW_STAT_LCD_STATUS) & 0x03);
+			m_Memory->at(HW_FF41_STAT_LCD_STATUS) = (value & 0x7C) | (m_Memory->at(HW_FF41_STAT_LCD_STATUS) & 0x03);
 		}
 		else
 		{
@@ -128,8 +128,8 @@ namespace Core
 
 	void Mmu::ResetDIVTimer()
 	{
-		m_Memory->at(HW_DIV_DIVIDER_REGISTER) = 0;
-		m_Memory->at(HW_DIV_DIVIDER_REGISTER - 1) = 0;
+		m_Memory->at(HW_FF04_DIV_DIVIDER_REGISTER) = 0;
+		m_Memory->at(HW_FF04_DIV_DIVIDER_REGISTER - 1) = 0;
 	}
 
 	LCD_Mode Mmu::ReadLCDMode() const
@@ -140,8 +140,8 @@ namespace Core
 	void Mmu::WriteLCDMode(const LCD_Mode lcdMode)
 	{
 		uint8_t lcdModeValue = static_cast<uint8_t>(lcdMode);
-		WriteRegisterBit(HW_STAT_LCD_STATUS, 0x2, (lcdModeValue >> 1) & 0x1);
-		WriteRegisterBit(HW_STAT_LCD_STATUS, 0x1, lcdModeValue & 0x1);
+		WriteRegisterBit(HW_FF41_STAT_LCD_STATUS, 0x2, (lcdModeValue >> 1) & 0x1);
+		WriteRegisterBit(HW_FF41_STAT_LCD_STATUS, 0x1, lcdModeValue & 0x1);
 		m_CurrentLCDMode = lcdMode;
 	}
 }

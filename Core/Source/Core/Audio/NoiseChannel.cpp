@@ -9,22 +9,22 @@ namespace Core
 	void NoiseChannel::Trigger()
 	{
 		m_IsActive = true;
-		m_MMU.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH4_ON, true);
+		m_MMU.WriteRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, NR52_CH4_ON, true);
 
 		// setup length
-		uint16_t length = APU_DEFAULT_LENGTH - (m_MMU.Read(HW_NR42_SOUND_CHANNEL_4_VOL_ENVELOPE) & 0b111111);
-		bool lengthStop = m_MMU.ReadRegisterBit(HW_NR41_SOUND_CHANNEL_4_LEN_TIMER, NR14_LEN_ENABLE);
+		uint16_t length = APU_DEFAULT_LENGTH - (m_MMU.Read(HW_FF21_NR42_SOUND_CH4_VOL_ENVELOPE) & 0b111111);
+		bool lengthStop = m_MMU.ReadRegisterBit(HW_FF20_NR41_SOUND_CH4_LEN_TIMER, NR14_LEN_ENABLE);
 		m_LengthComp.SetLength(length, lengthStop);
 
 		// setup envelope
 		m_EnvelopeComp.SetEnvelope(
-			m_MMU.Read(HW_NR42_SOUND_CHANNEL_4_VOL_ENVELOPE) & 0x7, // grab bits 0, 1, 2
-			(m_MMU.Read(HW_NR42_SOUND_CHANNEL_4_VOL_ENVELOPE) & 240) >> 4,
-			m_MMU.Read(HW_NR42_SOUND_CHANNEL_4_VOL_ENVELOPE) & 8
+			m_MMU.Read(HW_FF21_NR42_SOUND_CH4_VOL_ENVELOPE) & 0x7, // grab bits 0, 1, 2
+			(m_MMU.Read(HW_FF21_NR42_SOUND_CH4_VOL_ENVELOPE) & 240) >> 4,
+			m_MMU.Read(HW_FF21_NR42_SOUND_CH4_VOL_ENVELOPE) & 8
 		);
 
 		// noise
-		uint8_t noiseData = m_MMU.Read(HW_NR43_SOUND_CHANNEL_4_FREQ_RANDOM);
+		uint8_t noiseData = m_MMU.Read(HW_FF22_NR43_SOUND_CH4_FREQ_RANDOM);
 		m_Divisor = m_AudioDivisorArray[noiseData & 0x7];
 		m_IsWidth7Bit = noiseData & 0x8;
 		m_lfsr = 0x7FFF;
@@ -50,7 +50,7 @@ namespace Core
 		m_IsActive = m_LengthComp.Clock();
 		if (!m_IsActive)
 		{
-			m_MMU.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH4_ON, false);
+			m_MMU.WriteRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, NR52_CH4_ON, false);
 		}
 	}
 

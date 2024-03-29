@@ -79,8 +79,8 @@ namespace App
 
 	void VRAMViewer::RenderBGMapsView()
 	{
-		bool bgTileMapArea = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_LCDC_LCD_CONTROL, Core::LCDC_BG_TILE_MAP);
-		bool windowTileDataArea = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_LCDC_LCD_CONTROL, Core::LCDC_BG_AND_WINDOW_TILES);
+		bool bgTileMapArea = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_FF40_LCDC_LCD_CONTROL, Core::LCDC_BG_TILE_MAP);
+		bool windowTileDataArea = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_FF40_LCDC_LCD_CONTROL, Core::LCDC_BG_AND_WINDOW_TILES);
 		ImGui::Text("Current BG Map 1?: %2d", bgTileMapArea);
 
 		// set custom item spacing for this section
@@ -196,7 +196,7 @@ namespace App
 
 	void VRAMViewer::updateTexture()
 	{
-		uint8_t bgPalette = m_GameBoy->m_MMU.Read(Core::HW_BGP_BG_PALETTE_DATA);
+		uint8_t bgPalette = m_GameBoy->m_MMU.Read(Core::HW_FF47_BGP_BG_PALETTE_DATA);
 
 		int x = 8;
 		int y = 0;

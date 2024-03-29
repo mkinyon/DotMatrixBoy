@@ -69,7 +69,8 @@ namespace Core
 		if (address >= CARTBANK_ADDR_RANGE_START && address <= CARTBANK_ADDR_RANGE_END)
 		{
 			// offset address based on current rombank
-			int test = GetRomBank();
+			int banktest = GetRomBank();
+			int addresstest = address + ((GetRomBank() - 1) * ROM_BANK_SIZE);
 			return m_RomData->at(address + ((GetRomBank() - 1) * ROM_BANK_SIZE));
 		}
 		else if (address >= CARTRAM_ADDR_RANGE_START && address <= CARTRAM_ADDR_RANGE_END)

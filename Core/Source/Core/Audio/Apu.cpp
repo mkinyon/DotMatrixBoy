@@ -57,13 +57,13 @@ namespace Core
 	{
 		m_CycleCount++;
 
-		if (!m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_AUDIO_ON))
+		if (!m_MMU.ReadRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, NR52_AUDIO_ON))
 		{
 			return;
 		}
 
 		// check if wave channel should start
-		if (m_MMU.ReadRegisterBit(HW_NR30_SOUND_CHANNEL_3_DAC_ENABLE, NR30_DAC_ON_OFF))
+		if (m_MMU.ReadRegisterBit(HW_FF1A_NR30_SOUND_CH3_DAC_ENABLE, NR30_DAC_ON_OFF))
 		{
 			m_CH3_Wave.Start();
 		}
@@ -135,10 +135,10 @@ namespace Core
 			float tempVolume = 1.0f;
 
 			// check to see if audio channels are enabled
-			bool isCh1On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH1_ON);
-			bool isCh2On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH2_ON);
-			bool isCh3On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH3_ON);
-			bool isCh4On = m_MMU.ReadRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH4_ON);
+			bool isCh1On = m_MMU.ReadRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, NR52_CH1_ON);
+			bool isCh2On = m_MMU.ReadRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, NR52_CH2_ON);
+			bool isCh3On = m_MMU.ReadRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, NR52_CH3_ON);
+			bool isCh4On = m_MMU.ReadRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, NR52_CH4_ON);
 
 			// get sample from each channel
 			float ch1Sample = isCh1On ? static_cast<float>(m_CH1_Square.GetCurrentSample() * tempVolume) : 0;
@@ -204,30 +204,30 @@ namespace Core
 
 	void Apu::OnWrite(uint16_t address, uint8_t value)
 	{
-		if (address == HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH)
+		if (address == HW_FF14_NR14_SOUND_CH1_PERIOD_HIGH)
 		{
-			if (m_MMU.ReadRegisterBit(HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH, 0x80))
+			if (m_MMU.ReadRegisterBit(HW_FF14_NR14_SOUND_CH1_PERIOD_HIGH, 0x80))
 			{
 				m_CH1_Square.Trigger();
 			}
 		}
-		if (address == HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH)
+		if (address == HW_FF19_NR24_SOUND_CH2_PERIOD_HIGH)
 		{
-			if (m_MMU.ReadRegisterBit(HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH, 0x80))
+			if (m_MMU.ReadRegisterBit(HW_FF19_NR24_SOUND_CH2_PERIOD_HIGH, 0x80))
 			{
 				m_CH2_Square.Trigger();
 			}
 		}
-		if (address == HW_NR34_SOUND_CHANNEL_3_PERIOD_HIGH)
+		if (address == HW_FF1E_NR34_SOUND_CH3_PERIOD_HIGH)
 		{
-			if (m_MMU.ReadRegisterBit(HW_NR34_SOUND_CHANNEL_3_PERIOD_HIGH, 0x80))
+			if (m_MMU.ReadRegisterBit(HW_FF1E_NR34_SOUND_CH3_PERIOD_HIGH, 0x80))
 			{
 				m_CH3_Wave.Trigger();
 			}
 		}
-		if (address == HW_NR44_SOUND_CHANNEL_4_CONTROL)
+		if (address == HW_FF23_NR44_SOUND_CH4_CONTROL)
 		{
-			if (m_MMU.ReadRegisterBit(HW_NR44_SOUND_CHANNEL_4_CONTROL, 0x80))
+			if (m_MMU.ReadRegisterBit(HW_FF23_NR44_SOUND_CH4_CONTROL, 0x80))
 			{
 				m_CH4_Noise.Trigger();
 			}

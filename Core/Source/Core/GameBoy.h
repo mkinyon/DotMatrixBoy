@@ -37,6 +37,7 @@ namespace Core
 
 	private:
 		void ClockSystems();
+		void Reset();
 
 	public:
 		Cartridge* m_Cart = nullptr;

@@ -61,7 +61,7 @@ namespace Core
 				" SP:" << std::setw(4) << static_cast<int>(m_State.SP) <<
 				" PC:" << std::setw(4) << static_cast<int>(m_State.PC) <<
 				" (cy: " << std::dec << static_cast<int>(m_TotalCycles) - 1 << ")" << std::hex <<
-				" ppu:+" << static_cast<int>(m_MMU.Read(HW_STAT_LCD_STATUS) & 0b11) <<
+				" ppu:+" << static_cast<int>(m_MMU.Read(HW_FF41_STAT_LCD_STATUS) & 0b11) <<
 				" |[00]0x" << std::setw(4) << static_cast<int>(m_State.PC) << ":" <<
 				std::setw(2) << static_cast<int>(opcode[0]) << " "
 				<< std::setw(2) << static_cast<int>(opcode[1]) << " "
@@ -1196,40 +1196,40 @@ namespace Core
 		uint16_t destinationAddress = 0;
 		uint8_t interruptFlag = 0;
 
-		if (m_MMU.ReadRegisterBit(HW_INTERRUPT_ENABLE, IE_VBLANK) &&
-			m_MMU.ReadRegisterBit(HW_IF_INTERRUPT_FLAG, IF_VBLANK))
+		if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_VBLANK) &&
+			m_MMU.ReadRegisterBit(HW_FF0F_IF_INTERRUPT_FLAG, IF_VBLANK))
 		{
 			destinationAddress = DEST_ADDRESS_VBLANK;
 			interruptFlag = IF_VBLANK;
 			m_IsHalted = false;
 		}
 
-		if (m_MMU.ReadRegisterBit(HW_INTERRUPT_ENABLE, IE_LCD) &&
-			m_MMU.ReadRegisterBit(HW_IF_INTERRUPT_FLAG, IF_LCD))
+		if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_LCD) &&
+			m_MMU.ReadRegisterBit(HW_FF0F_IF_INTERRUPT_FLAG, IF_LCD))
 		{
 			destinationAddress = DEST_ADDRESS_LCD_STAT;
 			interruptFlag = IF_LCD;
 			m_IsHalted = false;
 		}
 
-		if (m_MMU.ReadRegisterBit(HW_INTERRUPT_ENABLE, IE_TIMER) &&
-			m_MMU.ReadRegisterBit(HW_IF_INTERRUPT_FLAG, IF_TIMER))
+		if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_TIMER) &&
+			m_MMU.ReadRegisterBit(HW_FF0F_IF_INTERRUPT_FLAG, IF_TIMER))
 		{
 			destinationAddress = DEST_ADDRESS_TIMER;
 			interruptFlag = IF_TIMER;
 			m_IsHalted = false;
 		}
 
-		if (m_MMU.ReadRegisterBit(HW_INTERRUPT_ENABLE, IE_SERIAL) &&
-			m_MMU.ReadRegisterBit(HW_IF_INTERRUPT_FLAG, IF_SERIAL))
+		if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_SERIAL) &&
+			m_MMU.ReadRegisterBit(HW_FF0F_IF_INTERRUPT_FLAG, IF_SERIAL))
 		{
 			destinationAddress = DEST_ADDRESS_SERIAL;
 			interruptFlag = IF_SERIAL;
 			m_IsHalted = false;
 		}
 
-		if (m_MMU.ReadRegisterBit(HW_INTERRUPT_ENABLE, IE_JOYPAD) &&
-			m_MMU.ReadRegisterBit(HW_IF_INTERRUPT_FLAG, IF_JOYPAD))
+		if (m_MMU.ReadRegisterBit(HW_FFFF_INTERRUPT_ENABLE, IE_JOYPAD) &&
+			m_MMU.ReadRegisterBit(HW_FF0F_IF_INTERRUPT_FLAG, IF_JOYPAD))
 		{
 			destinationAddress = DEST_ADDRESS_JOYPAD;
 			interruptFlag = IF_JOYPAD;
@@ -1239,10 +1239,12 @@ namespace Core
 		if (destinationAddress != 0 && m_State.IME)
 		{
 			m_State.IME = false;;
-			m_MMU.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, interruptFlag, false);
+			m_MMU.WriteRegisterBit(HW_FF0F_IF_INTERRUPT_FLAG, interruptFlag, false);
 
 			PushSP(m_State.PC);
 			m_State.PC = destinationAddress;
+
+			m_Cycles = 5;
 
 			std::ostringstream stream;
 			stream << "IRQ Write - Address: " << std::hex << destinationAddress << " Interrupt Type: ";
@@ -2194,23 +2196,19 @@ namespace Core
 		m_IsHalted = false;
 
 		// registers
-		m_State.AF = enableBootRom ? 0x000 : 0x01B0;
-		m_State.BC = enableBootRom ? 0x000 : 0x0013;
-		m_State.DE = enableBootRom ? 0x000 : 0x00D8;
-		m_State.HL = enableBootRom ? 0x000 : 0x014D;
-		m_State.PC = enableBootRom ? 0x000 : 0x100; // game boy execution start point
-		m_State.SP = enableBootRom ? 0x000 : 0xFFFE;
-
-		// flags - should be reset to $B0
-		SetCPUFlag(FLAG_CARRY, true);
-		SetCPUFlag(FLAG_HALF_CARRY, true);
-		SetCPUFlag(FLAG_SUBTRACT, false);
-		SetCPUFlag(FLAG_ZERO, true);
+		m_State.AF = enableBootRom ? 0x0000 : 0x01B0; // flags - should be reset to $B0
+		m_State.BC = enableBootRom ? 0x0000 : 0x0013;
+		m_State.DE = enableBootRom ? 0x0000 : 0x00D8;
+		m_State.HL = enableBootRom ? 0x0000 : 0x014D;
+		m_State.PC = enableBootRom ? 0x0000 : 0x100; // game boy execution start point
+		m_State.SP = enableBootRom ? 0x0000 : 0xFFFE;
+		m_State.IME = false;
 
 		// randomize memory to mimick real gameboy
 		for (uint16_t address = 0x8000; address <= 0x97FF; address++)
 		{
-			m_MMU.Write(address, GenerateRandomNumber(0, 255));
+			//m_MMU.Write(address, GenerateRandomNumber(0, 255));
+			m_MMU.Write(address, 0);
 		}
 
 		// hardware registers
@@ -2268,7 +2266,7 @@ namespace Core
 		m_MMU.Write(0xFF6A, 0xFF);
 		m_MMU.Write(0xFF6B, 0xFF);
 		m_MMU.Write(0xFF70, 0xFF);
-		m_MMU.Write(HW_INTERRUPT_ENABLE, 0x00);
+		m_MMU.Write(HW_FFFF_INTERRUPT_ENABLE, 0x00);
 	}
 
 	void Cpu::PushSP(uint16_t value)
@@ -2728,20 +2726,20 @@ namespace Core
 	void Cpu::ProcessTimers() 
 	{
 		// increment DIV register
-		uint16_t internalClock = (m_MMU.Read(HW_DIV_DIVIDER_REGISTER) << 8)
-			| m_MMU.Read(HW_DIV_DIVIDER_REGISTER_LOW);
+		uint16_t internalClock = (m_MMU.Read(HW_FF04_DIV_DIVIDER_REGISTER) << 8)
+			| m_MMU.Read(HW_FF03_DIV_DIVIDER_REGISTER_LOW);
 
 		internalClock++;
 
 		// if the div clock rolls over then we need to copy the value of TIMA to TMA
 		if (internalClock == 0xFFFF)
 		{
-			m_MMU.Write(HW_TMA_TIMER_MODULO, m_MMU.Read(HW_TIMA_TIMER_COUNTER));
+			m_MMU.Write(HW_FF06_TMA_TIMER_MODULO, m_MMU.Read(HW_FF05_TIMA_TIMER_COUNTER));
 		}
 
 		// write updated DIV register
-		m_MMU.Write(HW_DIV_DIVIDER_REGISTER, (internalClock & 0xFF00) >> 8, true);
-		m_MMU.Write(HW_DIV_DIVIDER_REGISTER_LOW, internalClock & 0x00FF, true);
+		m_MMU.Write(HW_FF04_DIV_DIVIDER_REGISTER, (internalClock & 0xFF00) >> 8, true);
+		m_MMU.Write(HW_FF03_DIV_DIVIDER_REGISTER_LOW, internalClock & 0x00FF, true);
 
 
 		// https://github.com/Hacktix/GBEDG/blob/master/timers/index.md#timer-operation
@@ -2749,7 +2747,7 @@ namespace Core
 		bool thisBit = 0;
 
 		// 1. A bit position of the 16 - bit counter is determined based on the lower 2 bits of the TAC register
-		switch (m_MMU.Read(HW_TAC_TIMER_CONTROL) & 0x03)
+		switch (m_MMU.Read(HW_FF07_TAC_TIMER_CONTROL) & 0x03)
 		{
 			case 0:
 				thisBit = (internalClock >> 9) & 0x1;
@@ -2766,7 +2764,7 @@ namespace Core
 		}
 
 		// 2. The "Timer Enable" bit(Bit 2) is extracted from the value in the TAC register and stored for the next step.
-		bool timerEnabled = m_MMU.ReadRegisterBit(HW_TAC_TIMER_CONTROL, TAC_ENABLE);
+		bool timerEnabled = m_MMU.ReadRegisterBit(HW_FF07_TAC_TIMER_CONTROL, TAC_ENABLE);
 
 		// 3. The bit taken from the DIV counter is ANDed with the Timer Enable bit. 
 		//    The result of this operation will be referred to as the "AND Result".
@@ -2776,9 +2774,9 @@ namespace Core
 		if (lastBit == 1 && thisBit == 0)
 		{
 			// now increment the TIMA register
-			uint8_t tima = m_MMU.Read(HW_TIMA_TIMER_COUNTER);
+			uint8_t tima = m_MMU.Read(HW_FF05_TIMA_TIMER_COUNTER);
 			tima++;
-			m_MMU.Write(HW_TIMA_TIMER_COUNTER, tima);
+			m_MMU.Write(HW_FF05_TIMA_TIMER_COUNTER, tima);
 
 			// if the TIMA register rolls over then we need to trigger an interrupt
 			if (tima == 0x0)
@@ -2793,8 +2791,8 @@ namespace Core
 			countdownToInterrupt--;
 			if (countdownToInterrupt == 0)
 			{
-				m_MMU.WriteRegisterBit(HW_IF_INTERRUPT_FLAG, IF_TIMER, true);
-				m_MMU.Write(HW_TIMA_TIMER_COUNTER, m_MMU.Read(HW_TMA_TIMER_MODULO));
+				m_MMU.WriteRegisterBit(HW_FF0F_IF_INTERRUPT_FLAG, IF_TIMER, true);
+				m_MMU.Write(HW_FF05_TIMA_TIMER_COUNTER, m_MMU.Read(HW_FF06_TMA_TIMER_MODULO));
 			}
 		}
 

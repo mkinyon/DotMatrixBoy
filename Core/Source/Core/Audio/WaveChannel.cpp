@@ -24,10 +24,10 @@ namespace Core
 	void WaveChannel::Trigger()
 	{
 		m_IsRunning = true;
-		m_MMU.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH3_ON, true);
+		m_MMU.WriteRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, NR52_CH3_ON, true);
 
-		uint16_t length = AUDIO_WAVE_LENGTH - m_MMU.Read(HW_NR31_SOUND_CHANNEL_3_LEN_TIMER);
-		bool lengthStop = m_MMU.ReadRegisterBit(HW_NR34_SOUND_CHANNEL_3_PERIOD_HIGH, NR34_LEN_ENABLE);
+		uint16_t length = AUDIO_WAVE_LENGTH - m_MMU.Read(HW_FF1B_NR31_SOUND_CH3_LEN_TIMER);
+		bool lengthStop = m_MMU.ReadRegisterBit(HW_FF1E_NR34_SOUND_CH3_PERIOD_HIGH, NR34_LEN_ENABLE);
 		m_LengthComp.SetLength(length, lengthStop);
 
 		// Nothing magical just the way the hardware calculates the channel frequency
@@ -36,7 +36,7 @@ namespace Core
 		m_CycleCount = 0;
 		m_SampleIndex = 0;
 
-		uint8_t levelReg = m_MMU.Read(HW_NR32_SOUND_CHANNEL_3_OUTPUT_LEVEL);
+		uint8_t levelReg = m_MMU.Read(HW_FF1C_NR32_SOUND_CH3_OUTPUT_LEVEL);
 		outputLevel = (Core::AUDIO_LEVEL)((levelReg & 0x60) >> 5);
 
 		UpdateSample();
@@ -47,7 +47,7 @@ namespace Core
 		m_IsActive = m_LengthComp.Clock();
 		if (!m_IsActive)
 		{
-			m_MMU.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, NR52_CH3_ON, false);
+			m_MMU.WriteRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, NR52_CH3_ON, false);
 		}
 	}
 
@@ -74,8 +74,8 @@ namespace Core
 
 	uint16_t WaveChannel::GetFrequency() const
 	{
-		uint8_t frequencyData = m_MMU.Read(HW_NR34_SOUND_CHANNEL_3_PERIOD_HIGH);
-		uint16_t frequency = m_MMU.Read(HW_NR33_SOUND_CHANNEL_3_PERIOD_LOW);
+		uint8_t frequencyData = m_MMU.Read(HW_FF1E_NR34_SOUND_CH3_PERIOD_HIGH);
+		uint16_t frequency = m_MMU.Read(HW_FF1D_NR33_SOUND_CH3_PERIOD_LOW);
 		frequency |= (frequencyData & 0x7) << 8;
 		return frequency;
 	}
@@ -83,7 +83,7 @@ namespace Core
 	void WaveChannel::UpdateSample()
 	{
 		// Each byte in the Wave RAM holds two 2 4-bit samples
-		uint8_t sampleByte = m_MMU.Read(HW_WAVRAM_WAVEFORM_STORAGE + (m_SampleIndex / 2));
+		uint8_t sampleByte = m_MMU.Read(HW_FF30_WAVRAM_WAVEFORM_STORAGE_0 + (m_SampleIndex / 2));
 		uint8_t newSample = m_SampleIndex % 2 == 0
 			? (sampleByte & 0xF0) >> 4
 			: sampleByte & 0x0F;

@@ -8,11 +8,11 @@ namespace Core
 	{
 		bool m_HasSweep = isChannel1;
 		m_SoundControlFlag = isChannel1 ? NR52_CH1_ON : NR52_CH2_ON;
-		m_DataAddr = isChannel1 ? HW_NR14_SOUND_CHANNEL_1_PERIOD_HIGH : HW_NR24_SOUND_CHANNEL_2_PERIOD_HIGH;
-		m_FreqLowAddr = isChannel1 ? HW_NR13_SOUND_CHANNEL_1_PERIOD_LOW : HW_NR23_SOUND_CHANNEL_2_PERIOD_LOW;
-		m_LengthDutyAddr = isChannel1 ? HW_NR11_SOUND_CHANNEL_1_LEN_TIMER : HW_NR21_SOUND_CHANNEL_2_LEN_TIMER;
-		m_EvenlopeAddr = isChannel1 ? HW_NR12_SOUND_CHANNEL_1_VOL_ENVELOPE : HW_NR22_SOUND_CHANNEL_2_VOL_ENVELOPE;
-		m_SweepAddr = isChannel1 ? HW_NR10_SOUND_CHANNEL_1_SWEEP : 0;
+		m_DataAddr = isChannel1 ? HW_FF14_NR14_SOUND_CH1_PERIOD_HIGH : HW_FF19_NR24_SOUND_CH2_PERIOD_HIGH;
+		m_FreqLowAddr = isChannel1 ? HW_FF13_NR13_SOUND_CH1_PERIOD_LOW : HW_FF18_NR23_SOUND_CH2_PERIOD_LOW;
+		m_LengthDutyAddr = isChannel1 ? HW_FF11_NR11_SOUND_CH1_LEN_TIMER : HW_FF16_NR21_SOUND_CH2_LEN_TIMER;
+		m_EvenlopeAddr = isChannel1 ? HW_FF12_NR12_SOUND_CH1_VOL_ENVELOPE : HW_FF17_NR22_SOUND_CH2_VOL_ENVELOPE;
+		m_SweepAddr = isChannel1 ? HW_FF10_NR10_SOUND_CH1_SWEEP : 0;
 	}
 
 	SquareChannel::~SquareChannel() {}
@@ -38,7 +38,7 @@ namespace Core
 		m_IsActive = m_LengthComp.Clock();
 		if (!m_IsActive)
 		{
-			m_MMU.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, m_SoundControlFlag, false);
+			m_MMU.WriteRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, m_SoundControlFlag, false);
 		}
 	}
 
@@ -88,7 +88,7 @@ namespace Core
 	void SquareChannel::Trigger()
 	{
 		m_IsActive = true;
-		m_MMU.WriteRegisterBit(HW_NR52_SOUND_TOGGLE, m_SoundControlFlag, true);
+		m_MMU.WriteRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, m_SoundControlFlag, true);
 
 		m_SelectedDuty = (m_MMU.Read(m_LengthDutyAddr) & 0b11000000) >> 6;
 		
