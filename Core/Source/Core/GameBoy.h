@@ -20,6 +20,8 @@ namespace Core
 
 	public:
 		void LoadRom(const char* file);
+		bool IsRomLoaded();
+
 		void Run();
 		void Clock(float elapsedTimeMS);
 

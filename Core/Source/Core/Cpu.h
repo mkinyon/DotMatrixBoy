@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IMmu.h"
+#include "InstructionSet.h"
 
 #include <stdint.h>
 #include <iostream>
@@ -71,10 +72,12 @@ namespace Core
 
 		int m_TotalCycles = 0;
 		bool m_InstructionCompleted = false;
-		bool m_EnableLogging = false;
-
+		bool m_EnableLogging = true;
+		
 	private:
 		sCPUState m_State;
+		InstructionSet instrSet;
+
 		IMmu& m_MMU;
 		int m_Cycles = 0; // how many cycles remain before the cpu can fetch another instruction
 		std::string m_CurrentInstructionName;
@@ -84,7 +87,7 @@ namespace Core
 	public:
 		void Reset(bool enableBootRom);
 		void Clock();
-		int Disassemble(uint8_t* opcode, int pc);
+
 		std::map<uint16_t, std::string> DisassebleAll();
 		std::string GetCurrentInstruction();
 
@@ -97,21 +100,16 @@ namespace Core
 		IMmu& GetMMU();
 
 	private:
+		std::string DisassembleInstruction(uint8_t* opcode);
+
 		void Process16bitInstruction(uint16_t opcode, sCPUState& state);
 		void ProcessInterrupts();
 		void ProcessTimers();
 		void PushSP(uint16_t value);
 		uint16_t PopSP();
 
-		// disassembly
-		void Disasseble16bit(uint8_t* opcode, int pc);
-		void OutputDisassembledInstruction(const char* instructionName, int pc, uint8_t* opcode, int totalOpBytes);
-
 
 		//// Instructions ////
-		void UnimplementedInstruction(sCPUState& state, uint8_t opcode);
-
-
 		// 8-bit Load Instructions
 		void Instruction_ld_reg_value(uint8_t& reg, uint8_t& value);
 		void Instruction_ld_addr_reg(uint16_t& address, uint8_t& reg);
@@ -195,5 +193,4 @@ namespace Core
 		void Instruction_set_bit_reg(uint8_t& reg, uint8_t bit);
 		void Instruction_set_bit_hl(uint8_t bit);
 	};
-
 }

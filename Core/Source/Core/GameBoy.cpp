@@ -23,6 +23,11 @@ namespace Core
 		Run();
 	}
 
+	bool GameBoy::IsRomLoaded()
+	{
+		return m_Cart != nullptr;
+	}
+
 	void GameBoy::Run()
 	{
 		Reset();
