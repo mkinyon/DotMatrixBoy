@@ -99,6 +99,8 @@ namespace Core
 
 		IMmu& GetMMU();
 
+		InstructionSet::sInstruction CurrentInstruction;
+
 	private:
 		std::string DisassembleInstruction(uint8_t* opcode);
 
