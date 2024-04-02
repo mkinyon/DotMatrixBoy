@@ -20,7 +20,7 @@ namespace Core
 	// Jumps/Calls
 	uint8_t Instructions::Instr_0x18_JPCALL_JR_e8(Cpu* cpu)
 	{
-		cpu->GetState()->PC += (int8_t)cpu->CurrentInstruction.lowByte + 1;
+		cpu->GetState()->PC += (int8_t)cpu->CurrentInstruction.lowByte;
 
 		return 12;
 	}
@@ -31,12 +31,12 @@ namespace Core
 		int8_t offset = cpu->CurrentInstruction.lowByte;
 		if (cpu->GetCPUFlag(FLAG_ZERO) == 0)
 		{
-			cpu->GetState()->PC += offset + 1;
+			cpu->GetState()->PC += offset;
 			return 12;
 		}
 		else
 		{
-			cpu->GetState()->PC++;
+			//cpu->GetState()->PC++;
 			return 8;
 		}
 	}
@@ -47,12 +47,11 @@ namespace Core
 		int8_t offset = cpu->CurrentInstruction.lowByte;
 		if (cpu->GetCPUFlag(FLAG_ZERO) == 1)
 		{
-			cpu->GetState()->PC += offset + 1;
+			cpu->GetState()->PC += offset;
 			return 12;
 		}
 		else
 		{
-			cpu->GetState()->PC++;
 			return 8;
 		}
 	}
@@ -63,12 +62,11 @@ namespace Core
 		int8_t offset = cpu->CurrentInstruction.lowByte;
 		if (!cpu->GetCPUFlag(FLAG_CARRY))
 		{
-			cpu->GetState()->PC += offset + 1;
+			cpu->GetState()->PC += offset;
 			return 12;
 		}
 		else
 		{
-			cpu->GetState()->PC++;
 			return 8;
 		}	
 	}
@@ -79,12 +77,11 @@ namespace Core
 		int8_t offset = cpu->CurrentInstruction.lowByte;
 		if (cpu->GetCPUFlag(FLAG_CARRY))
 		{
-			cpu->GetState()->PC += offset + 1;
+			cpu->GetState()->PC += offset;
 			return 12;
 		}
 		else
 		{
-			cpu->GetState()->PC++;
 			return 8;
 		}
 	}
@@ -110,8 +107,6 @@ namespace Core
 			return 16;
 		}
 
-		cpu->GetState()->PC += 2;
-
 		return 12;
 	}
 
@@ -127,13 +122,11 @@ namespace Core
 	{
 		if (!cpu->GetCPUFlag(FLAG_ZERO))
 		{
-			cpu->PushSP(cpu->GetState()->PC += 2);
+			cpu->PushSP(cpu->GetState()->PC);
 			cpu->GetState()->PC = (cpu->CurrentInstruction.highByte << 8) | (cpu->CurrentInstruction.lowByte);
 
 			return 24;
 		}
-
-		cpu->GetState()->PC += 2;
 
 		return 12;
 	}
@@ -174,8 +167,6 @@ namespace Core
 			return 16;
 		}
 
-		cpu->GetState()->PC += 2;
-
 		return 12;
 	}
 
@@ -183,19 +174,17 @@ namespace Core
 	{
 		if (cpu->GetCPUFlag(FLAG_ZERO))
 		{
-			cpu->PushSP(cpu->GetState()->PC += 2);
+			cpu->PushSP(cpu->GetState()->PC);
 			cpu->GetState()->PC = (cpu->CurrentInstruction.highByte << 8) | (cpu->CurrentInstruction.lowByte);
 			return 24;
 		}
-
-		cpu->GetState()->PC += 2;
 
 		return 12;
 	}
 
 	uint8_t Instructions::Instr_0xCD_JPCALL_CALL_a16(Cpu* cpu)
 	{
-		cpu->PushSP(cpu->GetState()->PC += 2);
+		cpu->PushSP(cpu->GetState()->PC);
 		cpu->GetState()->PC = (cpu->CurrentInstruction.highByte << 8) | (cpu->CurrentInstruction.lowByte);
 
 		return 24;
@@ -230,8 +219,6 @@ namespace Core
 			return 16;
 		}
 
-		cpu->GetState()->PC += 2;
-
 		return 12;
 	}
 
@@ -239,13 +226,11 @@ namespace Core
 	{
 		if (!cpu->GetCPUFlag(FLAG_CARRY))
 		{
-			cpu->PushSP(cpu->GetState()->PC += 2);
+			cpu->PushSP(cpu->GetState()->PC);
 			cpu->GetState()->PC = (cpu->CurrentInstruction.highByte << 8) | (cpu->CurrentInstruction.lowByte);
 
 			return 24;
 		}
-
-		cpu->GetState()->PC += 2;
 
 		return 12;
 	}
@@ -287,8 +272,6 @@ namespace Core
 			return 16;
 		}
 
-		cpu->GetState()->PC += 2;
-
 		return 12;
 	}
 
@@ -296,13 +279,11 @@ namespace Core
 	{
 		if (cpu->GetCPUFlag(FLAG_CARRY))
 		{
-			cpu->PushSP(cpu->GetState()->PC += 2);
+			cpu->PushSP(cpu->GetState()->PC);
 			cpu->GetState()->PC = (cpu->CurrentInstruction.highByte << 8) | (cpu->CurrentInstruction.lowByte);
 
 			return 24;
 		}
-
-		cpu->GetState()->PC += 2;
 
 		return 12;
 	}
@@ -515,7 +496,6 @@ namespace Core
 	{
 		Cpu::sCPUState* state = cpu->GetState();
 		cpu->GetMMU().Write(state->HL, cpu->CurrentInstruction.lowByte);
-		state->PC++;
 
 		return  12;
 	}
@@ -524,7 +504,6 @@ namespace Core
 	{
 		Cpu::sCPUState* state = cpu->GetState();
 		state->A = cpu->CurrentInstruction.lowByte;
-		state->PC++;
 
 		return  8;
 	}
@@ -590,7 +569,6 @@ namespace Core
 		Cpu::sCPUState* state = cpu->GetState();
 		uint8_t offset = cpu->CurrentInstruction.lowByte;
 		cpu->GetMMU().Write(0xFF00 + offset, state->A);
-		state->PC++;
 
 		return 12;
 	}
@@ -607,7 +585,6 @@ namespace Core
 	{
 		Cpu::sCPUState* state = cpu->GetState();
 		cpu->GetMMU().Write((cpu->CurrentInstruction.highByte << 8) | (cpu->CurrentInstruction.lowByte), state->A);
-		state->PC += 2;
 
 		return 16;
 	}
@@ -616,8 +593,6 @@ namespace Core
 	{
 		Cpu::sCPUState* state = cpu->GetState();
 		state->A = cpu->GetMMU().Read(0xFF00 + cpu->CurrentInstruction.lowByte);
-
-		state->PC++;
 
 		return 12;
 	}
@@ -634,7 +609,6 @@ namespace Core
 	{
 		Cpu::sCPUState* state = cpu->GetState();
 		state->A = cpu->GetMMU().Read((cpu->CurrentInstruction.highByte << 8) | (cpu->CurrentInstruction.lowByte));
-		state->PC += 2;
 
 		return 16;
 	}
@@ -653,7 +627,6 @@ namespace Core
 		uint16_t addr = (cpu->CurrentInstruction.highByte << 8) | (cpu->CurrentInstruction.lowByte);
 		cpu->GetMMU().Write(addr, state->SP & 0x00FF);
 		cpu->GetMMU().Write(addr + 1, (state->SP & 0xFF00) >> 8);
-		state->PC += 2;
 
 		return 20;
 	}
@@ -728,7 +701,6 @@ namespace Core
 		cpu->SetCPUFlag(FLAG_CARRY, ((state->SP ^ signedValue ^ (fullResult & 0xFFFF)) & 0x100) == 0x100);
 
 		state->HL = result;
-		state->PC++;
 
 		return 12;
 	}

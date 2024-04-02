@@ -76,9 +76,8 @@ namespace Core
 			CurrentInstruction.lowByte = opcode[1];
 			CurrentInstruction.highByte = opcode[2];
 
-			m_Cycles = CurrentInstruction.definition.instructionFunc(this);
-
 			m_State.PC += CurrentInstruction.definition.length - 1;
+			m_Cycles = CurrentInstruction.definition.instructionFunc(this);
 		}
 
 		ProcessInterrupts();
