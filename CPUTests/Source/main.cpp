@@ -157,7 +157,8 @@ bool RunTests(Core::Cpu cpu, std::vector<Test> tests)
 
 	for (int i = 0; i < tests.size(); i++)
 	{
-		// Reset Ram
+		// reset devices
+		cpu.Reset(false);
 		mmu.Reset();
 
 		// setup CPU State
@@ -174,6 +175,7 @@ bool RunTests(Core::Cpu cpu, std::vector<Test> tests)
 		cpuState.PC = tests[i].initial.PC;
 		cpuState.SP = tests[i].initial.SP;
 		cpuState.IME = tests[i].initial.IME;
+		
 
 		cpu.SetState(cpuState);
 
@@ -198,67 +200,67 @@ bool RunTests(Core::Cpu cpu, std::vector<Test> tests)
 
 		if (state->A != tests[i].final.A)
 		{
-			std::cout << "Test: " << i << " State A - Result: " << static_cast<int>(state->A) << " Final: " << static_cast<int>(tests[i].final.A) << std::endl;
+			std::cout << "Test: " << tests[i].name <<" State A - Result: " << static_cast<int>(state->A) << " Final: " << static_cast<int>(tests[i].final.A) << std::endl;
 			didPass = false;
 		}
 
 		if (state->B != tests[i].final.B)
 		{
-			std::cout << "Test: " << i << " State B - Result: " << static_cast<int>(state->B) << " Final: " << static_cast<int>(tests[i].final.B) << std::endl;
+			std::cout << "Test: " << tests[i].name <<" State B - Result: " << static_cast<int>(state->B) << " Final: " << static_cast<int>(tests[i].final.B) << std::endl;
 			didPass = false;
 		}
 
 		if (state->C != tests[i].final.C)
 		{
-			std::cout << "Test: " << i << " State C - Result: " << static_cast<int>(state->C) << " Final: " << static_cast<int>(tests[i].final.C) << std::endl;
+			std::cout << "Test: " << tests[i].name <<" State C - Result: " << static_cast<int>(state->C) << " Final: " << static_cast<int>(tests[i].final.C) << std::endl;
 			didPass = false;
 		}
 
 		if (state->D != tests[i].final.D)
 		{
-			std::cout << "Test: " << i << " State D - Result: " << static_cast<int>(state->D) << " Final: " << static_cast<int>(tests[i].final.D) << std::endl;
+			std::cout << "Test: " << tests[i].name <<" State D - Result: " << static_cast<int>(state->D) << " Final: " << static_cast<int>(tests[i].final.D) << std::endl;
 			didPass = false;
 		}
 
 		if (state->E != tests[i].final.E)
 		{
-			std::cout << "Test: " << i << " State E - Result: " << static_cast<int>(state->E) << " Final: " << static_cast<int>(tests[i].final.E) << std::endl;
+			std::cout << "Test: " << tests[i].name <<" State E - Result: " << static_cast<int>(state->E) << " Final: " << static_cast<int>(tests[i].final.E) << std::endl;
 			didPass = false;
 		}
 
 		if (state->F != tests[i].final.F)
 		{
-			std::cout << "Test: " << i << " State F - Result: " << static_cast<int>(state->F) << " Final: " << static_cast<int>(tests[i].final.F) << std::endl;
+			std::cout << "Test: " << tests[i].name <<" State F - Result: " << static_cast<int>(state->F) << " Final: " << static_cast<int>(tests[i].final.F) << std::endl;
 			didPass = false;
 		}
 
 		if (state->H != tests[i].final.H)
 		{
-			std::cout << "Test: " << i << " State H - Result: " << static_cast<int>(state->H) << " Final: " << static_cast<int>(tests[i].final.H) << std::endl;
+			std::cout << "Test: " << tests[i].name << " State H - Result: " << static_cast<int>(state->H) << " Final: " << static_cast<int>(tests[i].final.H) << std::endl;
 			didPass = false;
 		}
 
 		if (state->L != tests[i].final.L)
 		{
-			std::cout << "Test: " << i << " State L - Result: " << static_cast<int>(state->L) << " Final: " << static_cast<int>(tests[i].final.L) << std::endl;
+			std::cout << "Test: " << tests[i].name <<" State L - Result: " << static_cast<int>(state->L) << " Final: " << static_cast<int>(tests[i].final.L) << std::endl;
 			didPass = false;
 		}
 
 		if (state->PC != tests[i].final.PC)
 		{
-			std::cout << "Test: " << i << " State PC - Result: " << static_cast<int>(state->PC) << " Final: " << static_cast<int>(tests[i].final.PC) << std::endl;
+			std::cout << "Test: " << tests[i].name <<" State PC - Result: " << static_cast<int>(state->PC) << " Final: " << static_cast<int>(tests[i].final.PC) << std::endl;
 			didPass = false;
 		}
 
 		if (state->SP != tests[i].final.SP)
 		{
-			std::cout << "Test: " << i << " State SP - Result: " << static_cast<int>(state->A) << " Final: " << static_cast<int>(tests[i].final.A) << std::endl;
+			std::cout << "Test: " << tests[i].name <<" State SP - Result: " << static_cast<int>(state->SP) << " Final: " << static_cast<int>(tests[i].final.SP) << std::endl;
 			didPass = false;
 		}
 
 		if (state->IME != tests[i].final.IME)
 		{
-			std::cout << "Test: " << i << " State IME - Result: " << static_cast<int>(state->IME) << " Final: " << static_cast<int>(tests[i].final.IME) << std::endl;
+			std::cout << "Test: " << tests[i].name <<" State IME - Result: " << static_cast<int>(state->IME) << " Final: " << static_cast<int>(tests[i].final.IME) << std::endl;
 			didPass = false;
 		}
 
@@ -267,7 +269,7 @@ bool RunTests(Core::Cpu cpu, std::vector<Test> tests)
 			uint8_t result = mmu.Read(mem.address, true);
 			if (result != mem.value)
 			{
-				std::cout << "Test: " << i << " RAM - Result: " << static_cast<int>(result) << " Final: " << static_cast<int>(mem.value) << std::endl;
+				std::cout << "Test: " << tests[i].name <<" RAM - Result: " << static_cast<int>(result) << " Final: " << static_cast<int>(mem.value) << std::endl;
 				didPass = false;
 			}
 		}

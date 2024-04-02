@@ -170,7 +170,7 @@ namespace Core
 		m_InstructionMap[0xA1] = { 1, "and a,c" 		   , &Instructions::Instr_0xA1_8ALU_AND_C		    };
 		m_InstructionMap[0xA2] = { 1, "and a,d" 		   , &Instructions::Instr_0xA2_8ALU_AND_D		    };
 		m_InstructionMap[0xA3] = { 1, "and a,e" 		   , &Instructions::Instr_0xA3_8ALU_AND_E		    };
-		m_InstructionMap[0xA4] = { 1, "and a,h" 		   , &Instructions::Instr_0x84_8ALU_ADD_H		    };
+		m_InstructionMap[0xA4] = { 1, "and a,h" 		   , &Instructions::Instr_0xA4_8ALU_AND_H		    };
 		m_InstructionMap[0xA5] = { 1, "and a,l" 		   , &Instructions::Instr_0xA5_8ALU_AND_L		    };
 		m_InstructionMap[0xA6] = { 1, "and a,[hl]" 		   , &Instructions::Instr_0xA6_8ALU_AND_HL		    };
 		m_InstructionMap[0xA7] = { 1, "and a,a" 		   , &Instructions::Instr_0xA7_8ALU_AND_A		    };

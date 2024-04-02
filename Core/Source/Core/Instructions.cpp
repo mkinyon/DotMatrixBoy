@@ -1065,7 +1065,7 @@ namespace Core
 	uint8_t Instructions::Instr_16_0xCB3C_SRL_H(Cpu* cpu)    { SRL(cpu, cpu->GetState()->H); return 8; }
 	uint8_t Instructions::Instr_16_0xCB3D_SRL_L(Cpu* cpu)    { SRL(cpu, cpu->GetState()->L); return 8; }
 	uint8_t Instructions::Instr_16_0xCB3E_SRL_HL(Cpu* cpu)   { SRL_HL(cpu); return 16; }
-	uint8_t Instructions::Instr_16_0xCB3F_SRL_A(Cpu* cpu)    { SRA(cpu, cpu->GetState()->A); return 8; }
+	uint8_t Instructions::Instr_16_0xCB3F_SRL_A(Cpu* cpu)    { SRL(cpu, cpu->GetState()->A); return 8; }
 	uint8_t Instructions::Instr_16_0xCB40_BIT_0_B(Cpu* cpu)  { BIT(cpu, cpu->GetState()->B, 0); return 8; }
 	uint8_t Instructions::Instr_16_0xCB41_BIT_0_C(Cpu* cpu)  { BIT(cpu, cpu->GetState()->C, 0); return 8; }
 	uint8_t Instructions::Instr_16_0xCB42_BIT_0_D(Cpu* cpu)  { BIT(cpu, cpu->GetState()->D, 0); return 8; }
