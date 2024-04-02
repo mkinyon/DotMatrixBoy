@@ -1,7 +1,9 @@
 
 #pragma once
+
 #include <map>
 #include <string>
+#include <functional>
 
 namespace Core
 {
@@ -12,11 +14,13 @@ namespace Core
 		~InstructionSet();
 
 	public:
+		typedef uint8_t(*OpcodeFunc)(class Cpu*);
+
 		struct sInstructionDefinition
 		{
 			uint8_t length = 0;
 			std::string nmemonic;
-			void* instructionFunc;
+			OpcodeFunc instructionFunc;
 		};
 
 		struct sInstruction

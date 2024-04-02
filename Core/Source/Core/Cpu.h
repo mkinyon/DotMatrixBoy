@@ -70,9 +70,11 @@ namespace Core
 			bool IME = false; // interrupt master enable
 		};
 
+		bool m_IsHalted = false;
+
 		int m_TotalCycles = 0;
 		bool m_InstructionCompleted = false;
-		bool m_EnableLogging = true;
+		bool m_EnableLogging = false;
 		
 	private:
 		sCPUState m_State;
@@ -81,7 +83,6 @@ namespace Core
 		IMmu& m_MMU;
 		int m_Cycles = 0; // how many cycles remain before the cpu can fetch another instruction
 		std::string m_CurrentInstructionName;
-		bool m_IsHalted = false;
 		enum Cpu_Flags;
 
 	public:
@@ -93,6 +94,8 @@ namespace Core
 
 		bool GetCPUFlag(int flag);
 		void SetCPUFlag(int flag, bool enable);
+		void PushSP(uint16_t value);
+		uint16_t PopSP();
 
 		sCPUState* GetState();
 		void SetState(sCPUState state);
@@ -100,99 +103,12 @@ namespace Core
 		IMmu& GetMMU();
 
 		InstructionSet::sInstruction CurrentInstruction;
+		InstructionSet m_InstructionSet;
 
 	private:
 		std::string DisassembleInstruction(uint8_t* opcode);
 
-		void Process16bitInstruction(uint16_t opcode, sCPUState& state);
 		void ProcessInterrupts();
 		void ProcessTimers();
-		void PushSP(uint16_t value);
-		uint16_t PopSP();
-
-
-		//// Instructions ////
-		// 8-bit Load Instructions
-		void Instruction_ld_reg_value(uint8_t& reg, uint8_t& value);
-		void Instruction_ld_addr_reg(uint16_t& address, uint8_t& reg);
-		void Instruction_ld_reg_addr(uint8_t& reg, uint16_t& address);
-
-
-		// 16-bit Load Instructions
-		void Instruction_ld16_reg_value(uint16_t& reg, uint16_t value);
-
-
-		// 8-bit Arithmetic/Logical Instructions
-		void Instruction_inc_reg(uint8_t& reg);
-		void Instruction_inc_hl();
-
-		void Instruction_dec_reg(uint8_t& reg);
-		void Instruction_dec_hl();
-
-		void Instruction_add_reg(uint8_t& reg);
-		void Instruction_add_hl();
-
-		void Instruction_adc_reg(uint8_t& reg);
-		void Instruction_adc_hl();
-
-		void Instruction_sub_reg(uint8_t& reg);
-		void Instruction_sub_hl();
-
-		void Instruction_sbc_reg(uint8_t& reg);
-		void Instruction_sbc_hl();
-
-		void Instruction_and_reg(uint8_t& reg);
-		void Instruction_and_hl();
-
-		void Instruction_xor_reg(uint8_t& reg);
-		void Instruction_xor_hl();
-
-		void Instruction_or_reg(uint8_t& reg);
-		void Instruction_or_hl();
-
-		void Instruction_cp_reg(uint8_t& reg);
-		void Instruction_cp_hl();
-
-
-		// 16-bit Arithmetic/Logical Instructions
-		void Instruction_inc_reg16(uint16_t& reg);
-		void Instruction_dec_reg16(uint16_t& reg);
-		void Instruction_add_reg16(uint16_t& reg);
-		void Instruction_add_sp_e8(uint8_t& e8);
-
-
-		// 16 bit prefix (0xCB) instructions
-		void Instruction_rlc_reg(uint8_t& reg);
-		void Instruction_rlc_hl();
-
-		void Instruction_rrc_reg(uint8_t& reg);
-		void Instruction_rrc_hl();
-
-		void Instruction_rl_reg(uint8_t& reg);
-		void Instruction_rl_hl();
-
-		void Instruction_rr_reg(uint8_t& reg);
-		void Instruction_rr_hl();
-
-		void Instruction_sla_reg(uint8_t& reg);
-		void Instruction_sla_hl();
-
-		void Instruction_sra_reg(uint8_t& reg);
-		void Instruction_sra_hl();
-
-		void Instruction_swap_reg(uint8_t& reg);
-		void Instruction_swap_hl();
-
-		void Instruction_srl_reg(uint8_t& reg);
-		void Instruction_srl_hl();
-
-		void Instruction_bit_bit_reg(uint8_t& reg, uint8_t bit);
-		void Instruction_bit_bit_hl(uint8_t bit);
-
-		void Instruction_res_bit_reg(uint8_t& reg, uint8_t bit);
-		void Instruction_res_bit_hl(uint8_t bit);
-
-		void Instruction_set_bit_reg(uint8_t& reg, uint8_t bit);
-		void Instruction_set_bit_hl(uint8_t bit);
 	};
 }

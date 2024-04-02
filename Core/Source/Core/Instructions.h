@@ -530,5 +530,52 @@ namespace Core
 		static uint8_t Instr_16_0xCBFE_SET_7_HL(Cpu* cpu);
 		static uint8_t Instr_16_0xCBFF_SET_7_A(Cpu* cpu); 
 
+
+		// helpers
+		static void INC(Cpu* cpu, uint8_t& reg);
+		static void INC_HL(Cpu* cpu);
+		static void DEC(Cpu* cpu, uint8_t& reg);
+		static void DEC_HL(Cpu* cpu);
+		static void ADD(Cpu* cpu, uint8_t& reg);
+		static void ADD_HL(Cpu* cpu);
+		static void ADC(Cpu* cpu, uint8_t& reg);
+		static void ADC_HL(Cpu* cpu);
+		static void SUB(Cpu* cpu, uint8_t& reg);
+		static void SUB_HL(Cpu* cpu);
+		static void SBC(Cpu* cpu, uint8_t& reg);
+		static void SBC_HL(Cpu* cpu);
+		static void AND(Cpu* cpu, uint8_t& reg);
+		static void AND_HL(Cpu* cpu);
+		static void XOR(Cpu* cpu, uint8_t& reg);
+		static void XOR_HL(Cpu* cpu);
+		static void OR(Cpu* cpu, uint8_t& reg);
+		static void OR_HL(Cpu* cpu);
+		static void CP(Cpu* cpu, uint8_t& reg);
+		static void CP_HL(Cpu* cpu);
+		static void ADD_REG16(Cpu* cpu, uint16_t& reg);
+
+		// prefix helpers
+		static void RLC(Cpu* cpu, uint8_t& reg);
+		static void RLC_HL(Cpu* cpu);
+		static void RRC(Cpu* cpu, uint8_t& reg);
+		static void RRC_HL(Cpu* cpu);
+		static void RL(Cpu* cpu, uint8_t& reg);
+		static void RL_HL(Cpu* cpu);
+		static void RR(Cpu* cpu, uint8_t& reg);
+		static void RR_HL(Cpu* cpu);
+		static void SLA(Cpu* cpu, uint8_t& reg);
+		static void SLA_HL(Cpu* cpu);
+		static void SRA(Cpu* cpu, uint8_t& reg);
+		static void SRA_HL(Cpu* cpu);
+		static void SWAP(Cpu* cpu, uint8_t& reg);
+		static void SWAP_HL(Cpu* cpu);
+		static void SRL(Cpu* cpu, uint8_t& reg);
+		static void SRL_HL(Cpu* cpu);
+		static void BIT(Cpu* cpu, uint8_t& reg, uint8_t bit);
+		static void BIT_HL(Cpu* cpu, uint8_t bit);
+		static void RES(uint8_t& reg, uint8_t bit);
+		static void RES_HL(Cpu* cpu, uint8_t bit);
+		static void SET(uint8_t& reg, uint8_t bit);
+		static void SET_HL(Cpu* cpu, uint8_t bit);
 	};
 }
