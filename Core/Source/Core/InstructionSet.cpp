@@ -22,7 +22,7 @@ namespace Core
 		m_InstructionMap[0x0D] = { 1, "dec c" 			   , &Instructions::Instr_0x0D_8ALU_DEC_C		    };
 		m_InstructionMap[0x0E] = { 2, "ld c,%hhu" 		   , &Instructions::Instr_0x0E_8LD_C_e8			    };
 		m_InstructionMap[0x0F] = { 1, "rrca" 			   , &Instructions::Instr_0x0F_8SRB_RRCA		    };
-		m_InstructionMap[0x10] = { 1, "stop" 			   , &Instructions::Instr_0x10_MISC_STOP		    };
+		m_InstructionMap[0x10] = { 2, "stop" 			   , &Instructions::Instr_0x10_MISC_STOP		    };
 		m_InstructionMap[0x11] = { 3, "ld de,%hu" 		   , &Instructions::Instr_0x11_16LD_DE_e16		    };
 		m_InstructionMap[0x12] = { 1, "ld [de],a" 		   , &Instructions::Instr_0x12_8LD_DE_A			    };
 		m_InstructionMap[0x13] = { 1, "inc de" 			   , &Instructions::Instr_0x13_16ALU_INC_DE		    };

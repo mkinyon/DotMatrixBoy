@@ -60,26 +60,22 @@ namespace Core
 
 		if (!m_IsHalted)
 		{
-			// increment program counter
-			m_State.PC++;
-
 			if (opcode[0] != 0xCB)
 			{
-				CurrentInstruction.definition = m_InstructionSet.m_InstructionMap[opcode[0]];
+				CurrentInstruction.definition = m_InstructionSet.m_InstructionMap[m_MMU.Read(m_State.PC)];
 			}
 			else
 			{
-				CurrentInstruction.definition = m_InstructionSet.m_16BitInstructionMap[opcode[1]];
+				CurrentInstruction.definition = m_InstructionSet.m_16BitInstructionMap[m_MMU.Read(m_State.PC + 1)];
 			}
 
-			int test = opcode[0];
-			CurrentInstruction.lowByte = opcode[1];
-			CurrentInstruction.highByte = opcode[2];
+			CurrentInstruction.lowByte = m_MMU.Read(m_State.PC + 1);
+			CurrentInstruction.highByte = m_MMU.Read(m_State.PC + 2);
 
-			m_State.PC += CurrentInstruction.definition.length - 1;
+			m_State.PC += CurrentInstruction.definition.length;
 			m_Cycles = CurrentInstruction.definition.instructionFunc(this);
 		}
-
+	
 		ProcessInterrupts();
 		m_InstructionCompleted = true;
 	}

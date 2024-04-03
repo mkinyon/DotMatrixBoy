@@ -26,9 +26,9 @@ namespace Core
 		struct sInstruction
 		{
 			sInstructionDefinition definition;
-			uint8_t opcode;
-			uint8_t lowByte;
-			uint8_t highByte;
+			uint8_t opcode = 0;
+			uint8_t lowByte = 0;
+			uint8_t highByte = 0;
 		};
 
 		std::map<uint8_t, sInstructionDefinition> m_InstructionMap;
