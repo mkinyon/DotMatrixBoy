@@ -106,7 +106,7 @@ namespace Core
 		InstructionSet m_InstructionSet;
 
 	private:
-		std::string DisassembleInstruction(uint8_t* opcode);
+		std::string DisassembleInstruction(uint16_t pc);
 
 		void ProcessInterrupts();
 		void ProcessTimers();

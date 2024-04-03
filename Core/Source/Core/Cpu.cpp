@@ -40,14 +40,10 @@ namespace Core
 			return;
 		}
 
-		// read opcode from memory
-		uint8_t* opcode = &m_MMU.Read(m_State.PC);
-
 		if (m_EnableLogging)
 		{
 			linecount++;
-			logBuffer << DisassembleInstruction(opcode);
-
+			logBuffer << DisassembleInstruction(m_State.PC);
 			if (linecount >= 10000)
 			{
 				std::ofstream outFile("cpu.txt", std::ios::out | std::ios::app);
@@ -60,7 +56,7 @@ namespace Core
 
 		if (!m_IsHalted)
 		{
-			if (opcode[0] != 0xCB)
+			if (m_MMU.Read(m_State.PC) != 0xCB)
 			{
 				CurrentInstruction.definition = m_InstructionSet.m_InstructionMap[m_MMU.Read(m_State.PC)];
 			}
@@ -144,12 +140,12 @@ namespace Core
 
 		while (pc < 0x7FFF)
 		{
-			uint8_t* opcode = &m_MMU.Read(pc);
+			uint8_t opcode = m_MMU.Read(pc);
 			int nextPC;
 
-			if (opcode[0] != 0xCB)
+			if (opcode != 0xCB)
 			{
-				nextPC = instrSet.m_InstructionMap[opcode[0]].length;
+				nextPC = instrSet.m_InstructionMap[opcode].length;
 			}
 			else
 			{
@@ -344,9 +340,13 @@ namespace Core
 		return m_MMU;
 	}
 
-	std::string Cpu::DisassembleInstruction(uint8_t* opcode)
+	std::string Cpu::DisassembleInstruction(uint16_t pc)
 	{
-		uint8_t numOfBytes = instrSet.m_InstructionMap[opcode[0]].length;
+		uint8_t opcode = m_MMU.Read(pc);
+		uint8_t lowbyte = m_MMU.Read(pc + 1);
+		uint8_t highbyte = m_MMU.Read(pc + 2);
+
+		uint8_t numOfBytes = instrSet.m_InstructionMap[opcode].length;
 		std::ostringstream instrBuffer;
 
 		instrBuffer << std::hex << std::setfill('0') << std::uppercase <<
@@ -363,11 +363,11 @@ namespace Core
 			" (cy: " << std::dec << static_cast<int>(m_TotalCycles) - 1 << ")" << std::hex <<
 			" ppu:+" << static_cast<int>(m_MMU.Read(HW_FF41_STAT_LCD_STATUS) & 0b11) <<
 			" |[00]0x" << std::setw(4) << static_cast<int>(m_State.PC) << ":" <<
-			std::setw(2) << static_cast<int>(opcode[0]) << " ";
+			std::setw(2) << static_cast<int>(opcode) << " ";
 
 		if (numOfBytes > 1)
 		{
-			instrBuffer << std::setw(2) << static_cast<int>(opcode[1]) << " ";
+			instrBuffer << std::setw(2) << static_cast<int>(lowbyte) << " ";
 		}
 		else
 		{
@@ -376,20 +376,20 @@ namespace Core
 
 		if (numOfBytes > 2)
 		{
-			instrBuffer << std::setw(2) << static_cast<int>(opcode[2]) << "";
+			instrBuffer << std::setw(2) << static_cast<int>(highbyte) << "";
 		}
 		else
 		{
 			instrBuffer << "   ";
 		}
 
-		if (opcode[0] != 0xCB)
+		if (opcode != 0xCB)
 		{
-			instrBuffer << "  " << instrSet.m_InstructionMap[opcode[0]].nmemonic;
+			instrBuffer << "  " << instrSet.m_InstructionMap[opcode].nmemonic;
 		}
 		else
 		{
-			instrBuffer << "  " << instrSet.m_16BitInstructionMap[opcode[1]].nmemonic;
+			instrBuffer << "  " << instrSet.m_16BitInstructionMap[lowbyte].nmemonic;
 		}
 
 		instrBuffer << std::endl;
