@@ -33,8 +33,6 @@ struct Initial
 	uint8_t F = 0;
 	uint8_t H = 0;
 	uint8_t L = 0;
-	uint8_t IME = 0;
-	uint8_t IE = 0;
 	std::vector<RamEntry> ram;
 };
 
@@ -50,7 +48,6 @@ struct Final
 	uint8_t F = 0;
 	uint8_t H = 0;
 	uint8_t L = 0;
-	uint8_t IME = 0;
 	std::vector<RamEntry> ram;
 };
 
@@ -83,49 +80,47 @@ std::vector<Test> ParseTestsFromJSON(std::string filePath)
 
 			// get initial
 			json jInitial = jTest.at("initial");
-			test.initial.A = jInitial.at("a");
-			test.initial.B = jInitial.at("b");
-			test.initial.C = jInitial.at("c");
-			test.initial.D = jInitial.at("d");
-			test.initial.E = jInitial.at("e");
-			test.initial.F = jInitial.at("f");
-			test.initial.H = jInitial.at("h");
-			test.initial.L = jInitial.at("l");
-			test.initial.PC = jInitial.at("pc");
-			test.initial.SP = jInitial.at("sp");
-			test.initial.IE = jInitial.at("ie");
-			test.initial.IME = jInitial.at("ime");
+
+			test.initial.A = std::stoi(static_cast<std::string>(jInitial.at("cpu").at("a")), nullptr, 16);
+			test.initial.B = std::stoi(static_cast<std::string>(jInitial.at("cpu").at("b")), nullptr, 16);
+			test.initial.C = std::stoi(static_cast<std::string>(jInitial.at("cpu").at("c")), nullptr, 16);
+			test.initial.D = std::stoi(static_cast<std::string>(jInitial.at("cpu").at("d")), nullptr, 16);
+			test.initial.E = std::stoi(static_cast<std::string>(jInitial.at("cpu").at("e")), nullptr, 16);
+			test.initial.F = std::stoi(static_cast<std::string>(jInitial.at("cpu").at("f")), nullptr, 16);
+			test.initial.H = std::stoi(static_cast<std::string>(jInitial.at("cpu").at("h")), nullptr, 16);
+			test.initial.L = std::stoi(static_cast<std::string>(jInitial.at("cpu").at("l")), nullptr, 16);
+			test.initial.PC = std::stoi(static_cast<std::string>(jInitial.at("cpu").at("pc")), nullptr, 16);
+			test.initial.SP = std::stoi(static_cast<std::string>(jInitial.at("cpu").at("sp")), nullptr, 16);
 
 			// get initial ram
 			for (auto& jRamEntryItem : jInitial.at("ram"))
 			{
 				RamEntry ramEntry;
-				ramEntry.address = jRamEntryItem[0];
-				ramEntry.value = jRamEntryItem[1];
+				ramEntry.address = std::stoi(static_cast<std::string>(jRamEntryItem[0]), nullptr, 16);
+				ramEntry.value = std::stoi(static_cast<std::string>(jRamEntryItem[1]), nullptr, 16);
 
 				test.initial.ram.push_back(ramEntry);
 			}
 
 			// get final
 			json jFinal = jTest.at("final");
-			test.final.A = jFinal.at("a");
-			test.final.B = jFinal.at("b");
-			test.final.C = jFinal.at("c");
-			test.final.D = jFinal.at("d");
-			test.final.E = jFinal.at("e");
-			test.final.F = jFinal.at("f");
-			test.final.H = jFinal.at("h");
-			test.final.L = jFinal.at("l");
-			test.final.PC = jFinal.at("pc");
-			test.final.SP = jFinal.at("sp");
-			test.final.IME = jFinal.at("ime");
+			test.final.A = std::stoi(static_cast<std::string>(jFinal.at("cpu").at("a")), nullptr, 16);
+			test.final.B = std::stoi(static_cast<std::string>(jFinal.at("cpu").at("b")), nullptr, 16);
+			test.final.C = std::stoi(static_cast<std::string>(jFinal.at("cpu").at("c")), nullptr, 16);
+			test.final.D = std::stoi(static_cast<std::string>(jFinal.at("cpu").at("d")), nullptr, 16);
+			test.final.E = std::stoi(static_cast<std::string>(jFinal.at("cpu").at("e")), nullptr, 16);
+			test.final.F = std::stoi(static_cast<std::string>(jFinal.at("cpu").at("f")), nullptr, 16);
+			test.final.H = std::stoi(static_cast<std::string>(jFinal.at("cpu").at("h")), nullptr, 16);
+			test.final.L = std::stoi(static_cast<std::string>(jFinal.at("cpu").at("l")), nullptr, 16);
+			test.final.PC = std::stoi(static_cast<std::string>(jFinal.at("cpu").at("pc")), nullptr, 16);
+			test.final.SP = std::stoi(static_cast<std::string>(jFinal.at("cpu").at("sp")), nullptr, 16);
 
 			// get final ram
 			for (auto& jRamEntryItem : jFinal.at("ram"))
 			{
 				RamEntry ramEntry;
-				ramEntry.address = jRamEntryItem[0];
-				ramEntry.value = jRamEntryItem[1];
+				ramEntry.address = std::stoi(static_cast<std::string>(jRamEntryItem[0]), nullptr, 16);
+				ramEntry.value = std::stoi(static_cast<std::string>(jRamEntryItem[1]), nullptr, 16);
 
 				test.final.ram.push_back(ramEntry);
 			}
@@ -134,19 +129,21 @@ std::vector<Test> ParseTestsFromJSON(std::string filePath)
 			for (auto& jCyclesEntry : jTest.at("cycles"))
 			{
 				CycleEntry cycleEntry;
-				cycleEntry.address = jCyclesEntry[0];
-				cycleEntry.value = jCyclesEntry[1];
+				std::string teststring = jCyclesEntry[0];
+				cycleEntry.address = std::stoi(static_cast<std::string>(jCyclesEntry[0]), nullptr, 16);
+				cycleEntry.value = std::stoi(static_cast<std::string>(jCyclesEntry[1]), nullptr, 16);
 				cycleEntry.description = jCyclesEntry[2];
 
 				test.cycles.push_back(cycleEntry);
+
+				break; // intentionally only getting the first cycle for now
 			}
 
 			tests.push_back(test);
 		}
 
-		return tests;
-
 		file.close();
+		return tests;
 	}
 }
 
@@ -173,9 +170,7 @@ bool RunTests(Core::Cpu cpu, std::vector<Test> tests)
 		cpuState.H = tests[i].initial.H;
 		cpuState.L = tests[i].initial.L;
 		cpuState.PC = tests[i].initial.PC;
-		cpuState.SP = tests[i].initial.SP;
-		cpuState.IME = tests[i].initial.IME;
-		
+		cpuState.SP = tests[i].initial.SP;		
 
 		cpu.SetState(cpuState);
 
@@ -258,12 +253,6 @@ bool RunTests(Core::Cpu cpu, std::vector<Test> tests)
 			didPass = false;
 		}
 
-		if (state->IME != tests[i].final.IME)
-		{
-			std::cout << "Test: " << tests[i].name <<" State IME - Result: " << static_cast<int>(state->IME) << " Final: " << static_cast<int>(tests[i].final.IME) << std::endl;
-			didPass = false;
-		}
-
 		for (auto mem : tests[i].final.ram)
 		{
 			uint8_t result = mmu.Read(mem.address, true);
@@ -299,6 +288,8 @@ int main()
 		{
 			std::cout << "********************** TEST FAILED **********************" << std::endl;
 		}
+
+		std::cout << "" << std::endl;
 	}
 		
 }
