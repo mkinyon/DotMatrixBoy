@@ -1472,7 +1472,7 @@ namespace Core
 
 		uint8_t value = cpu->GetMMU().Read(state->HL);
 		CP(cpu, value);
-		cpu->GetMMU().Write(state->HL, value);
+		//cpu->GetMMU().Write(state->HL, value);
 	}
 
 	void Instructions::ADD_REG16(Cpu* cpu, uint16_t& reg)

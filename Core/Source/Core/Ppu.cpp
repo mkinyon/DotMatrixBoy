@@ -94,13 +94,13 @@ namespace Core
 			DrawWindowToBuffer();
 			DrawOAMToBuffer();
 
-			uint8_t ly = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD);
+			uint8_t ly = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD, true);
 			if (ly == 143)
 				WriteLCDMode(LCD_Mode::MODE_1_VBLANK);
 			else
 				WriteLCDMode(LCD_Mode::MODE_2_OAMSCAN);
 
-			m_MMU.Write(HW_FF44_LY_LCD_Y_COORD, ly + 1, true);
+			m_MMU.Write(HW_FF44_LY_LCD_Y_COORD, m_MMU.Read(HW_FF44_LY_LCD_Y_COORD, true) + 1, true);
 			m_CurrentScanLine = ly + 1;
 			m_CycleCount -= HBLANK_CYCLES;
 		}
@@ -112,7 +112,7 @@ namespace Core
 		{
 			ProcessLYC();
 
-			uint8_t ly = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD);
+			uint8_t ly = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD, true);
 
 			if (ly == 144)
 			{
@@ -146,9 +146,9 @@ namespace Core
 	{
 		if (!m_MMU.ReadRegisterBit(HW_FF40_LCDC_LCD_CONTROL, LCDC_BG_WINDOW_ENABLE_PRIORITY)) return;
 
-		uint8_t lcdY = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD);
-		uint8_t scrollX = m_MMU.Read(HW_FF43_SCX_VIEWPORT_X_POS);
-		uint8_t scrollY = m_MMU.Read(HW_FF42_SCY_VIEWPORT_Y_POS);
+		uint8_t lcdY = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD, true);
+		uint8_t scrollX = m_MMU.Read(HW_FF43_SCX_VIEWPORT_X_POS, true);
+		uint8_t scrollY = m_MMU.Read(HW_FF42_SCY_VIEWPORT_Y_POS, true);
 
 		// iterate through each pixel
 		for (int x = 0; x < 160; x++)
@@ -201,9 +201,9 @@ namespace Core
 			return;
 		}
 
-		uint8_t lcdY = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD);
-		int16_t windowX = m_MMU.Read(HW_FF4B_WX_WINDOW_X_POS) - 7;
-		int16_t windowY = m_MMU.Read(HW_FF4A_WY_WINDOW_Y_POS);
+		uint8_t lcdY = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD, true);
+		int16_t windowX = m_MMU.Read(HW_FF4B_WX_WINDOW_X_POS, true) - 7;
+		int16_t windowY = m_MMU.Read(HW_FF4A_WY_WINDOW_Y_POS, true);
 
 		if (lcdY >= windowY)
 		{
@@ -259,7 +259,7 @@ namespace Core
 			return;
 		}
 
-		uint8_t lcdY = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD);
+		uint8_t lcdY = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD, true);
 
 		RefreshOAMEntries();
 
@@ -485,8 +485,8 @@ namespace Core
 
 	void Ppu::ProcessLYC()
 	{
-		uint8_t lcdy = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD);
-		uint8_t lcdyc = m_MMU.Read(HW_FF45_LYC_LY_COMPARE);
+		uint8_t lcdy = m_MMU.Read(HW_FF44_LY_LCD_Y_COORD, true);
+		uint8_t lcdyc = m_MMU.Read(HW_FF45_LYC_LY_COMPARE, true);
 
 		if (lcdy == lcdyc)
 		{
