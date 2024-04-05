@@ -21,12 +21,23 @@
 
 using namespace App;
 
-int main(int argv, char** args)
+int main(int argc, char* argv[])
 {
+    bool isRunning = true;
+
     sAppState appState;
     appState.IsPaused = true; // need to always set to true since we don't have a rom loaded
     
     Core::GameBoy* gb = new Core::GameBoy(appState.IsBootRomEnabled);
+
+    if (argc >= 2)
+    {
+        const char* filePath = argv[1];
+        gb->m_CPU.m_EnableLogging = true;
+        gb->LoadRom(filePath);
+        gb->Clock(1000 * 60); // run for 2 seconds
+        isRunning = false;
+    }
     
     Window*  window = new Window(1280, 720, "DotMatrixBoy", gb, appState);
     window->Initialize();
@@ -46,7 +57,6 @@ int main(int argv, char** args)
     bool show_another_window = false;
 
     // Main loop
-    bool isRunning = true;
     while (isRunning)
     {
         appState.IsPaused = gb->IsPaused();

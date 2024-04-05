@@ -12,7 +12,7 @@ namespace Core
 	Cpu::Cpu(IMmu& mmu) : m_MMU(mmu)
 	{
 		// Check if the log file already exists
-		if (std::filesystem::exists("cpu.txt") && m_EnableLogging)
+		if (std::filesystem::exists("cpu.txt"))
 		{
 			// If it exists, delete it
 			std::filesystem::remove("cpu.txt");
@@ -362,6 +362,11 @@ namespace Core
 			" PC:" << std::setw(4) << static_cast<int>(m_State.PC) <<
 			" (cy: " << std::dec << static_cast<int>(m_TotalCycles) - 1 << ")" << std::hex <<
 			" ppu:+" << static_cast<int>(m_MMU.Read(HW_FF41_STAT_LCD_STATUS) & 0b11) <<
+
+			/*" DIV:" << static_cast<int>(m_MMU.Read(HW_FF04_DIV_DIVIDER_REGISTER) ) <<
+			" DIVL:" << static_cast<int>(m_MMU.Read(HW_FF03_DIV_DIVIDER_REGISTER_LOW)) <<
+			" LY:" << static_cast<int>(m_MMU.Read(HW_FF44_LY_LCD_Y_COORD)) <<*/
+
 			" |[00]0x" << std::setw(4) << static_cast<int>(m_State.PC) << ":" <<
 			std::setw(2) << static_cast<int>(opcode) << " ";
 
