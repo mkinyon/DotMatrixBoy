@@ -109,6 +109,5 @@ namespace Core
 		std::string DisassembleInstruction(uint16_t pc);
 
 		void ProcessInterrupts();
-		void ProcessTimers();
 	};
 }

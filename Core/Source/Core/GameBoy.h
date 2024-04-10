@@ -6,6 +6,7 @@
 #include "Cpu.h"
 #include "Ppu.h"
 #include "Audio/Apu.h"
+#include "Timer.h"
 #include "Input.h"
 #include "Cartridge.h"
 #include "Utils.h"
@@ -47,6 +48,7 @@ namespace Core
 		Cpu m_CPU;
 		Ppu m_PPU;
 		Apu m_APU;
+		Timer m_Timer;
 		Input m_Input;
 
 	private:

@@ -3,7 +3,13 @@
 
 namespace Core
 {
-	GameBoy::GameBoy(bool enableBootRom) : m_MMU(), m_CPU(m_MMU), m_PPU(m_MMU), m_APU(m_MMU), m_Input(m_MMU)
+	GameBoy::GameBoy(bool enableBootRom) : 
+		m_MMU(), 
+		m_CPU(m_MMU), 
+		m_PPU(m_MMU), 
+		m_APU(m_MMU), 
+		m_Timer(m_MMU), 
+		m_Input(m_MMU)
 	{
 		m_BootRomEnabled = enableBootRom;
 	}
@@ -126,6 +132,7 @@ namespace Core
 		m_PPU.Clock();
 
 		m_APU.Clock();
+		m_Timer.Clock();
 		m_Input.Clock();
 	}
 
