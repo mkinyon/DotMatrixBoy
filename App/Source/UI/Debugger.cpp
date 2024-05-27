@@ -30,24 +30,12 @@ namespace App
 			flags |= ImGuiInputTextFlags_ReadOnly;
 		}
 
-		ImGui::PushItemWidth(100);
-		ImGui::InputScalar("PC", ImGuiDataType_U16, &cpuState->PC, NULL, NULL, "%04X", flags); ImGui::SameLine(0,50);
+		ImGui::InputScalar("PC", ImGuiDataType_U16, &cpuState->PC, NULL, NULL, "%04X", flags);
 		ImGui::InputScalar("SP", ImGuiDataType_U16, &cpuState->SP, NULL, NULL, "%04X", flags);
-		ImGui::PopItemWidth();
-		ImGui::PushItemWidth(50);
-		ImGui::InputScalar("AF", ImGuiDataType_U16, &cpuState->AF, NULL, NULL, "%04X", flags); ImGui::SameLine(0, 50);
-		ImGui::InputScalar("A", ImGuiDataType_U8, &cpuState->A, NULL, NULL, "%02X", flags); ImGui::SameLine(0, 50);
-		ImGui::InputScalar("F", ImGuiDataType_U8, &cpuState->F, NULL, NULL, "%02X", flags);
-		ImGui::InputScalar("BC", ImGuiDataType_U16, &cpuState->BC, NULL, NULL, "%04X", flags); ImGui::SameLine(0, 50);
-		ImGui::InputScalar("B", ImGuiDataType_U8, &cpuState->B, NULL, NULL, "%02X", flags); ImGui::SameLine(0, 50);
-		ImGui::InputScalar("C", ImGuiDataType_U8, &cpuState->C, NULL, NULL, "%02X", flags);
-		ImGui::InputScalar("DE", ImGuiDataType_U16, &cpuState->DE, NULL, NULL, "%04X", flags); ImGui::SameLine(0, 50);
-		ImGui::InputScalar("D", ImGuiDataType_U8, &cpuState->D, NULL, NULL, "%02X", flags); ImGui::SameLine(0, 50);
-		ImGui::InputScalar("E", ImGuiDataType_U8, &cpuState->E, NULL, NULL, "%02X", flags);
-		ImGui::InputScalar("HL", ImGuiDataType_U16, &cpuState->HL, NULL, NULL, "%04X", flags); ImGui::SameLine(0, 50);
-		ImGui::InputScalar("H", ImGuiDataType_U8, &cpuState->H, NULL, NULL, "%02X", flags); ImGui::SameLine(0, 50);
-		ImGui::InputScalar("L", ImGuiDataType_U8, &cpuState->L, NULL, NULL, "%02X", flags);
-		ImGui::PopItemWidth();
+		ImGui::InputScalar("AF", ImGuiDataType_U16, &cpuState->AF, NULL, NULL, "%04X", flags);
+		ImGui::InputScalar("BC", ImGuiDataType_U16, &cpuState->BC, NULL, NULL, "%04X", flags);
+		ImGui::InputScalar("DE", ImGuiDataType_U16, &cpuState->DE, NULL, NULL, "%04X", flags);
+		ImGui::InputScalar("HL", ImGuiDataType_U16, &cpuState->HL, NULL, NULL, "%04X", flags);
 
 		bool z = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_ZERO);       ImGui::Checkbox("Z", &z); ImGui::SameLine(0,25);
 		bool n = m_GameBoy->m_CPU.GetCPUFlag(Core::FLAG_SUBTRACT);   ImGui::Checkbox("N", &n); ImGui::SameLine(0,25);
