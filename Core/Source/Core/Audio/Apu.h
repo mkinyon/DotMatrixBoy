@@ -26,6 +26,7 @@ namespace Core
 
 	private:
 		void OnWrite(uint16_t address, uint8_t value);
+		float NormalizeSample(float sample);
 
 	private:
 		Mmu& m_MMU;

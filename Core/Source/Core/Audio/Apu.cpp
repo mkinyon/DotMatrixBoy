@@ -149,17 +149,17 @@ namespace Core
 			// add samples to audio buffers
 			// todo: we push twice.. once for left speaker, once for right speaker
 			//	need to add stereo support
-			m_CH1Buffer.push_back(ch1Sample);
-			m_CH1Buffer.push_back(ch1Sample);
+			m_CH1Buffer.push_back(NormalizeSample(ch1Sample));
+			m_CH1Buffer.push_back(NormalizeSample(ch1Sample));
 
-			m_CH2Buffer.push_back(ch2Sample);
-			m_CH2Buffer.push_back(ch2Sample);
+			m_CH2Buffer.push_back(NormalizeSample(ch2Sample));
+			m_CH2Buffer.push_back(NormalizeSample(ch2Sample));
 
-			m_CH3Buffer.push_back(ch3Sample);
-			m_CH3Buffer.push_back(ch3Sample);
+			m_CH3Buffer.push_back(NormalizeSample(ch3Sample));
+			m_CH3Buffer.push_back(NormalizeSample(ch3Sample));
 
-			m_CH4Buffer.push_back(ch4Sample);
-			m_CH4Buffer.push_back(ch4Sample);
+			m_CH4Buffer.push_back(NormalizeSample(ch4Sample));
+			m_CH4Buffer.push_back(NormalizeSample(ch4Sample));
 
 			float leftCombined = (ch1Sample + ch2Sample + ch3Sample + ch4Sample) / 4;
 			float rightCombined = (ch1Sample + ch2Sample + ch3Sample + ch4Sample) / 4;
@@ -262,5 +262,17 @@ namespace Core
 	int Apu::GetQueuedAudioBufferSize()
 	{
 		return SDL_GetQueuedAudioSize(m_SDLAudioDevice);
+	}
+
+	float Apu::NormalizeSample(float sample)
+	{
+		static float maxValue = 0;
+		if (sample > maxValue)
+		{
+			maxValue = sample;
+		}
+
+		// normalize sample to 0 - 1
+		return sample / maxValue;
 	}
 }
