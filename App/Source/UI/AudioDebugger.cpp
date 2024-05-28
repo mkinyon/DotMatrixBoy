@@ -24,18 +24,18 @@ namespace App
 		ImGui::PlotLines("Master", masterBuffer.data(), static_cast<int>(masterBuffer.size()), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
 
 
-		ImGui::SeparatorText("Channel 1 - Square");
+		ImGui::SeparatorText("Channel 1 - Pulse");
 		bool ch1Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_FF26_NR52_SOUND_TOGGLE, Core::NR52_CH1_ON); ImGui::Checkbox("Enabled", &ch1Enabled);
 
 		std::vector<float> ch1Buffer = m_GameBoy->m_APU.GetCh1AudioBuffer();
-		ImGui::PlotLines("CH1 - Square", ch1Buffer.data(), static_cast<int>(ch1Buffer.size()), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
+		ImGui::PlotLines("CH1 - Pulse", ch1Buffer.data(), static_cast<int>(ch1Buffer.size()), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
 
 
-		ImGui::SeparatorText("Channel 2 - Square");
+		ImGui::SeparatorText("Channel 2 - Pulse");
 		bool ch2Enabled = m_GameBoy->m_MMU.ReadRegisterBit(Core::HW_FF26_NR52_SOUND_TOGGLE, Core::NR52_CH2_ON); ImGui::Checkbox("Enabled", &ch2Enabled);
 
 		std::vector<float> ch2Buffer = m_GameBoy->m_APU.GetCh2AudioBuffer();
-		ImGui::PlotLines("CH2 - Square", ch2Buffer.data(), static_cast<int>(ch2Buffer.size()), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
+		ImGui::PlotLines("CH2 - Pulse", ch2Buffer.data(), static_cast<int>(ch2Buffer.size()), 0, nullptr, -1.0f, 1.0f, ImVec2(0, 40.0f));
 
 
 		ImGui::SeparatorText("Channel 3 - Wave");

@@ -7,11 +7,11 @@
 
 namespace Core
 {
-	class SquareChannel
+	class PulseChannel
 	{
 	public:
-		SquareChannel(Mmu& mmu, bool isChannel1);
-		~SquareChannel();
+		PulseChannel(Mmu& mmu, bool isChannel1);
+		~PulseChannel();
 
 		void Clock();
 		void LengthClock();

@@ -11,8 +11,8 @@ namespace Core
 {
 	Apu::Apu(Mmu& mmu) :
 		m_MMU(mmu), 
-		m_CH1_Square(mmu, true), 
-		m_CH2_Square(mmu, false), 
+		m_CH1_Pulse(mmu, true), 
+		m_CH2_Pulse(mmu, false), 
 		m_CH3_Wave(mmu),
 		m_CH4_Noise(mmu),
 		m_MasterBuffer(),
@@ -79,40 +79,40 @@ namespace Core
 			switch (m_FrameSequencer)
 			{
 				case 0:
-					m_CH1_Square.LengthClock();
-					m_CH2_Square.LengthClock();
+					m_CH1_Pulse.LengthClock();
+					m_CH2_Pulse.LengthClock();
 					m_CH3_Wave.LengthClock();
 					m_CH4_Noise.LengthClock();
 					break;
 				case 1:
 					break;
 				case 2:
-					m_CH1_Square.SweepClock();
-					m_CH1_Square.LengthClock();
-					m_CH2_Square.LengthClock();
+					m_CH1_Pulse.SweepClock();
+					m_CH1_Pulse.LengthClock();
+					m_CH2_Pulse.LengthClock();
 					m_CH3_Wave.LengthClock();
 					m_CH4_Noise.LengthClock();
 					break;
 				case 3:
 					break;
 				case 4:
-					m_CH1_Square.LengthClock();
-					m_CH2_Square.LengthClock();
+					m_CH1_Pulse.LengthClock();
+					m_CH2_Pulse.LengthClock();
 					m_CH3_Wave.LengthClock();
 					m_CH4_Noise.LengthClock();
 					break;
 				case 5:
 					break;
 				case 6:
-					m_CH1_Square.SweepClock();
-					m_CH1_Square.LengthClock();
-					m_CH2_Square.LengthClock();
+					m_CH1_Pulse.SweepClock();
+					m_CH1_Pulse.LengthClock();
+					m_CH2_Pulse.LengthClock();
 					m_CH3_Wave.LengthClock();
 					m_CH4_Noise.LengthClock();
 					break;
 				case 7: 
-					m_CH1_Square.EnvelopeClock();
-					m_CH2_Square.EnvelopeClock();
+					m_CH1_Pulse.EnvelopeClock();
+					m_CH2_Pulse.EnvelopeClock();
 					m_CH4_Noise.EnvelopeClock();
 					break;
 			}
@@ -124,8 +124,8 @@ namespace Core
 			}
 		}
 
-		m_CH1_Square.Clock();
-		m_CH2_Square.Clock();
+		m_CH1_Pulse.Clock();
+		m_CH2_Pulse.Clock();
 		m_CH3_Wave.Clock();
 		m_CH4_Noise.Clock();
 
@@ -141,8 +141,8 @@ namespace Core
 			bool isCh4On = m_MMU.ReadRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, NR52_CH4_ON);
 
 			// get sample from each channel
-			float ch1Sample = isCh1On ? static_cast<float>(m_CH1_Square.GetCurrentSample() * tempVolume) : 0;
-			float ch2Sample = isCh2On ? static_cast<float>(m_CH2_Square.GetCurrentSample() * tempVolume) : 0;
+			float ch1Sample = isCh1On ? static_cast<float>(m_CH1_Pulse.GetCurrentSample() * tempVolume) : 0;
+			float ch2Sample = isCh2On ? static_cast<float>(m_CH2_Pulse.GetCurrentSample() * tempVolume) : 0;
 			float ch3Sample = isCh3On ? static_cast<float>(m_CH3_Wave.GetCurrentSample()   * tempVolume) : 0;
 			float ch4Sample = isCh4On ? static_cast<float>(m_CH4_Noise.GetCurrentSample()  *  tempVolume) : 0;
 
@@ -208,14 +208,14 @@ namespace Core
 		{
 			if (m_MMU.ReadRegisterBit(HW_FF14_NR14_SOUND_CH1_PERIOD_HIGH, 0x80))
 			{
-				m_CH1_Square.Trigger();
+				m_CH1_Pulse.Trigger();
 			}
 		}
 		if (address == HW_FF19_NR24_SOUND_CH2_PERIOD_HIGH)
 		{
 			if (m_MMU.ReadRegisterBit(HW_FF19_NR24_SOUND_CH2_PERIOD_HIGH, 0x80))
 			{
-				m_CH2_Square.Trigger();
+				m_CH2_Pulse.Trigger();
 			}
 		}
 		if (address == HW_FF1E_NR34_SOUND_CH3_PERIOD_HIGH)

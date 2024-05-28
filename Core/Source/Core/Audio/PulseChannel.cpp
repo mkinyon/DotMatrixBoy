@@ -1,10 +1,10 @@
 
-#include "SquareChannel.h"
+#include "PulseChannel.h"
 
 
 namespace Core
 {
-	SquareChannel::SquareChannel(Mmu& mmu, bool isChannel1) : m_MMU(mmu)
+	PulseChannel::PulseChannel(Mmu& mmu, bool isChannel1) : m_MMU(mmu)
 	{
 		bool m_HasSweep = isChannel1;
 		m_SoundControlFlag = isChannel1 ? NR52_CH1_ON : NR52_CH2_ON;
@@ -15,9 +15,9 @@ namespace Core
 		m_SweepAddr = isChannel1 ? HW_FF10_NR10_SOUND_CH1_SWEEP : 0;
 	}
 
-	SquareChannel::~SquareChannel() {}
+	PulseChannel::~PulseChannel() {}
 
-	void SquareChannel::Clock()
+	void PulseChannel::Clock()
 	{
 		m_CycleCount++;
 		if (m_CycleCount >= m_CycleSampleUpdate)
@@ -33,7 +33,7 @@ namespace Core
 		}
 	}
 
-	void SquareChannel::LengthClock()
+	void PulseChannel::LengthClock()
 	{
 		m_IsActive = m_LengthComp.Clock();
 		if (!m_IsActive)
@@ -42,7 +42,7 @@ namespace Core
 		}
 	}
 
-	void SquareChannel::SweepClock()
+	void PulseChannel::SweepClock()
 	{
 		if (m_SweepTime == 0)
 		{
@@ -80,12 +80,12 @@ namespace Core
 		}
 	}
 
-	void SquareChannel::EnvelopeClock()
+	void PulseChannel::EnvelopeClock()
 	{
 		m_EnvelopeComp.Clock();
 	}
 
-	void SquareChannel::Trigger()
+	void PulseChannel::Trigger()
 	{
 		m_IsActive = true;
 		m_MMU.WriteRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, m_SoundControlFlag, true);
@@ -123,7 +123,7 @@ namespace Core
 		}
 	}
 
-	uint16_t SquareChannel::GetFrequency() const
+	uint16_t PulseChannel::GetFrequency() const
 	{
 		// The frequency (period) is 11 bits is stored at two addresses. The
 		// low 8 bits are stored in FF13 (ch1) and FF18 (ch2). The
@@ -142,7 +142,7 @@ namespace Core
 		return frequency;
 	}
 
-	void SquareChannel::SetFrequency(uint16_t frequency)
+	void PulseChannel::SetFrequency(uint16_t frequency)
 	{
 		// read upper three bits from frequency (period)
 		uint8_t frequencyData = m_MMU.Read(m_DataAddr);
@@ -154,7 +154,7 @@ namespace Core
 		m_MMU.Write(m_FreqLowAddr, frequency & 0xFF);
 	}
 
-	void SquareChannel::UpdateSample()
+	void PulseChannel::UpdateSample()
 	{
 		m_CurrentSample = 0;
 
@@ -165,7 +165,7 @@ namespace Core
 		}
 	}
 
-	uint8_t SquareChannel::GetCurrentSample()
+	uint8_t PulseChannel::GetCurrentSample()
 	{
 		return m_CurrentSample;
 	}

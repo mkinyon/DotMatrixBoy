@@ -2,7 +2,7 @@
 
 #include "AudioFile.h"
 #include "..\Mmu.h"
-#include "SquareChannel.h"
+#include "PulseChannel.h"
 #include "NoiseChannel.h"
 #include "WaveChannel.h"
 #include "RingBuffer.h"
@@ -30,8 +30,8 @@ namespace Core
 
 	private:
 		Mmu& m_MMU;
-		SquareChannel m_CH1_Square;
-		SquareChannel m_CH2_Square;
+		PulseChannel m_CH1_Pulse;
+		PulseChannel m_CH2_Pulse;
 		WaveChannel m_CH3_Wave;
 		NoiseChannel m_CH4_Noise;
 
