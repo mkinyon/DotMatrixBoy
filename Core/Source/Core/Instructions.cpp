@@ -12,7 +12,7 @@ namespace Core
 	// Misc / Control Instructions
 	uint8_t Instructions::Instr_0x00_MISC_NOP(Cpu* cpu) { return 4; }
 	uint8_t Instructions::Instr_0x10_MISC_STOP(Cpu* cpu) { cpu->GetMMU().ResetDIVTimer(); return 4; }
-	uint8_t Instructions::Instr_0x76_MISC_HALT(Cpu* cpu) { cpu->m_IsHalted; return 4; }
+	uint8_t Instructions::Instr_0x76_MISC_HALT(Cpu* cpu) { cpu->m_IsHalted = true; return 4; }
 	uint8_t Instructions::Instr_0xCB_MISC_PREFIX(Cpu* cpu) { return 0; } // should never get called
 	uint8_t Instructions::Instr_0xF3_MISC_DI(Cpu* cpu) { cpu->GetState()->IME = false; return 4; }
 	uint8_t Instructions::Instr_0xFB_MISC_IE(Cpu* cpu) { cpu->GetState()->IME = true; return 4; }
