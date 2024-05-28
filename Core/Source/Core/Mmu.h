@@ -25,6 +25,8 @@ namespace Core
 
 		LCD_Mode ReadLCDMode() const;
 		void WriteLCDMode(const LCD_Mode lcdMode);
+		
+		std::vector<uint8_t>* GetMemory();
 
 	private:
 		std::vector<uint8_t>* m_Memory;

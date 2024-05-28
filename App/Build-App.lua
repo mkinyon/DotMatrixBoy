@@ -31,6 +31,9 @@ project "App"
     -- imgui file browser
     "../ThirdParty/imgui-filebrowser/imfilebrowser.h",
 
+    -- imgui memory editor
+    "../ThirdParty/imgui-memory-editor/imgui_memory_editor.h",
+
     -- json
     "../ThirdParty/json/single_include/nlohmann/json.hpp"
     }
@@ -48,6 +51,7 @@ project "App"
       "../ThirdParty/imgui",
       "../ThirdParty/imgui/backends",
       "../ThirdParty/imgui-filebrowser",
+      "../ThirdParty/imgui-memory-editor",
       "../ThirdParty/OneLoneCoder",
       "../ThirdParty/SDL2/include",
 

@@ -149,4 +149,9 @@ namespace Core
 		WriteRegisterBit(HW_FF41_STAT_LCD_STATUS, 0x1, lcdModeValue & 0x1);
 		m_CurrentLCDMode = lcdMode;
 	}
+
+	std::vector<uint8_t>* Mmu::GetMemory()
+	{
+		return m_Memory;
+	}
 }

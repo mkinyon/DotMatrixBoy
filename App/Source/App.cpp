@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
         fileDialog->Render();
         lcdWindow->Render();
         debugger->Render();
-        //memoryMap->Render();
+        memoryMap->Render();
         vramViewer->Render();
         audioDebugger->Render();
         console->Render();

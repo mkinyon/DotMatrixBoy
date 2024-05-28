@@ -1,10 +1,14 @@
 #include "MemoryMap.h"
 #include "EventManager.h"
 
+#include <imgui_memory_editor.h>
+
 namespace App
 {
 	MemoryMap::MemoryMap(Core::GameBoy* gb) : ImguiWidgetBase("Memory Map"), m_GameBoy(gb)
 	{
+		m_DisableTitleWrapper = true;
+
 		EventManager::Instance().Subscribe(Event::MEMORY_MAP_ENABLE, this);
 		EventManager::Instance().Subscribe(Event::MEMORY_MAP_DISABLE, this);
 	}
@@ -13,28 +17,12 @@ namespace App
 
 	void MemoryMap::RenderContent()
 	{
-		uint16_t addr = 0x0000;
-		int nColumns = 16;
+		static MemoryEditor memEditor;
 
-		for (int row = 0; addr < 0xF000; row++)
+		memEditor.DrawWindow("Memory Editor (MMU)", &m_GameBoy->m_MMU.GetMemory()->front(), m_GameBoy->m_MMU.GetMemory()->size());
+		if (m_GameBoy->IsRomLoaded())
 		{
-			// render address and bytes
-			ImGui::Text("$%04x", addr); ImGui::SameLine();
-			for (int col = 0; col < nColumns; col++)
-			{
-				ImGui::Text(" %02x", m_GameBoy->m_MMU.Read(addr)); ImGui::SameLine();
-				addr += 1;
-			}
-			
-			// render ascii
-			addr -= nColumns;
-			ImGui::Text(" "); ImGui::SameLine();
-			for (int col = 0; col < nColumns; col++)
-			{
-				ImGui::Text("%c", m_GameBoy->m_MMU.Read(addr));
-				if (col != 15) ImGui::SameLine();
-				addr += 1;
-			}
+			memEditor.DrawWindow("Memory Editor (Cart)", &m_GameBoy->GetCart()->GetRomData()->front(), m_GameBoy->GetCart()->GetRomData()->size());
 		}
 	}
 
