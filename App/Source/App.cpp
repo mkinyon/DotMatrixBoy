@@ -53,9 +53,6 @@ int main(int argc, char* argv[])
     Console* console = new Console();
     RomInfo* romInfo = new RomInfo(gb);
 
-    bool show_demo_window = true;
-    bool show_another_window = false;
-
     // Main loop
     while (isRunning)
     {
@@ -68,8 +65,10 @@ int main(int argc, char* argv[])
 
         window->BeginRender();
 
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        #ifdef DEBUG
+        bool show_demo_window = true;
+        ImGui::ShowDemoWindow(&show_demo_window);
+        #endif
 
         // render widgets
         menuBar->Render();
