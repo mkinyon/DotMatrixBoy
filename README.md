@@ -3,9 +3,22 @@ DotMatrixBoy is a Game Boy emulator written in C++ that emulates the first-gener
 
 **Please note**: This emulator is highly experimental and not intended for general use. It is primarily a tool for educational purposes and may contain bugs or incomplete features.
 
+![DotMatrixBoy](Media/main.png)
+
+
 ## Features
 
-## Screenshots
+
+## Media
+### Audio Debugger
+![Audio Debugger](Media/audio.gif)
+
+### VRAM Viewer
+![VRAM Viewer](Media/bgmap.gif)
+
+### Mem Editor
+![Mem Editor](Media/mem_editor.gif)
+
 
 ## Controls
 | Key | Description |
@@ -36,8 +49,10 @@ DotMatrixBoy is a Game Boy emulator written in C++ that emulates the first-gener
 - Visual Studio (Not required, however the premake scripts only support VS.)
 - Windows (Currently the premake scripts only support Windows.)
 
+
 #### Compiling
 Once you have cloned, run the `Setup-Windows.bat` script to generate solution/project files for Visual Studio.
+
 
 ## 3rd Party Libraries
 - [SDL 2](https://www.libsdl.org/)
