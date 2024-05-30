@@ -38,7 +38,7 @@ DotMatrixBoy is a Game Boy emulator written in C++ that emulates the first-gener
 | **Enter**      | Start    |
 
 
-# Test Results
+## Test Results
 [Blargg's tests](http://gbdev.gg8.se/wiki/articles/Test_ROMs):
 
 | Test | Result |
