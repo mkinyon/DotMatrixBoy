@@ -24,14 +24,14 @@ DotMatrixBoy is a Game Boy emulator written in C++ that emulates the first-gener
 ### VRAM Viewer
 ![VRAM Viewer](Media/bgmap.gif)
 
-### Mem Editor
+### Memory Editor
 ![Mem Editor](Media/mem_editor.gif)
 
 
 ## Controls
 | Key | Description |
 |-----------------------------|-----------------------------|
-| **Arrow Keys** | D PAD    |
+| **Arrow Keys** | D Pad    |
 | **A**          | A Button |
 | **S**          | B Button |
 | **Tab**        | Select   |
