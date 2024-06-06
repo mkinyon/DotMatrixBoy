@@ -6,6 +6,7 @@
 
 #include "Theme.h"
 #include "Core/Defines.h"
+#include "EventManager.h"
 #include <mutex>
 
 namespace App
@@ -55,6 +56,8 @@ namespace App
         ImGui_ImplSDLRenderer2_Init(m_SDLRenderer);
 
         m_StartTime = SDL_GetTicks();
+
+        EventManager::Instance().Subscribe(Event::MENU_BAR_EXIT, this);
     }
 
     Window::~Window()
@@ -237,5 +240,28 @@ namespace App
     Uint64 Window::GetElapsedTime()
     {
         return m_ElapsedTime;
+    }
+
+    void Window::AttachWidget(std::unique_ptr<ImguiWidgetBase> widget)
+    {
+        m_Widgets.push_back(std::move(widget));
+    }
+
+    const std::vector<std::unique_ptr<ImguiWidgetBase>>& Window::GetWidgets() const
+    {
+        return m_Widgets;
+    }
+
+    void Window::OnEvent(Event event)
+    {
+        if (event == Event::MENU_BAR_EXIT)
+        {
+            m_ShouldExit = true;
+        }
+    }
+
+    bool Window::ShouldExit()
+    {
+        return m_ShouldExit;
     }
 }

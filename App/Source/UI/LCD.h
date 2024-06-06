@@ -5,10 +5,11 @@
 #include "SDL.h"
 #include "imgui.h"
 #include "ImguiWidgetBase.h"
+#include "EventObserver.h"
 
 namespace App
 {
-	class LCD : public ImguiWidgetBase
+	class LCD : public ImguiWidgetBase, public EventObserver
 	{
 	public:
 		LCD(uint8_t* lcdPixels, SDL_Renderer* renderer);

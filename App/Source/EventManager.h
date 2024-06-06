@@ -1,4 +1,4 @@
-#include "UI/ImguiWidgetBase.h"
+#include "EventObserver.h"
 #include "Enums.h"
 
 #include <vector>
@@ -15,7 +15,7 @@ namespace App
             return s_Instance;
         }
 
-        void Subscribe(Event event, ImguiWidgetBase* observer)
+        void Subscribe(Event event, EventObserver* observer)
         {
             m_Observers[event].push_back(observer);
         }
@@ -24,7 +24,7 @@ namespace App
         {
             if (m_Observers.find(event) != m_Observers.end())
             {
-                for (ImguiWidgetBase* observer : m_Observers[event])
+                for (EventObserver* observer : m_Observers[event])
                 {
                     observer->OnEvent(event);
                 }
@@ -32,6 +32,6 @@ namespace App
         }
 
     private:
-        std::unordered_map<Event, std::vector<ImguiWidgetBase*>> m_Observers;
+        std::unordered_map<Event, std::vector<EventObserver*>> m_Observers;
     };
 }

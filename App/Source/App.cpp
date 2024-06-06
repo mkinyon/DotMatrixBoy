@@ -43,15 +43,15 @@ int main(int argc, char* argv[])
     window->Initialize();
     
     // Widgets
-    FileDialog* fileDialog = new FileDialog(gb, appState);
-    MenuBar* menuBar = new MenuBar(gb, appState);
-    LCD* lcdWindow = new LCD(gb->m_PPU.GetLCDPixels(), window->GetRenderer());
-    AudioDebugger* audioDebugger = new AudioDebugger(gb);
-    Debugger* debugger = new Debugger(gb);
-    MemoryMap* memoryMap = new MemoryMap(gb);
-    VRAMViewer* vramViewer = new VRAMViewer(gb, window->GetRenderer());
-    Console* console = new Console();
-    RomInfo* romInfo = new RomInfo(gb);
+    window->AttachWidget(std::make_unique<FileDialog>(gb, appState));
+    window->AttachWidget(std::make_unique<MenuBar>(gb, appState));
+    window->AttachWidget(std::make_unique<LCD>(gb->m_PPU.GetLCDPixels(), window->GetRenderer()));
+    window->AttachWidget(std::make_unique<AudioDebugger>(gb));
+    window->AttachWidget(std::make_unique<Debugger>(gb));
+    window->AttachWidget(std::make_unique<MemoryMap>(gb));
+    window->AttachWidget(std::make_unique<VRAMViewer>(gb, window->GetRenderer()));
+    window->AttachWidget(std::make_unique<Console>());
+    window->AttachWidget(std::make_unique<RomInfo>(gb));
 
     // Main loop
     while (isRunning)
@@ -71,19 +71,14 @@ int main(int argc, char* argv[])
         #endif
 
         // render widgets
-        menuBar->Render();
-        fileDialog->Render();
-        lcdWindow->Render();
-        debugger->Render();
-        memoryMap->Render();
-        vramViewer->Render();
-        audioDebugger->Render();
-        console->Render();
-        romInfo->Render();
+        for (auto& widget : window->GetWidgets())
+        {
+            widget->Render();
+        }
 
         window->EndRender();
 
-        if (menuBar->m_ExitPressed)
+        if (window->ShouldExit())
         {
             isRunning = false;
         }
@@ -92,19 +87,8 @@ int main(int argc, char* argv[])
     appState.SaveStateToFile();
 
     // clean up
-    delete menuBar;
-    delete fileDialog;
-    delete lcdWindow;
-    delete debugger;
-    delete memoryMap;
-    delete vramViewer;
-    delete audioDebugger;
-    delete console;
-
     delete gb;
     delete window;
 
     _CrtDumpMemoryLeaks();
-
-    return 0;
 }

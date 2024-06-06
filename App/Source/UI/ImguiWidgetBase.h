@@ -30,8 +30,6 @@ namespace App
 			if (!m_DisableTitleWrapper) ImGui::End();
 		}
 
-		virtual void OnEvent(Event event) {};
-
 	public:
 		bool m_ShowWindow = true;
 		bool m_DisableTitleWrapper = false;

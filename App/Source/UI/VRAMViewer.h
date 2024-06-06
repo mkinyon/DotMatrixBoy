@@ -4,11 +4,12 @@
 
 #include "SDL.h"
 #include "ImguiWidgetBase.h"
+#include "EventObserver.h"
 #include "Core/GameBoy.h"
 
 namespace App
 {
-	class VRAMViewer : public ImguiWidgetBase
+	class VRAMViewer : public ImguiWidgetBase, public EventObserver
 	{
 	public:
 		VRAMViewer(Core::GameBoy* gb, SDL_Renderer* renderer);

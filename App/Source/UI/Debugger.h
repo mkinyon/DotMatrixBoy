@@ -1,12 +1,13 @@
 #pragma once
 
 #include "ImguiWidgetBase.h"
+#include "EventObserver.h"
 #include "Core/GameBoy.h"
 #include "Core/Defines.h"
 
 namespace App
 {
-	class Debugger : public ImguiWidgetBase
+	class Debugger : public ImguiWidgetBase, public EventObserver
 	{
 	public:
 		Debugger(Core::GameBoy* gb);

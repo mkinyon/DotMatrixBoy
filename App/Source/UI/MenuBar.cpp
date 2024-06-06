@@ -36,6 +36,7 @@ namespace App
                 if (ImGui::MenuItem("Exit", "CTRL+Q"))
                 {
                     m_ExitPressed = true;
+                    EventManager::Instance().Emit(Event::MENU_BAR_EXIT);
                 }
 
                 ImGui::EndMenu();

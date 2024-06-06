@@ -2,11 +2,12 @@
 
 #include "imgui.h"
 #include "ImguiWidgetBase.h"
+#include "EventObserver.h"
 #include "UI/Components/Components.h"
 
 namespace App
 {
-	class Console : public ImguiWidgetBase
+	class Console : public ImguiWidgetBase, public EventObserver
 	{
 	public:
 		Console();
