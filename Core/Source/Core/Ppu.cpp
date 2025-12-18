@@ -339,7 +339,7 @@ namespace Core
 					int y = lcdY;
 
 					// TODO: It appears we need to look at the color index before the palette is applied
-					// BG and Window colors 1–3 are drawn over this OBJ
+					// BG and Window colors 1ï¿½3 are drawn over this OBJ
 					if ( false /* oam.bgPriority */)
 					{
 						int bgColorIndex = ReadFromBuffer(x, y);
