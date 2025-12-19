@@ -6,7 +6,7 @@ namespace Core
 {
 	PulseChannel::PulseChannel(Mmu& mmu, bool isChannel1) : m_MMU(mmu)
 	{
-		bool m_HasSweep = isChannel1;
+		m_HasSweep = isChannel1;
 		m_SoundControlFlag = isChannel1 ? NR52_CH1_ON : NR52_CH2_ON;
 		m_DataAddr = isChannel1 ? HW_FF14_NR14_SOUND_CH1_PERIOD_HIGH : HW_FF19_NR24_SOUND_CH2_PERIOD_HIGH;
 		m_FreqLowAddr = isChannel1 ? HW_FF13_NR13_SOUND_CH1_PERIOD_LOW : HW_FF18_NR23_SOUND_CH2_PERIOD_LOW;
@@ -44,7 +44,8 @@ namespace Core
 
 	void PulseChannel::SweepClock()
 	{
-		if (m_SweepTime == 0)
+		// Sweep is disabled if time is 0 or shift is 0
+		if (m_SweepTime == 0 || m_SweepShift == 0)
 		{
 			return;
 		}
@@ -56,27 +57,40 @@ namespace Core
 			
 		if (m_ElaspsedSweepTime == m_SweepTime)
 		{
-			int8_t sweepCorrection = m_IsSweepDecreasing ? -1 : 1;
-			uint8_t sweepChange = (m_CurrentFrequency >> m_SweepShift) * sweepCorrection;
-
-			// overflow on decrease - do nothing
-			if (m_IsSweepDecreasing && sweepChange > m_CurrentFrequency)
+			// Calculate frequency change: current_frequency / 2^shift
+			uint16_t sweepChange = m_CurrentFrequency >> m_SweepShift;
+			
+			// Apply direction: 0 = increase, 1 = decrease
+			uint16_t newFrequency;
+			if (m_IsSweepDecreasing)
 			{
-				m_ElaspsedSweepTime = 0;
-			}
-			// overflow on increase - stop channel
-			else if (!m_IsSweepDecreasing && sweepChange + m_CurrentFrequency > 2047)
-			{
-				m_IsActive = false;
+				// Decreasing: new_frequency = current - change
+				if (sweepChange > m_CurrentFrequency)
+				{
+					// Underflow - disable sweep
+					m_ElaspsedSweepTime = 0;
+					return;
+				}
+				newFrequency = m_CurrentFrequency - sweepChange;
 			}
 			else
 			{
-				m_CurrentFrequency += sweepChange;
-				m_CycleSampleUpdate = (2048 - m_CurrentFrequency) * 4;
-				m_CycleCount = 0;
-				m_ElaspsedSweepTime = 0;
-				SetFrequency(m_CurrentFrequency);
+				// Increasing: new_frequency = current + change
+				newFrequency = m_CurrentFrequency + sweepChange;
+				if (newFrequency > 2047)
+				{
+					// Overflow - disable channel
+					m_IsActive = false;
+					m_MMU.WriteRegisterBit(HW_FF26_NR52_SOUND_TOGGLE, m_SoundControlFlag, false);
+					return;
+				}
 			}
+
+			m_CurrentFrequency = newFrequency;
+			m_CycleSampleUpdate = (2048 - m_CurrentFrequency) * 4;
+			m_CycleCount = 0;
+			m_ElaspsedSweepTime = 0;
+			SetFrequency(m_CurrentFrequency);
 		}
 	}
 

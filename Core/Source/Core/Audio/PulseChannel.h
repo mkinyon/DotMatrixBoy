@@ -28,10 +28,10 @@ namespace Core
 	private:
 		Mmu& m_MMU;
 		const bool m_DutyCycleTable[4][8] = {
-		{0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 1, 1, 1},
-		{0, 1, 1, 1, 1, 1, 1, 0}
+		{0, 0, 0, 0, 0, 0, 0, 1},  // 12.5% duty cycle
+		{0, 0, 0, 0, 0, 0, 1, 1},  // 25% duty cycle
+		{0, 0, 0, 0, 1, 1, 1, 1},  // 50% duty cycle
+		{0, 0, 1, 1, 1, 1, 1, 1}   // 75% duty cycle
 		};
 
 		bool m_IsActive = false;

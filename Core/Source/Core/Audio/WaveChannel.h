@@ -34,8 +34,6 @@ namespace Core
 		uint16_t m_CycleSampleUpdate = 0;
 		uint16_t m_CycleCount = 0;
 
-		Core::AUDIO_LEVEL outputLevel = Core::AUDIO_LEVEL::MUTE;
-
 		// components
 		Length m_LengthComp;
 	};
