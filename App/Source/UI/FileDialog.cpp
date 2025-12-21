@@ -24,6 +24,7 @@ namespace App
 			m_GameBoy->LoadRom(m_FileDialog.GetSelected().string().c_str());
 
 			m_AppState.AddRecentRomEntry(m_FileDialog.GetSelected().string());
+			m_AppState.SaveStateToFile();
 			m_FileDialog.ClearSelected();
 		}
 	}

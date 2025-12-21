@@ -102,8 +102,8 @@ namespace App
 			// add this entry to the top
 			recentRoms.push_front(path);
 
-			// trim the list to just the last 10 items
-			while (recentRoms.size() > 10)
+			// trim the list to just the last 20 items
+			while (recentRoms.size() > 20)
 			{
 				recentRoms.pop_back();
 			}

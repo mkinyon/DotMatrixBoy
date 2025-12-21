@@ -23,13 +23,15 @@ namespace App
 
                 ImGui::Separator();
 
-                for (auto& rom : m_AppState.recentRoms)
-                {
-                    if (ImGui::MenuItem(rom.c_str(), ""))
-                    {
-                        m_GameBoy->LoadRom(rom.c_str());
-                    }
-                }
+				for (auto& rom : m_AppState.recentRoms)
+				{
+					if (ImGui::MenuItem(rom.c_str(), ""))
+					{
+						m_GameBoy->LoadRom(rom.c_str());
+						m_AppState.AddRecentRomEntry(rom);
+						m_AppState.SaveStateToFile();
+					}
+				}
 
                 ImGui::Separator();
 
