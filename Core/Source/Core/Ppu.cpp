@@ -44,6 +44,7 @@ namespace Core
 		m_TotalFrames = 0;
 		m_CurrentScanLine = 0;
 		m_TotalDotsThisFrame = 0;
+		m_WindowLineCounter = -1;
 	}
 
 	LCD_Mode Ppu::GetMode()
@@ -198,6 +199,7 @@ namespace Core
 	{
 		if (!m_MMU.ReadRegisterBit(HW_FF40_LCDC_LCD_CONTROL, LCDC_WINDOW_ENABLE))
 		{
+			m_WindowLineCounter = -1; // Reset window line counter when window is disabled
 			return;
 		}
 
@@ -205,49 +207,74 @@ namespace Core
 		int16_t windowX = m_MMU.Read(HW_FF4B_WX_WINDOW_X_POS, true) - 7;
 		int16_t windowY = m_MMU.Read(HW_FF4A_WY_WINDOW_Y_POS, true);
 
+		// Window line counter starts when window first becomes visible (lcdY >= windowY)
+		// and only increments when window is actually drawn (windowX is valid)
 		if (lcdY >= windowY)
 		{
-			// iterate through each pixel
-			for (int x = 0; x < 160; x++)
+			// Initialize window line counter when window first appears
+			if (m_WindowLineCounter == -1)
 			{
-				// get x and y coordinate from within tile map
-				uint8_t xCoordInTileMap = x;
-				uint8_t yCoordInTileMap = lcdY - windowY;
+				m_WindowLineCounter = 0;
+			}
 
-				// get tile coordinates
-				uint8_t tileXCoord = xCoordInTileMap / TILE_WIDTH;
-				uint8_t tileYCoord = yCoordInTileMap / TILE_HEIGHT;
+			// Window is only visible when windowX is valid (0-159)
+			if (windowX >= 0 && windowX < 160)
+			{
+				// Use window's internal line counter, not lcdY - windowY
+				uint8_t windowLine = m_WindowLineCounter;
 
-				// get tile x and y offsets
-				uint8_t tileXOffset = xCoordInTileMap % TILE_WIDTH;
-				uint8_t tileYOffset = yCoordInTileMap % TILE_HEIGHT;
+				// Only draw pixels where x >= windowX and x < 160
+				int startX = windowX;
+				int endX = 160; // Window can extend to edge of screen
 
-				// get tile at x and y coord
-				int tilePosition = tileYCoord * TILEMAP_WIDTH + tileXCoord;
+				for (int x = startX; x < endX; x++)
+				{
+					// Calculate position within window tile map
+					int windowPixelX = x - windowX;
+					uint8_t xCoordInTileMap = windowPixelX;
+					uint8_t yCoordInTileMap = windowLine;
 
-				// get tile id from current tile map
-				bool bgTileMapArea = m_MMU.ReadRegisterBit(HW_FF40_LCDC_LCD_CONTROL, LCDC_WINDOW_TILE_MAP);
-				uint8_t tileId = m_MMU.Read(bgTileMapArea ? BG_MAP_1 + tilePosition : BG_MAP_0 + tilePosition);
+					// get tile coordinates
+					uint8_t tileXCoord = xCoordInTileMap / TILE_WIDTH;
+					uint8_t tileYCoord = yCoordInTileMap / TILE_HEIGHT;
 
-				// get tile address
-				uint16_t tileAddress = GetTileAddressFromTileId(tileId);
+					// get tile x and y offsets
+					uint8_t tileXOffset = xCoordInTileMap % TILE_WIDTH;
+					uint8_t tileYOffset = yCoordInTileMap % TILE_HEIGHT;
 
-				// need to offset the address based on the y position (tileYOffset) inside the tile
-				uint8_t firstByte = m_MMU.Read(tileAddress + (tileYOffset * 2));
-				uint8_t secondByte = m_MMU.Read(tileAddress + (tileYOffset * 2) + 1);
+					// get tile at x and y coord
+					int tilePosition = tileYCoord * TILEMAP_WIDTH + tileXCoord;
 
-				// get the background palette
-				uint8_t bgPalette = m_MMU.Read(HW_FF47_BGP_BG_PALETTE_DATA);
+					// get tile id from current tile map
+					bool bgTileMapArea = m_MMU.ReadRegisterBit(HW_FF40_LCDC_LCD_CONTROL, LCDC_WINDOW_TILE_MAP);
+					uint8_t tileId = m_MMU.Read(bgTileMapArea ? BG_MAP_1 + tilePosition : BG_MAP_0 + tilePosition);
 
-				// because of the bit order and how we are rendering, we need to flip the tileXOffset
-				// so we get the right pixel
-				int wrappedValue = (7 - tileXOffset) % 8;
+					// get tile address
+					uint16_t tileAddress = GetTileAddressFromTileId(tileId);
 
-				uint8_t firstBit = (firstByte >> wrappedValue) & 0x01;
-				uint8_t secondBit = (secondByte >> wrappedValue) & 0x01;
-				int colorIndex = (secondBit << 1) | firstBit;
+					// need to offset the address based on the y position (tileYOffset) inside the tile
+					uint8_t firstByte = m_MMU.Read(tileAddress + (tileYOffset * 2));
+					uint8_t secondByte = m_MMU.Read(tileAddress + (tileYOffset * 2) + 1);
 
-				WriteToBuffer(x, windowY + (tileYCoord * TILE_HEIGHT) + tileYOffset, bgPalette, colorIndex);
+					// get the background palette
+					uint8_t bgPalette = m_MMU.Read(HW_FF47_BGP_BG_PALETTE_DATA);
+
+					// because of the bit order and how we are rendering, we need to flip the tileXOffset
+					// so we get the right pixel
+					int wrappedValue = (7 - tileXOffset) % 8;
+
+					uint8_t firstBit = (firstByte >> wrappedValue) & 0x01;
+					uint8_t secondBit = (secondByte >> wrappedValue) & 0x01;
+					int colorIndex = (secondBit << 1) | firstBit;
+
+					// Write to current scanline, not windowY position
+					WriteToBuffer(x, lcdY, bgPalette, colorIndex);
+				}
+
+				// Increment window line counter ONLY when window is actually drawn
+				// This ensures the counter tracks how many lines have been rendered, not scanlines passed
+				// When window is hidden by WX and shown again, it continues from the correct line
+				m_WindowLineCounter++;
 			}
 		}
 	}
@@ -267,6 +294,13 @@ namespace Core
 		std::vector<OAM> oamEntriesThisScanLine;
 		for (int i = 0; i < 40; i++)
 		{
+			// Sprites with Y=0 or Y>159 are not displayed
+			if (m_OAMEntries[i].yPos == 0 || m_OAMEntries[i].yPos > 159)
+			{
+				continue;
+			}
+
+			// Check if sprite is on this scanline
 			if (lcdY >= m_OAMEntries[i].yPos - 16 && 
 				((m_OAMEntries[i].isTall && lcdY < m_OAMEntries[i].yPos) || (!m_OAMEntries[i].isTall && lcdY < m_OAMEntries[i].yPos - 8)))
 			{
@@ -274,37 +308,78 @@ namespace Core
 			}
 		}
 
+		// Limit to 10 objects per line BEFORE sorting
+		if (oamEntriesThisScanLine.size() > 10)
+		{
+			oamEntriesThisScanLine.resize(10);
+		}
+
 		// here we sort the tiles based on x position and memory address
 		std::sort(oamEntriesThisScanLine.begin(), oamEntriesThisScanLine.end());
 
 		// we want to render the first 10 tiles back to front so that tiles in front will
 		//  draw over the tiles in the back.
-		for (int i = 10; i > 0; i--)
+		for (int i = oamEntriesThisScanLine.size(); i > 0; i--)
 		{
-			// skip if no oam entry exists
-			if (i > oamEntriesThisScanLine.size() )
-			{
-				continue;
-			}
 
 			OAM oam = oamEntriesThisScanLine[i - 1];
 
-			uint16_t tileAddress = 0x8000 + (oam.tileIndex * 16);
-
-			// need to offset the address based on the y position (backgroundTileYOffset) inside the tile
-			uint8_t backgroundTileYOffset;
-			if (oam.yFlip)
+			// Calculate which tile to use for 8x16 sprites
+			uint8_t tileIndex = oam.tileIndex;
+			if (oam.isTall)
 			{
-				backgroundTileYOffset = (lcdY - (oam.yPos - 16));
-				backgroundTileYOffset =  7 - backgroundTileYOffset;
+				// For 8x16 sprites, determine if we're in the top or bottom tile
+				uint8_t spriteLine = lcdY - (oam.yPos - 16);
+				if (oam.yFlip)
+				{
+					spriteLine = 15 - spriteLine;
+				}
+				if (spriteLine >= 8)
+				{
+					// Bottom tile - bit 0 is ignored, so add 1
+					tileIndex = (oam.tileIndex & 0xFE) + 1;
+				}
+				else
+				{
+					// Top tile
+					tileIndex = oam.tileIndex & 0xFE;
+				}
+			}
+
+			uint16_t tileAddress = 0x8000 + (tileIndex * 16);
+
+			// need to offset the address based on the y position inside the tile
+			uint8_t tileYOffset;
+			if (oam.isTall)
+			{
+				uint8_t spriteLine = lcdY - (oam.yPos - 16);
+				if (oam.yFlip)
+				{
+					tileYOffset = 15 - spriteLine;
+				}
+				else
+				{
+					tileYOffset = spriteLine;
+				}
+				
+				// For 8x16, use modulo 8 to get offset within the 8x8 tile
+				tileYOffset = tileYOffset % 8;
 			}
 			else
 			{
-				backgroundTileYOffset = (lcdY - (oam.yPos - 16));
+				uint8_t spriteLine = lcdY - (oam.yPos - 16);
+				if (oam.yFlip)
+				{
+					tileYOffset = 7 - spriteLine;
+				}
+				else
+				{
+					tileYOffset = spriteLine;
+				}
 			}
 
-			uint8_t firstByte = m_MMU.Read(tileAddress + (backgroundTileYOffset * 2));
-			uint8_t secondByte = m_MMU.Read(tileAddress + (backgroundTileYOffset * 2) + 1);
+			uint8_t firstByte = m_MMU.Read(tileAddress + (tileYOffset * 2));
+			uint8_t secondByte = m_MMU.Read(tileAddress + (tileYOffset * 2) + 1);
 
 			// get the obj palette
 			uint8_t palette;
@@ -336,21 +411,29 @@ namespace Core
 						x = oam.xPos - p - 1;
 					}
 
+					// Only draw pixels that are on screen (x must be 0-159)
+					if (x < 0 || x >= 160)
+					{
+						continue;
+					}
+
 					int y = lcdY;
 
 					// TODO: It appears we need to look at the color index before the palette is applied
 					// BG and Window colors 1�3 are drawn over this OBJ
-					if ( false /* oam.bgPriority */)
+					// When bgPriority is set, the sprite pixel is only drawn if the BG/Window pixel has color index 0
+					if (oam.bgPriority)
 					{
-						int bgColorIndex = ReadFromBuffer(x, y);
+						uint8_t bgColorIndex = ReadColorIndexFromBuffer(x, y);
+						// Only draw sprite if BG/Window pixel is transparent (color index 0)
 						if (bgColorIndex == 0)
 						{
-							WriteToBuffer(x, y, palette, colorIndex);
+							WriteOBJToBuffer(x, y, palette, colorIndex, oam.paletteOneSelected);
 						}
 					}
 					else
 					{
-						WriteToBuffer(x, y, palette, colorIndex);
+						WriteOBJToBuffer(x, y, palette, colorIndex, oam.paletteOneSelected);
 					}
 				}
 			}
@@ -365,12 +448,34 @@ namespace Core
 			return 0;
 		}
 
-		return m_BackBuffer[y * LCD_WIDTH + x];
+		// Return the final color value after applying palette
+		uint8_t bufferValue = m_BackBuffer[y * LCD_WIDTH + x];
+		uint8_t colorIndex = bufferValue & 0x03;
+		bool isOBJ = (bufferValue & 0x04) != 0;
+		
+		if (isOBJ)
+		{
+			// Apply OBJ palette
+			bool paletteOneSelected = (bufferValue & 0x08) != 0;
+			uint8_t objPalette = paletteOneSelected ? 
+				m_MMU.Read(HW_FF49_OBP1_OBJ_PALETTE_1_DATA) : 
+				m_MMU.Read(HW_FF48_OBP0_OBJ_PALETTE_0_DATA);
+			return (objPalette >> (colorIndex * 2)) & 0x03;
+		}
+		else
+		{
+			// Apply BG palette
+			uint8_t bgPalette = m_MMU.Read(HW_FF47_BGP_BG_PALETTE_DATA);
+			return (bgPalette >> (colorIndex * 2)) & 0x03;
+		}
 	}
 
 	void Ppu::WriteToBuffer(int x, int y, uint8_t bgPalette, int colorIndex)
 	{
-		uint8_t color = bgPalette >> (colorIndex * 2) & 0x03;
+		// Store color index (0-3) in lower 2 bits
+		// Bit 2: is OBJ flag (0 = BG/Window, 1 = OBJ)
+		// Bit 3: OBJ palette (0 = OBP0, 1 = OBP1) - only valid if is OBJ
+		uint8_t value = colorIndex & 0x03;
 
 		if (x < 0 || x >= 160 || y < 0 || y >= 144)
 		{
@@ -378,16 +483,69 @@ namespace Core
 			return;
 		}
 
-		m_BackBuffer[y * LCD_WIDTH + x] = color;
+		m_BackBuffer[y * LCD_WIDTH + x] = value;
+	}
+
+	void Ppu::WriteOBJToBuffer(int x, int y, uint8_t objPalette, int colorIndex, bool paletteOneSelected)
+	{
+		// Store color index (0-3) in lower 2 bits
+		// Bit 2: is OBJ flag = 1
+		// Bit 3: OBJ palette (0 = OBP0, 1 = OBP1)
+		uint8_t value = (colorIndex & 0x03) | 0x04; // Set OBJ flag
+		if (paletteOneSelected)
+		{
+			value |= 0x08; // Set palette 1 flag
+		}
+
+		if (x < 0 || x >= 160 || y < 0 || y >= 144)
+		{
+			Logger::Instance().Warning(Domain::PPU, "Attempted bad write to backbuffer");
+			return;
+		}
+
+		m_BackBuffer[y * LCD_WIDTH + x] = value;
+	}
+
+	uint8_t Ppu::ReadColorIndexFromBuffer(int x, int y)
+	{
+		if (x < 0 || x >= 160 || y < 0 || y >= 144)
+		{
+			Logger::Instance().Warning(Domain::PPU, "Attempted bad read from backbuffer");
+			return 0;
+		}
+
+		return m_BackBuffer[y * LCD_WIDTH + x] & 0x03; // Return only color index
 	}
 
 	void Ppu::CopyBackBufferToLCD()
 	{
+		uint8_t bgPalette = m_MMU.Read(HW_FF47_BGP_BG_PALETTE_DATA);
+		
 		for (int y = 0; y < LCD_HEIGHT; y++)
 		{
 			for (int x = 0; x < LCD_WIDTH; x++)
 			{
-				m_LCDPixels[y * LCD_WIDTH + x] = m_BackBuffer[y * LCD_WIDTH + x];
+				uint8_t bufferValue = m_BackBuffer[y * LCD_WIDTH + x];
+				uint8_t colorIndex = bufferValue & 0x03;
+				bool isOBJ = (bufferValue & 0x04) != 0;
+				
+				uint8_t finalColor;
+				if (isOBJ)
+				{
+					// Apply OBJ palette
+					bool paletteOneSelected = (bufferValue & 0x08) != 0;
+					uint8_t objPalette = paletteOneSelected ? 
+						m_MMU.Read(HW_FF49_OBP1_OBJ_PALETTE_1_DATA) : 
+						m_MMU.Read(HW_FF48_OBP0_OBJ_PALETTE_0_DATA);
+					finalColor = (objPalette >> (colorIndex * 2)) & 0x03;
+				}
+				else
+				{
+					// Apply BG palette
+					finalColor = (bgPalette >> (colorIndex * 2)) & 0x03;
+				}
+				
+				m_LCDPixels[y * LCD_WIDTH + x] = finalColor;
 			}
 		}
 	}
@@ -438,18 +596,17 @@ namespace Core
 
 			// the third oam byte is the tile index
 			uint8_t tileIndex = m_MMU.Read(addr + 2);
-			m_OAMEntries[i].tileIndex = objSize ? tileIndex & 0xFE : tileIndex;
-			if (m_OAMEntries[i].yFlip && m_OAMEntries[i].isTall)
-			{
-				m_OAMEntries[i].tileIndex++;
-			}
-
-			// the fourth oam byte is for the attributes
+			
+			// the fourth oam byte is for the attributes (read before processing tile index for 8x16)
 			m_OAMEntries[i].paletteOneSelected = m_MMU.ReadRegisterBit(addr + 3, OAM_PALETTE);
 			m_OAMEntries[i].xFlip = m_MMU.ReadRegisterBit(addr + 3, OAM_FLIP_X);
 			m_OAMEntries[i].yFlip = m_MMU.ReadRegisterBit(addr + 3, OAM_FLIP_Y);
 			m_OAMEntries[i].bgPriority = m_MMU.ReadRegisterBit(addr + 3, OAM_PRIORITY);
 			m_OAMEntries[i].isTall = objSize;
+
+			// For 8x16 sprites, bit 0 of tile index is ignored (always use even tile index for top tile)
+			// The actual tile selection happens during rendering based on which line of the sprite we're on
+			m_OAMEntries[i].tileIndex = objSize ? (tileIndex & 0xFE) : tileIndex;
 
 			i++;
 		}

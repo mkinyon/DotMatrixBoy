@@ -61,7 +61,9 @@ namespace Core
 		void DrawOAMToBuffer();
 
 		uint8_t ReadFromBuffer(int x, int y);
+		uint8_t ReadColorIndexFromBuffer(int x, int y);
 		void WriteToBuffer(int x, int y, uint8_t bgPalette, int colorIndex);
+		void WriteOBJToBuffer(int x, int y, uint8_t objPalette, int colorIndex, bool paletteOneSelected);
 		void CopyBackBufferToLCD();
 		void ClearBackBuffer();
 
@@ -79,6 +81,7 @@ namespace Core
 		unsigned int m_TotalFrames = 0;
 		unsigned int m_CurrentScanLine = 0;
 		unsigned int m_TotalDotsThisFrame = 0;
+		int m_WindowLineCounter = -1; // Window internal line counter (-1 = window not started)
 
 		uint8_t m_LCDPixels[160 * 144] = {};
 	};
